@@ -28,9 +28,12 @@ class MoodRow extends StatelessWidget {
         padding: const EdgeInsets.fromLTRB(18, 10, 12, 10),
         child: Row(
           children: [
-            const Text(
-              'How are you?',
-              style: TextStyle(fontSize: 15, fontWeight: FontWeight.w600),
+            const Flexible(
+              child: Text(
+                'How are you?',
+                overflow: TextOverflow.ellipsis,
+                style: TextStyle(fontSize: 15, fontWeight: FontWeight.w600),
+              ),
             ),
             const Spacer(),
             for (final (emoji, name) in _moods)

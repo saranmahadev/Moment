@@ -137,6 +137,7 @@ class _TypeCard extends StatelessWidget {
   Widget build(BuildContext context) {
     final color = tokens.colorFor(type);
     return GestureDetector(
+      key: ValueKey('add-sheet-type-$type'),
       onTap: onTap,
       child: GlassSurface(
         variant: GlassVariant.card,

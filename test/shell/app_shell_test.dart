@@ -20,11 +20,7 @@ void main() {
     return tester.pumpWidget(
       MaterialApp(
         theme: momentTheme(),
-        home: AppShell(
-          repository: repo,
-          now: () => now,
-          onAddType: onAddType,
-        ),
+        home: AppShell(repository: repo, now: () => now, onAddType: onAddType),
       ),
     );
   }
@@ -112,7 +108,7 @@ void main() {
 
     await tester.tap(find.bySemanticsLabel('Add a log'));
     await tester.pumpAndSettle();
-    await tester.tap(find.text('Text'));
+    await tester.tap(find.byKey(const ValueKey('add-sheet-type-LogType.text')));
     await tester.pumpAndSettle();
 
     expect(picked, LogType.text);
