@@ -6,9 +6,12 @@ Read `docs/WORKFLOW.md` first. It is the working agreement: strict TDD (a `test:
 
 ## Source of truth
 
-- Plan: https://claude.ai/artifact/U6uhFvGHSbxHXXBHjfF6uJ
-- Delivery roadmap (5 phases, tests and exit gates): https://claude.ai/artifact/BAyTndC6jNZxrHCFjKMS9i
-- Mockups, 27 app screens + app map + design language: https://claude.ai/artifact/Svq4CmiaxtuNUS7KLV4JdH
+Everything needed is in this repo, so no web access is required:
+
+- `docs/ROADMAP.md`: the 5 phases with scope, tests to write first, exit gates and screen coverage. This is the plan to follow.
+- `design/mockups/png/`: one reference image per screen (01 to 27, plus 00 App map and 28 Design language). Look at the image for a screen before building it.
+- `design/mockups/*.dc.html`: the HTML source of each artboard. The inline styles hold exact radii, spacing, colours and glass recipes. See `design/README.md`.
+- Original online copies (the owner can open these; they may not be reachable from here): plan https://claude.ai/artifact/U6uhFvGHSbxHXXBHjfF6uJ, roadmap https://claude.ai/artifact/BAyTndC6jNZxrHCFjKMS9i, mockups https://claude.ai/artifact/Svq4CmiaxtuNUS7KLV4JdH
 
 Releases: Phase 1 = 0.1.0 (Foundation, Text and Emoji), 2 = 0.2.0 (Photo, Audio, Backup), 3 = 0.3.0 (Video, Location), 4 = 0.4.0 (Calendar, Search, Settings), 5 = 1.0.0 (polish and hardening). Tag `vX.Y.Z` only when CI is green and the phase exit gate is met.
 

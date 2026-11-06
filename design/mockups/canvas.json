@@ -1,0 +1,328 @@
+{
+ "v": 3,
+ "createdOnFiles": {
+  "v": 1,
+  "at": "2026-11-06T16:25:00Z"
+ },
+ "title": "Moment: Glassmorphism UI Mockups",
+ "launch": {
+  "view": "canvas"
+ },
+ "pages": [],
+ "boards": {
+  "Sitemap.dc.html": {
+   "x": 0,
+   "y": 0,
+   "w": 1240,
+   "h": 920,
+   "title": "00 App map",
+   "is_interactive": true
+  },
+  "Main.dc.html": {
+   "x": 0,
+   "y": 1300,
+   "w": 390,
+   "h": 3300,
+   "title": "02 Home: all six log types",
+   "is_interactive": true
+  },
+  "Lock.dc.html": {
+   "x": 470,
+   "y": 1300,
+   "w": 390,
+   "h": 844,
+   "title": "01 Lock",
+   "is_interactive": true
+  },
+  "Add.dc.html": {
+   "x": 940,
+   "y": 1300,
+   "w": 390,
+   "h": 844,
+   "title": "03 Add: pick a type",
+   "is_interactive": true
+  },
+  "Library.dc.html": {
+   "x": 1410,
+   "y": 1300,
+   "w": 390,
+   "h": 844,
+   "title": "04 Library: one section per type",
+   "is_interactive": true
+  },
+  "New-Text.dc.html": {
+   "x": 0,
+   "y": 5000,
+   "w": 390,
+   "h": 844,
+   "title": "05 Create Text",
+   "is_interactive": true
+  },
+  "New-Emoji.dc.html": {
+   "x": 470,
+   "y": 5000,
+   "w": 390,
+   "h": 844,
+   "title": "06 Create Emoji",
+   "is_interactive": true
+  },
+  "New-Photo.dc.html": {
+   "x": 940,
+   "y": 5000,
+   "w": 390,
+   "h": 844,
+   "title": "07 Create Photo",
+   "is_interactive": true
+  },
+  "New-Video.dc.html": {
+   "x": 1410,
+   "y": 5000,
+   "w": 390,
+   "h": 844,
+   "title": "08 Create Video",
+   "is_interactive": true
+  },
+  "New-Audio.dc.html": {
+   "x": 1880,
+   "y": 5000,
+   "w": 390,
+   "h": 844,
+   "title": "09 Create Audio",
+   "is_interactive": true
+  },
+  "New-Location.dc.html": {
+   "x": 2350,
+   "y": 5000,
+   "w": 390,
+   "h": 844,
+   "title": "10 Create Location",
+   "is_interactive": true
+  },
+  "List-Text.dc.html": {
+   "x": 0,
+   "y": 6244,
+   "w": 390,
+   "h": 1200,
+   "title": "11 Section: Text",
+   "is_interactive": true
+  },
+  "List-Emoji.dc.html": {
+   "x": 470,
+   "y": 6244,
+   "w": 390,
+   "h": 1180,
+   "title": "12 Section: Emoji",
+   "is_interactive": true
+  },
+  "List-Photo.dc.html": {
+   "x": 940,
+   "y": 6244,
+   "w": 390,
+   "h": 1000,
+   "title": "13 Section: Photos",
+   "is_interactive": true
+  },
+  "List-Video.dc.html": {
+   "x": 1410,
+   "y": 6244,
+   "w": 390,
+   "h": 1000,
+   "title": "14 Section: Videos",
+   "is_interactive": true
+  },
+  "List-Audio.dc.html": {
+   "x": 1880,
+   "y": 6244,
+   "w": 390,
+   "h": 960,
+   "title": "15 Section: Audio",
+   "is_interactive": true
+  },
+  "List-Location.dc.html": {
+   "x": 2350,
+   "y": 6244,
+   "w": 390,
+   "h": 1020,
+   "title": "16 Section: Locations",
+   "is_interactive": true
+  },
+  "View-Text.dc.html": {
+   "x": 0,
+   "y": 7844,
+   "w": 390,
+   "h": 844,
+   "title": "17 Detail: Text",
+   "is_interactive": true
+  },
+  "View-Emoji.dc.html": {
+   "x": 470,
+   "y": 7844,
+   "w": 390,
+   "h": 844,
+   "title": "18 Detail: Emoji",
+   "is_interactive": true
+  },
+  "View-Photo.dc.html": {
+   "x": 940,
+   "y": 7844,
+   "w": 390,
+   "h": 844,
+   "title": "19 Detail: Photo",
+   "is_interactive": true
+  },
+  "View-Video.dc.html": {
+   "x": 1410,
+   "y": 7844,
+   "w": 390,
+   "h": 844,
+   "title": "20 Detail: Video",
+   "is_interactive": true
+  },
+  "View-Audio.dc.html": {
+   "x": 1880,
+   "y": 7844,
+   "w": 390,
+   "h": 844,
+   "title": "21 Detail: Audio",
+   "is_interactive": true
+  },
+  "View-Location.dc.html": {
+   "x": 2350,
+   "y": 7844,
+   "w": 390,
+   "h": 844,
+   "title": "22 Detail: Location",
+   "is_interactive": true
+  },
+  "Calendar.dc.html": {
+   "x": 0,
+   "y": 9088,
+   "w": 390,
+   "h": 1100,
+   "title": "23 Calendar",
+   "is_interactive": true
+  },
+  "Search.dc.html": {
+   "x": 470,
+   "y": 9088,
+   "w": 390,
+   "h": 844,
+   "title": "24 Search",
+   "is_interactive": true
+  },
+  "Settings.dc.html": {
+   "x": 940,
+   "y": 9088,
+   "w": 390,
+   "h": 960,
+   "title": "25 Settings",
+   "is_interactive": true
+  },
+  "Privacy.dc.html": {
+   "x": 1410,
+   "y": 9088,
+   "w": 390,
+   "h": 1260,
+   "title": "26 Privacy and backup",
+   "is_interactive": true
+  },
+  "Trash.dc.html": {
+   "x": 1880,
+   "y": 9088,
+   "w": 390,
+   "h": 844,
+   "title": "27 Trash",
+   "is_interactive": true
+  },
+  "Language.dc.html": {
+   "x": 2350,
+   "y": 9088,
+   "w": 860,
+   "h": 1020,
+   "title": "28 Design language"
+  }
+ },
+ "order": [
+  "Sitemap.dc.html",
+  "Main.dc.html",
+  "Lock.dc.html",
+  "Add.dc.html",
+  "Library.dc.html",
+  "New-Text.dc.html",
+  "New-Emoji.dc.html",
+  "New-Photo.dc.html",
+  "New-Video.dc.html",
+  "New-Audio.dc.html",
+  "New-Location.dc.html",
+  "List-Text.dc.html",
+  "List-Emoji.dc.html",
+  "List-Photo.dc.html",
+  "List-Video.dc.html",
+  "List-Audio.dc.html",
+  "List-Location.dc.html",
+  "View-Text.dc.html",
+  "View-Emoji.dc.html",
+  "View-Photo.dc.html",
+  "View-Video.dc.html",
+  "View-Audio.dc.html",
+  "View-Location.dc.html",
+  "Calendar.dc.html",
+  "Search.dc.html",
+  "Settings.dc.html",
+  "Privacy.dc.html",
+  "Trash.dc.html",
+  "Language.dc.html"
+ ],
+ "notes": {
+  "n0": {
+   "x": 0,
+   "y": -300,
+   "text": "Moment: every log type is its own thing",
+   "kind": "title1",
+   "maxW": 1240
+  },
+  "nA": {
+   "x": 0,
+   "y": 1000,
+   "text": "Home and navigation",
+   "kind": "title1",
+   "maxW": 1800
+  },
+  "nB": {
+   "x": 0,
+   "y": 4700,
+   "text": "Create: one screen per type",
+   "kind": "title1",
+   "maxW": 2740
+  },
+  "nC": {
+   "x": 0,
+   "y": 5944,
+   "text": "Library sections: one list per type",
+   "kind": "title1",
+   "maxW": 2740
+  },
+  "nD": {
+   "x": 0,
+   "y": 7544,
+   "text": "Detail: one view per type",
+   "kind": "title1",
+   "maxW": 2740
+  },
+  "nE": {
+   "x": 0,
+   "y": 8788,
+   "text": "Calendar, search and settings",
+   "kind": "title1",
+   "maxW": 3210
+  },
+  "nH": {
+   "x": 940,
+   "y": 2200,
+   "w": 380,
+   "fill": "blue",
+   "text": "Home is one long feed. Each card is one log of one type, and the tab bar floats at the bottom of the screen while you scroll."
+  }
+ },
+ "designSystems": []
+}
