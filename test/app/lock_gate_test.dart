@@ -32,7 +32,9 @@ void main() {
     WidgetTester tester, {
     required AppLockController controller,
     required bool hasPin,
-  }) {
+  }) async {
+    await tester.binding.setSurfaceSize(const Size(390, 844));
+    addTearDown(() => tester.binding.setSurfaceSize(null));
     return tester.pumpWidget(
       MaterialApp(
         theme: momentTheme(),
