@@ -96,7 +96,7 @@ void main() {
     await db.close();
   });
 
-  testWidgets('picking a type from the Add sheet reports it and closes it', (
+  testWidgets('picking a type not built yet falls back to onAddType', (
     tester,
   ) async {
     final db = AppDatabase(NativeDatabase.memory());
@@ -108,14 +108,67 @@ void main() {
 
     await tester.tap(find.bySemanticsLabel('Add a log'));
     await tester.pumpAndSettle();
-    await tester.tap(find.byKey(const ValueKey('add-sheet-type-LogType.text')));
+    await tester.tap(
+      find.byKey(const ValueKey('add-sheet-type-LogType.emoji')),
+    );
     await tester.pumpAndSettle();
 
-    expect(picked, LogType.text);
+    expect(picked, LogType.emoji);
     expect(find.text('Add to your log'), findsNothing);
 
     await tester.pumpWidget(const SizedBox());
     await tester.pumpAndSettle();
     await db.close();
   });
+
+  testWidgets('picking Text from the Add sheet opens CreateTextScreen', (
+    tester,
+  ) async {
+    final db = AppDatabase(NativeDatabase.memory());
+    final repo = LogRepository(db, clock: () => now);
+
+    await pump(tester, repo);
+    await tester.pump();
+
+    await tester.tap(find.bySemanticsLabel('Add a log'));
+    await tester.pumpAndSettle();
+    await tester.tap(find.byKey(const ValueKey('add-sheet-type-LogType.text')));
+    await tester.pumpAndSettle();
+
+    expect(find.text('Add to your log'), findsNothing);
+    expect(find.bySemanticsLabel('Close without saving'), findsOneWidget);
+
+    await tester.pumpWidget(const SizedBox());
+    await tester.pumpAndSettle();
+    await db.close();
+  });
+
+  testWidgets(
+    'saving a new text log from the Add flow returns to Home with it visible',
+    (tester) async {
+      final db = AppDatabase(NativeDatabase.memory());
+      final repo = LogRepository(db, clock: () => now);
+
+      await pump(tester, repo);
+      await tester.pump();
+
+      await tester.tap(find.bySemanticsLabel('Add a log'));
+      await tester.pumpAndSettle();
+      await tester.tap(
+        find.byKey(const ValueKey('add-sheet-type-LogType.text')),
+      );
+      await tester.pumpAndSettle();
+
+      await tester.enterText(find.byType(TextField), 'From the shell');
+      await tester.tap(find.text('Save'));
+      await tester.pumpAndSettle();
+
+      expect(find.text('From the shell'), findsOneWidget);
+      expect(find.bySemanticsLabel('Close without saving'), findsNothing);
+
+      await tester.pumpWidget(const SizedBox());
+      await tester.pumpAndSettle();
+      await db.close();
+    },
+  );
 }
