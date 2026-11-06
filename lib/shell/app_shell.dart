@@ -7,6 +7,7 @@ import '../domain/log.dart';
 import '../domain/log_type.dart';
 import '../home/add_sheet.dart';
 import '../home/home_screen.dart';
+import '../text/create_text_screen.dart';
 
 enum _Tab { home, library, calendar, settings }
 
@@ -46,11 +47,32 @@ class _AppShellState extends State<AppShell> {
       builder: (sheetContext) => AddSheet(
         onTypeSelected: (type) {
           Navigator.of(sheetContext).pop();
-          widget.onAddType?.call(type);
+          _handleTypeSelected(type);
         },
         onClose: () => Navigator.of(sheetContext).pop(),
       ),
     );
+  }
+
+  void _handleTypeSelected(LogType type) {
+    switch (type) {
+      case LogType.text:
+        Navigator.of(context).push(
+          MaterialPageRoute<void>(
+            builder: (_) => CreateTextScreen(
+              repository: widget.repository,
+              onSaved: (_) => Navigator.of(context).pop(),
+              onClose: () => Navigator.of(context).pop(),
+            ),
+          ),
+        );
+      case LogType.emoji:
+      case LogType.photo:
+      case LogType.video:
+      case LogType.audio:
+      case LogType.location:
+        widget.onAddType?.call(type);
+    }
   }
 
   @override
