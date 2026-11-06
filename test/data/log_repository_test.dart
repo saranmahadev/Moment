@@ -264,4 +264,70 @@ void main() {
       expect((updates.last.single as TextLog).body, 'Edited');
     });
   });
+
+  group('purging', () {
+    test('deletePermanently removes the log entirely', () async {
+      final id = await repo.createText(body: 'Gone for good');
+      await repo.deletePermanently(id);
+      expect(await repo.getById(id), isNull);
+    });
+
+    test('emptyTrash removes every soft-deleted log but leaves the rest', () async {
+      final trashed = await repo.createText(body: 'trashed');
+      final kept = await repo.createText(body: 'kept');
+      await repo.softDelete(trashed);
+
+      await repo.emptyTrash();
+
+      expect(await repo.getById(trashed), isNull);
+      expect(await repo.getById(kept), isNotNull);
+    });
+
+    test('purgeExpired removes logs deleted more than 30 days ago', () async {
+      final old = await repo.createText(body: 'old');
+      await repo.softDelete(old);
+
+      await repo.purgeExpired(now.add(const Duration(days: 31)));
+
+      expect(await repo.getById(old), isNull);
+    });
+
+    test('purgeExpired keeps logs deleted less than 30 days ago', () async {
+      final recent = await repo.createText(body: 'recent');
+      await repo.softDelete(recent);
+
+      await repo.purgeExpired(now.add(const Duration(days: 29)));
+
+      expect(await repo.getById(recent), isNotNull);
+    });
+
+    test('purgeExpired never touches logs that are not in Trash', () async {
+      final kept = await repo.createText(body: 'kept');
+
+      await repo.purgeExpired(now.add(const Duration(days: 365)));
+
+      expect(await repo.getById(kept), isNotNull);
+    });
+  });
+
+  group('setCreatedAt', () {
+    test('backdates a log and recomputes its recorded offset', () async {
+      final id = await repo.createText(body: 'hi');
+      final backdated = DateTime.utc(2020, 6, 1, 8);
+
+      await repo.setCreatedAt(id, backdated);
+
+      final log = (await repo.getById(id))!;
+      expect(log.createdAt, backdated);
+      expect(log.tzOffsetMinutes, 0);
+    });
+
+    test('does not change editedAt', () async {
+      final id = await repo.createText(body: 'hi');
+      await repo.setCreatedAt(id, DateTime.utc(2020, 6, 1, 8));
+
+      final log = (await repo.getById(id))!;
+      expect(log.editedAt, isNull);
+    });
+  });
 }
