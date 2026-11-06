@@ -9,7 +9,10 @@ void main() {
     });
 
     test('uses Ground as the scaffold background', () {
-      expect(momentTheme().scaffoldBackgroundColor, MomentTokens.standard.ground);
+      expect(
+        momentTheme().scaffoldBackgroundColor,
+        MomentTokens.standard.ground,
+      );
     });
 
     test('UI text defaults to Inter', () {
