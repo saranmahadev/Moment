@@ -7,7 +7,10 @@ import 'package:moment/home/feed_card.dart';
 void main() {
   Future<void> pump(WidgetTester tester, Widget child) async {
     await tester.pumpWidget(
-      MaterialApp(theme: momentTheme(), home: Scaffold(body: child)),
+      MaterialApp(
+        theme: momentTheme(),
+        home: Scaffold(body: child),
+      ),
     );
   }
 
