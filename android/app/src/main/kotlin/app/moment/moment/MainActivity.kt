@@ -1,5 +1,6 @@
 package app.moment.moment
 
-import io.flutter.embedding.android.FlutterActivity
+import io.flutter.embedding.android.FlutterFragmentActivity
 
-class MainActivity : FlutterActivity()
+// local_auth (biometric app lock) requires a FragmentActivity.
+class MainActivity : FlutterFragmentActivity()
