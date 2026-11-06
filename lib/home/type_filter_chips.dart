@@ -112,6 +112,7 @@ class _Chip extends StatelessWidget {
       excludeSemantics: true,
       label: label,
       child: GestureDetector(
+        key: ValueKey('type-chip-$label'),
         onTap: onTap,
         child: SizedBox(
           height: 44,
