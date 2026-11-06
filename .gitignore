@@ -1,0 +1,29 @@
+# Flutter / Dart
+.dart_tool/
+.packages
+.pub-cache/
+.flutter-plugins
+.flutter-plugins-dependencies
+build/
+coverage/
+pubspec.lock.bak
+
+# Generated code (CI and developers run build_runner)
+*.g.dart
+*.drift.dart
+
+# IDE
+.idea/
+*.iml
+.vscode/
+.DS_Store
+
+# Android signing (never commit)
+android/key.properties
+*.jks
+*.keystore
+
+# Local data
+*.sqlite
+*.db
+*.moment
