@@ -26,9 +26,7 @@ void main() {
       ),
     );
 
-    final backdrop = tester.widget<BackdropFilter>(
-      find.byType(BackdropFilter),
-    );
+    final backdrop = tester.widget<BackdropFilter>(find.byType(BackdropFilter));
     final filter = backdrop.filter;
     expect(filter, isA<ImageFilter>());
     // The compose filter does not expose its inner sigma directly, but its
