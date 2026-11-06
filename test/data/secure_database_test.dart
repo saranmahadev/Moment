@@ -25,28 +25,31 @@ void main() {
     await db.close();
   });
 
-  test('data written with the key is readable after reopening with it', () async {
-    final key = 'b'.padRight(64, 'b');
+  test(
+    'data written with the key is readable after reopening with it',
+    () async {
+      final key = 'b'.padRight(64, 'b');
 
-    var db = AppDatabase(openEncryptedDatabase(path, key));
-    await db
-        .into(db.logsTable)
-        .insert(
-          LogsTableCompanion.insert(
-            id: '1',
-            type: 'text',
-            createdAtMs: 0,
-            tzOffsetMinutes: 0,
-          ),
-        );
-    await db.close();
+      var db = AppDatabase(openEncryptedDatabase(path, key));
+      await db
+          .into(db.logsTable)
+          .insert(
+            LogsTableCompanion.insert(
+              id: '1',
+              type: 'text',
+              createdAtMs: 0,
+              tzOffsetMinutes: 0,
+            ),
+          );
+      await db.close();
 
-    db = AppDatabase(openEncryptedDatabase(path, key));
-    final rows = await db.select(db.logsTable).get();
-    expect(rows, hasLength(1));
-    expect(rows.single.id, '1');
-    await db.close();
-  });
+      db = AppDatabase(openEncryptedDatabase(path, key));
+      final rows = await db.select(db.logsTable).get();
+      expect(rows, hasLength(1));
+      expect(rows.single.id, '1');
+      await db.close();
+    },
+  );
 
   test('the file cannot be read by plain sqlite3 without the key', () async {
     final db = AppDatabase(openEncryptedDatabase(path, 'c'.padRight(64, 'c')));
