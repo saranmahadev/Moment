@@ -272,16 +272,19 @@ void main() {
       expect(await repo.getById(id), isNull);
     });
 
-    test('emptyTrash removes every soft-deleted log but leaves the rest', () async {
-      final trashed = await repo.createText(body: 'trashed');
-      final kept = await repo.createText(body: 'kept');
-      await repo.softDelete(trashed);
+    test(
+      'emptyTrash removes every soft-deleted log but leaves the rest',
+      () async {
+        final trashed = await repo.createText(body: 'trashed');
+        final kept = await repo.createText(body: 'kept');
+        await repo.softDelete(trashed);
 
-      await repo.emptyTrash();
+        await repo.emptyTrash();
 
-      expect(await repo.getById(trashed), isNull);
-      expect(await repo.getById(kept), isNotNull);
-    });
+        expect(await repo.getById(trashed), isNull);
+        expect(await repo.getById(kept), isNotNull);
+      },
+    );
 
     test('purgeExpired removes logs deleted more than 30 days ago', () async {
       final old = await repo.createText(body: 'old');

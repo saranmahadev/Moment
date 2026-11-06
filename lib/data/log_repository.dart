@@ -29,6 +29,8 @@ class LogRepository {
   final Clock _clock;
   final IdGenerator _generateId;
 
+  static const _trashRetention = Duration(days: 30);
+
   /// Creates a text log and returns its id.
   ///
   /// [body] must not be blank. [createdAt] backdates the log; it defaults
@@ -183,6 +185,38 @@ class LogRepository {
       case LogType.location:
         throw UnimplementedError('${log.type} logs are not built yet');
     }
+  }
+
+  /// Permanently removes log [id] and its type-specific row.
+  Future<void> deletePermanently(String id) async {
+    await (_db.delete(_db.logsTable)..where((l) => l.id.equals(id))).go();
+  }
+
+  /// Permanently removes every log currently in Trash.
+  Future<void> emptyTrash() async {
+    await (_db.delete(
+      _db.logsTable,
+    )..where((l) => l.deletedAtMs.isNotNull())).go();
+  }
+
+  /// Permanently removes every log that has been in Trash for more than 30
+  /// days, as measured against [now].
+  Future<void> purgeExpired(DateTime now) async {
+    final cutoff = now.subtract(_trashRetention).toUtc().millisecondsSinceEpoch;
+    await (_db.delete(
+      _db.logsTable,
+    )..where((l) => l.deletedAtMs.isSmallerOrEqualValue(cutoff))).go();
+  }
+
+  /// Backdates or postdates log [id] to [createdAt], recomputing the
+  /// recorded time zone offset from it. Does not change `editedAt`.
+  Future<void> setCreatedAt(String id, DateTime createdAt) async {
+    await (_db.update(_db.logsTable)..where((l) => l.id.equals(id))).write(
+      LogsTableCompanion(
+        createdAtMs: Value(createdAt.toUtc().millisecondsSinceEpoch),
+        tzOffsetMinutes: Value(createdAt.timeZoneOffset.inMinutes),
+      ),
+    );
   }
 
   /// Changes a text log's [body] and stamps `editedAt`. Throws if [id] does
