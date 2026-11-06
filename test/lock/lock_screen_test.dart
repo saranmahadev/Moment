@@ -20,14 +20,13 @@ class _FakePinStorage implements PinStorage {
 }
 
 class _FakeBiometrics implements BiometricAuthenticator {
-  _FakeBiometrics({this.available = true, this.result = true});
+  _FakeBiometrics({this.result = true});
 
-  final bool available;
   final bool result;
   bool authenticateCalled = false;
 
   @override
-  Future<bool> get isAvailable async => available;
+  Future<bool> get isAvailable async => true;
 
   @override
   Future<bool> authenticate() async {
@@ -50,6 +49,8 @@ void main() {
   });
 
   Future<void> pump(WidgetTester tester) async {
+    await tester.binding.setSurfaceSize(const Size(390, 844));
+    addTearDown(() => tester.binding.setSurfaceSize(null));
     await tester.pumpWidget(
       MaterialApp(
         theme: momentTheme(),
@@ -104,7 +105,7 @@ void main() {
     expect(controller.isLocked, isTrue);
     expect(unlocked, isFalse);
 
-    await tester.pumpAndSettle();
+    await tester.pump(const Duration(milliseconds: 600));
     expect(find.bySemanticsLabel('0 of 4 digits entered'), findsOneWidget);
     expect(find.text('Incorrect PIN'), findsNothing);
   });
@@ -143,8 +144,6 @@ void main() {
   });
 
   testWidgets('matches its approved baseline', (tester) async {
-    await tester.binding.setSurfaceSize(const Size(390, 844));
-    addTearDown(() => tester.binding.setSurfaceSize(null));
     await pump(tester);
 
     await expectLater(
