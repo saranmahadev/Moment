@@ -37,11 +37,7 @@ void main() {
 
   testWidgets('tapping a chip reports its type', (tester) async {
     LogType? reported = LogType.text;
-    await pump(
-      tester,
-      selected: null,
-      onSelected: (type) => reported = type,
-    );
+    await pump(tester, selected: null, onSelected: (type) => reported = type);
 
     await tester.tap(find.text('Emoji'));
     expect(reported, LogType.emoji);
@@ -72,7 +68,9 @@ void main() {
     expect(emojiChip.properties.selected, isTrue);
 
     final allChip = tester.widget<Semantics>(
-      find.ancestor(of: find.text('All'), matching: find.byType(Semantics)).first,
+      find
+          .ancestor(of: find.text('All'), matching: find.byType(Semantics))
+          .first,
     );
     expect(allChip.properties.selected, isFalse);
   });
