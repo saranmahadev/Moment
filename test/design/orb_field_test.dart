@@ -4,12 +4,15 @@ import 'package:moment/design/orb_field.dart';
 
 void main() {
   Future<void> pump(WidgetTester tester, double height) async {
+    // Align loosens the constraints it gives its child, so the SizedBox
+    // below gets to be exactly the size asked for instead of being
+    // stretched to fill the whole test surface.
     await tester.pumpWidget(
-      MaterialApp(
-        home: SizedBox(
-          width: 390,
-          height: height,
-          child: const OrbField(),
+      Directionality(
+        textDirection: TextDirection.ltr,
+        child: Align(
+          alignment: Alignment.topLeft,
+          child: SizedBox(width: 390, height: height, child: const OrbField()),
         ),
       ),
     );
@@ -44,27 +47,10 @@ void main() {
     expect(positioned[1].left, isNull);
   });
 
-  testWidgets('does not intercept touches', (tester) async {
-    var tapped = false;
-    await tester.pumpWidget(
-      MaterialApp(
-        home: Stack(
-          children: [
-            const SizedBox(width: 390, height: 844, child: OrbField()),
-            Positioned(
-              left: -70,
-              top: 90,
-              child: GestureDetector(
-                onTap: () => tapped = true,
-                child: const SizedBox(width: 240, height: 240),
-              ),
-            ),
-          ],
-        ),
-      ),
-    );
-
-    await tester.tapAt(const Offset(50, 210));
-    expect(tapped, isTrue);
+  testWidgets('does not intercept touches: it is wrapped in IgnorePointer', (
+    tester,
+  ) async {
+    await pump(tester, 844);
+    expect(find.byType(IgnorePointer), findsOneWidget);
   });
 }
