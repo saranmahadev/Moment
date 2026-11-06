@@ -101,4 +101,80 @@ void main() {
       expect(id1, isNot(id2));
     });
   });
+
+  group('update', () {
+    test('updateText changes the body and stamps editedAt', () async {
+      final id = await repo.createText(body: 'Original');
+      now = now.add(const Duration(hours: 1));
+
+      await repo.updateText(id, body: 'Edited');
+
+      final log = await repo.getById(id) as TextLog;
+      expect(log.body, 'Edited');
+      expect(log.editedAt, now);
+    });
+
+    test('updateText rejects a blank body', () async {
+      final id = await repo.createText(body: 'Original');
+      expect(() => repo.updateText(id, body: '  '), throwsArgumentError);
+    });
+
+    test('updateText on an unknown id throws', () {
+      expect(
+        () => repo.updateText('missing', body: 'x'),
+        throwsArgumentError,
+      );
+    });
+
+    test('updateText on an emoji log throws', () async {
+      final id = await repo.createEmoji(emoji: '😌', strength: 2);
+      expect(
+        () => repo.updateText(id, body: 'x'),
+        throwsArgumentError,
+      );
+    });
+
+    test(
+      'updateEmoji changes emoji, label and strength, and stamps editedAt',
+      () async {
+        final id = await repo.createEmoji(
+          emoji: '😌',
+          label: 'Calm',
+          strength: 2,
+        );
+        now = now.add(const Duration(hours: 1));
+
+        await repo.updateEmoji(id, emoji: '😄', label: 'Happy', strength: 5);
+
+        final log = await repo.getById(id) as EmojiLog;
+        expect(log.emoji, '😄');
+        expect(log.label, 'Happy');
+        expect(log.strength, 5);
+        expect(log.editedAt, now);
+      },
+    );
+
+    test('updateEmoji with only strength leaves emoji and label unchanged', () async {
+      final id = await repo.createEmoji(
+        emoji: '😌',
+        label: 'Calm',
+        strength: 2,
+      );
+
+      await repo.updateEmoji(id, strength: 4);
+
+      final log = await repo.getById(id) as EmojiLog;
+      expect(log.emoji, '😌');
+      expect(log.label, 'Calm');
+      expect(log.strength, 4);
+    });
+
+    test('updateEmoji rejects a strength outside 1 to 5', () async {
+      final id = await repo.createEmoji(emoji: '😌', strength: 2);
+      expect(
+        () => repo.updateEmoji(id, strength: 9),
+        throwsArgumentError,
+      );
+    });
+  });
 }
