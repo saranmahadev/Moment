@@ -1,5 +1,3 @@
-import 'dart:math';
-
 import 'package:flutter_test/flutter_test.dart';
 import 'package:moment/data/key_store.dart';
 
@@ -29,17 +27,14 @@ void main() {
       expect(storage.stored, key);
     });
 
-    test(
-      'the key survives a restart: a fresh KeyStore over the same storage '
-      'returns the same key',
-      () async {
-        final storage = _FakeKeyStorage();
-        final key = await KeyStore(storage).getOrCreateKey();
+    test('the key survives a restart: a fresh KeyStore over the same storage '
+        'returns the same key', () async {
+      final storage = _FakeKeyStorage();
+      final key = await KeyStore(storage).getOrCreateKey();
 
-        final afterRestart = KeyStore(storage);
-        expect(await afterRestart.getOrCreateKey(), key);
-      },
-    );
+      final afterRestart = KeyStore(storage);
+      expect(await afterRestart.getOrCreateKey(), key);
+    });
 
     test('generated keys are unique across separate storages', () async {
       final key1 = await KeyStore(_FakeKeyStorage()).getOrCreateKey();
