@@ -246,6 +246,7 @@ class _Keypad extends StatelessWidget {
         child: Semantics(
           button: true,
           label: value,
+          excludeSemantics: true,
           child: GlassSurface(
             variant: GlassVariant.card,
             borderRadius: 38,
@@ -275,6 +276,7 @@ class _Keypad extends StatelessWidget {
         child: Semantics(
           button: true,
           label: 'Unlock with Face ID',
+          excludeSemantics: true,
           child: Icon(
             Icons.face_retouching_natural,
             size: 30,
@@ -295,6 +297,7 @@ class _Keypad extends StatelessWidget {
         child: Semantics(
           button: true,
           label: 'Delete last digit',
+          excludeSemantics: true,
           child: Icon(
             Icons.backspace_outlined,
             size: 28,
