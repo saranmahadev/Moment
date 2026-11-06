@@ -171,4 +171,55 @@ void main() {
       expect(() => repo.updateEmoji(id, strength: 9), throwsArgumentError);
     });
   });
+
+  group('trash', () {
+    test(
+      'softDelete stamps deletedAt and moves the log into watchTrash',
+      () async {
+        final id = await repo.createText(body: 'Gone soon');
+        now = now.add(const Duration(hours: 1));
+
+        await repo.softDelete(id);
+
+        final log = (await repo.getById(id))!;
+        expect(log.deletedAt, now);
+
+        final trash = await repo.watchTrash().first;
+        expect(trash.map((l) => l.id), [id]);
+      },
+    );
+
+    test('a soft-deleted log no longer appears in watchFeed', () async {
+      final id = await repo.createText(body: 'Gone soon');
+      await repo.softDelete(id);
+
+      final feed = await repo.watchFeed().first;
+      expect(feed, isEmpty);
+    });
+
+    test(
+      'restore clears deletedAt and removes the log from watchTrash',
+      () async {
+        final id = await repo.createText(body: 'Back again');
+        await repo.softDelete(id);
+
+        await repo.restore(id);
+
+        final log = (await repo.getById(id))!;
+        expect(log.deletedAt, isNull);
+        expect(await repo.watchTrash().first, isEmpty);
+      },
+    );
+
+    test('watchTrash orders newest-deleted first', () async {
+      final first = await repo.createText(body: 'first');
+      final second = await repo.createText(body: 'second');
+      await repo.softDelete(first);
+      now = now.add(const Duration(minutes: 1));
+      await repo.softDelete(second);
+
+      final trash = await repo.watchTrash().first;
+      expect(trash.map((l) => l.id), [second, first]);
+    });
+  });
 }
