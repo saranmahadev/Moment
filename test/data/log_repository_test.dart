@@ -120,18 +120,12 @@ void main() {
     });
 
     test('updateText on an unknown id throws', () {
-      expect(
-        () => repo.updateText('missing', body: 'x'),
-        throwsArgumentError,
-      );
+      expect(() => repo.updateText('missing', body: 'x'), throwsArgumentError);
     });
 
     test('updateText on an emoji log throws', () async {
       final id = await repo.createEmoji(emoji: '😌', strength: 2);
-      expect(
-        () => repo.updateText(id, body: 'x'),
-        throwsArgumentError,
-      );
+      expect(() => repo.updateText(id, body: 'x'), throwsArgumentError);
     });
 
     test(
@@ -154,27 +148,27 @@ void main() {
       },
     );
 
-    test('updateEmoji with only strength leaves emoji and label unchanged', () async {
-      final id = await repo.createEmoji(
-        emoji: '😌',
-        label: 'Calm',
-        strength: 2,
-      );
+    test(
+      'updateEmoji with only strength leaves emoji and label unchanged',
+      () async {
+        final id = await repo.createEmoji(
+          emoji: '😌',
+          label: 'Calm',
+          strength: 2,
+        );
 
-      await repo.updateEmoji(id, strength: 4);
+        await repo.updateEmoji(id, strength: 4);
 
-      final log = await repo.getById(id) as EmojiLog;
-      expect(log.emoji, '😌');
-      expect(log.label, 'Calm');
-      expect(log.strength, 4);
-    });
+        final log = await repo.getById(id) as EmojiLog;
+        expect(log.emoji, '😌');
+        expect(log.label, 'Calm');
+        expect(log.strength, 4);
+      },
+    );
 
     test('updateEmoji rejects a strength outside 1 to 5', () async {
       final id = await repo.createEmoji(emoji: '😌', strength: 2);
-      expect(
-        () => repo.updateEmoji(id, strength: 9),
-        throwsArgumentError,
-      );
+      expect(() => repo.updateEmoji(id, strength: 9), throwsArgumentError);
     });
   });
 }

@@ -112,6 +112,66 @@ class LogRepository {
     return _hydrate(row);
   }
 
+  /// Changes a text log's [body] and stamps `editedAt`. Throws if [id] does
+  /// not name a text log, or [body] is blank.
+  Future<void> updateText(String id, {required String body}) async {
+    if (body.trim().isEmpty) {
+      throw ArgumentError.value(body, 'body', 'must not be blank');
+    }
+    if (await getById(id) is! TextLog) {
+      throw ArgumentError.value(id, 'id', 'is not a text log');
+    }
+
+    await _db.transaction(() async {
+      await (_db.update(_db.textLogsTable)..where((t) => t.logId.equals(id)))
+          .write(TextLogsTableCompanion(body: Value(body)));
+      await _touch(id);
+    });
+  }
+
+  /// Changes an emoji log's [emoji], [label] and/or [strength], leaving any
+  /// field not passed unchanged, and stamps `editedAt`. Throws if [id] does
+  /// not name an emoji log, [emoji] is passed empty, or [strength] is
+  /// passed outside 1 to 5.
+  Future<void> updateEmoji(
+    String id, {
+    String? emoji,
+    String? label,
+    int? strength,
+  }) async {
+    if (emoji != null && emoji.isEmpty) {
+      throw ArgumentError.value(emoji, 'emoji', 'must not be empty');
+    }
+    if (strength != null && (strength < 1 || strength > 5)) {
+      throw ArgumentError.value(strength, 'strength', 'must be 1 to 5');
+    }
+    if (await getById(id) is! EmojiLog) {
+      throw ArgumentError.value(id, 'id', 'is not an emoji log');
+    }
+
+    await _db.transaction(() async {
+      await (_db.update(
+        _db.emojiLogsTable,
+      )..where((e) => e.logId.equals(id))).write(
+        EmojiLogsTableCompanion(
+          emoji: emoji == null ? const Value.absent() : Value(emoji),
+          label: label == null ? const Value.absent() : Value(label),
+          strength: strength == null ? const Value.absent() : Value(strength),
+        ),
+      );
+      await _touch(id);
+    });
+  }
+
+  /// Stamps `editedAt` on log [id] with the current time.
+  Future<void> _touch(String id) async {
+    await (_db.update(_db.logsTable)..where((l) => l.id.equals(id))).write(
+      LogsTableCompanion(
+        editedAtMs: Value(_clock().toUtc().millisecondsSinceEpoch),
+      ),
+    );
+  }
+
   Future<Log> _hydrate(LogRow row) async {
     switch (LogType.values.byName(row.type)) {
       case LogType.text:
