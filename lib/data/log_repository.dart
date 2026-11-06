@@ -112,6 +112,79 @@ class LogRepository {
     return _hydrate(row);
   }
 
+  /// Moves log [id] to Trash by stamping `deletedAt` with the current time.
+  Future<void> softDelete(String id) async {
+    await (_db.update(_db.logsTable)..where((l) => l.id.equals(id))).write(
+      LogsTableCompanion(
+        deletedAtMs: Value(_clock().toUtc().millisecondsSinceEpoch),
+      ),
+    );
+  }
+
+  /// Takes log [id] out of Trash by clearing `deletedAt`.
+  Future<void> restore(String id) async {
+    await (_db.update(_db.logsTable)..where((l) => l.id.equals(id))).write(
+      const LogsTableCompanion(deletedAtMs: Value(null)),
+    );
+  }
+
+  /// Every log that is not in Trash, newest first (ties broken by id),
+  /// optionally restricted to [types].
+  Stream<List<Log>> watchFeed({Set<LogType>? types}) {
+    final query = _feedQuery()
+      ..where(_db.logsTable.deletedAtMs.isNull())
+      ..orderBy([
+        OrderingTerm.desc(_db.logsTable.createdAtMs),
+        OrderingTerm.desc(_db.logsTable.id),
+      ]);
+    if (types != null) {
+      query.where(_db.logsTable.type.isIn(types.map((t) => t.name)));
+    }
+    return query.watch().map(
+      (rows) => [for (final row in rows) _rowToLog(row)],
+    );
+  }
+
+  /// Every log in Trash, most recently deleted first.
+  Stream<List<Log>> watchTrash() {
+    final query = _feedQuery()
+      ..where(_db.logsTable.deletedAtMs.isNotNull())
+      ..orderBy([
+        OrderingTerm.desc(_db.logsTable.deletedAtMs),
+        OrderingTerm.desc(_db.logsTable.id),
+      ]);
+    return query.watch().map(
+      (rows) => [for (final row in rows) _rowToLog(row)],
+    );
+  }
+
+  JoinedSelectStatement<HasResultSet, dynamic> _feedQuery() =>
+      _db.select(_db.logsTable).join([
+        leftOuterJoin(
+          _db.textLogsTable,
+          _db.textLogsTable.logId.equalsExp(_db.logsTable.id),
+        ),
+        leftOuterJoin(
+          _db.emojiLogsTable,
+          _db.emojiLogsTable.logId.equalsExp(_db.logsTable.id),
+        ),
+      ]);
+
+  Log _rowToLog(TypedResult row) {
+    final log = row.readTable(_db.logsTable);
+    switch (LogType.values.byName(log.type)) {
+      case LogType.text:
+        return _toTextLog(log, row.readTable(_db.textLogsTable));
+      case LogType.emoji:
+        return _toEmojiLog(log, row.readTable(_db.emojiLogsTable));
+      case LogType.photo:
+      case LogType.video:
+      case LogType.audio:
+      case LogType.location:
+        throw UnimplementedError('${log.type} logs are not built yet');
+    }
+  }
+
   /// Changes a text log's [body] and stamps `editedAt`. Throws if [id] does
   /// not name a text log, or [body] is blank.
   Future<void> updateText(String id, {required String body}) async {
