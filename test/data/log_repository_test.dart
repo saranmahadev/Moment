@@ -222,4 +222,46 @@ void main() {
       expect(trash.map((l) => l.id), [second, first]);
     });
   });
+
+  group('watchFeed', () {
+    test('orders newest-created first', () async {
+      final first = await repo.createText(body: 'first');
+      now = now.add(const Duration(minutes: 1));
+      final second = await repo.createEmoji(emoji: '😌', strength: 2);
+
+      final feed = await repo.watchFeed().first;
+      expect(feed.map((l) => l.id), [second, first]);
+    });
+
+    test('ties at the same createdAt break by id, newest first', () async {
+      final first = await repo.createText(body: 'first');
+      final second = await repo.createText(body: 'second');
+
+      final feed = await repo.watchFeed().first;
+      expect(feed.map((l) => l.id), [second, first]);
+    });
+
+    test('can be restricted to a set of types', () async {
+      final text = await repo.createText(body: 'a text log');
+      await repo.createEmoji(emoji: '😌', strength: 2);
+
+      final feed = await repo.watchFeed(types: {LogType.text}).first;
+      expect(feed.map((l) => l.id), [text]);
+    });
+
+    test('re-emits when a log already in the feed is edited', () async {
+      final id = await repo.createText(body: 'Original');
+
+      final updates = <List<Log>>[];
+      final sub = repo.watchFeed().listen(updates.add);
+      await pumpEventQueue();
+
+      await repo.updateText(id, body: 'Edited');
+      await pumpEventQueue();
+      await sub.cancel();
+
+      expect(updates.last.single, isA<TextLog>());
+      expect((updates.last.single as TextLog).body, 'Edited');
+    });
+  });
 }
