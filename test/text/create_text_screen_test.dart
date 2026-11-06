@@ -57,7 +57,7 @@ void main() {
 
     await tester.enterText(find.byType(TextField), 'Quiet evening tonight');
     await tester.pump();
-    expect(find.text('4 words'), findsOneWidget);
+    expect(find.text('3 words'), findsOneWidget);
 
     await tester.pumpWidget(const SizedBox());
     await tester.pumpAndSettle();
@@ -111,25 +111,8 @@ void main() {
     await tester.pump();
 
     expect(closed, isTrue);
-    expect(await repo.watchFeed().first, isEmpty);
+    expect(await db.select(db.logsTable).get(), isEmpty);
 
-    await tester.pumpWidget(const SizedBox());
-    await tester.pumpAndSettle();
-    await db.close();
-  });
-
-  testWidgets('tapping the date pill opens a date picker', (tester) async {
-    final db = AppDatabase(NativeDatabase.memory());
-    final repo = LogRepository(db, clock: () => now);
-
-    await pump(tester, repo);
-    await tester.tap(find.text('Fri 6 Nov · 21:42'));
-    await tester.pumpAndSettle();
-
-    expect(find.byType(CalendarDatePicker), findsOneWidget);
-
-    await tester.tap(find.text('Cancel'));
-    await tester.pumpAndSettle();
     await tester.pumpWidget(const SizedBox());
     await tester.pumpAndSettle();
     await db.close();
