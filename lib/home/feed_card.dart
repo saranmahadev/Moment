@@ -8,15 +8,26 @@ import '../domain/log.dart';
 import '../domain/log_type.dart';
 
 final _timeFormat = DateFormat('HH:mm');
+final _fullDateFormat = DateFormat('EEE d MMM');
 
 /// One entry in the Home feed (or a type's section list): a type badge,
 /// label and time, then whatever that type shows. Matches the card style
 /// in design/mockups/Main.dc.html.
 class FeedCard extends StatelessWidget {
-  const FeedCard({super.key, required this.log, this.onTap});
+  const FeedCard({
+    super.key,
+    required this.log,
+    this.onTap,
+    this.showFullDate = false,
+  });
 
   final Log log;
   final VoidCallback? onTap;
+
+  /// Home shows just the time ("20:12"); section lists show the full
+  /// weekday and date too ("Fri 6 Nov · 20:12"), per
+  /// design/mockups/List-Text.dc.html.
+  final bool showFullDate;
 
   @override
   Widget build(BuildContext context) {
@@ -33,7 +44,7 @@ class FeedCard extends StatelessWidget {
             crossAxisAlignment: CrossAxisAlignment.start,
             mainAxisSize: MainAxisSize.min,
             children: [
-              _Header(log: log, tokens: tokens),
+              _Header(log: log, tokens: tokens, showFullDate: showFullDate),
               const SizedBox(height: 10),
               _Body(log: log, tokens: tokens),
             ],
@@ -45,10 +56,15 @@ class FeedCard extends StatelessWidget {
 }
 
 class _Header extends StatelessWidget {
-  const _Header({required this.log, required this.tokens});
+  const _Header({
+    required this.log,
+    required this.tokens,
+    required this.showFullDate,
+  });
 
   final Log log;
   final MomentTokens tokens;
+  final bool showFullDate;
 
   @override
   Widget build(BuildContext context) {
@@ -82,7 +98,10 @@ class _Header extends StatelessWidget {
         ),
         const Spacer(),
         Text(
-          _timeFormat.format(log.localMoment),
+          showFullDate
+              ? '${_fullDateFormat.format(log.localMoment)} · '
+                    '${_timeFormat.format(log.localMoment)}'
+              : _timeFormat.format(log.localMoment),
           style: TextStyle(
             fontSize: 13,
             fontWeight: FontWeight.w500,
