@@ -48,3 +48,8 @@ jobs:
       - run: flutter build apk --release
       - name: Fail if the release manifest asks for the internet
         run: dart run tool/check_manifest.dart build/app/intermediates/merged_manifests/release
+      - uses: actions/upload-artifact@v4
+        with:
+          name: moment-release-apk
+          path: build/app/outputs/flutter-apk/app-release.apk
+          retention-days: 14
