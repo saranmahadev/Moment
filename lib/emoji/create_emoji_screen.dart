@@ -4,6 +4,7 @@ import '../data/log_repository.dart';
 import '../design/glass_surface.dart';
 import '../design/tokens.dart';
 import '../design/type_icons.dart';
+import '../domain/log.dart';
 import '../domain/log_type.dart';
 
 /// The twelve quick-pick moods offered on the New Emoji screen, in grid
@@ -34,6 +35,7 @@ class CreateEmojiScreen extends StatefulWidget {
     DateTime Function()? now,
     required this.onSaved,
     required this.onClose,
+    this.editing,
   }) : now = now ?? DateTime.now;
 
   final LogRepository repository;
@@ -41,16 +43,39 @@ class CreateEmojiScreen extends StatefulWidget {
   final ValueChanged<String> onSaved;
   final VoidCallback onClose;
 
+  /// When set, this screen edits that log in place instead of creating a
+  /// new one.
+  final EmojiLog? editing;
+
   @override
   State<CreateEmojiScreen> createState() => _CreateEmojiScreenState();
 }
 
 class _CreateEmojiScreenState extends State<CreateEmojiScreen> {
-  int _selectedIndex = 0;
-  int _strength = 3;
+  late int _selectedIndex = _indexFor(widget.editing?.emoji);
+  late int _strength = widget.editing?.strength ?? 3;
+
+  static int _indexFor(String? emoji) {
+    if (emoji == null) return 0;
+    final index = _presetMoods.indexWhere((mood) => mood.$1 == emoji);
+    return index == -1 ? 0 : index;
+  }
 
   Future<void> _save() async {
     final (emoji, label) = _presetMoods[_selectedIndex];
+
+    final editing = widget.editing;
+    if (editing != null) {
+      await widget.repository.updateEmoji(
+        editing.id,
+        emoji: emoji,
+        label: label,
+        strength: _strength,
+      );
+      widget.onSaved(editing.id);
+      return;
+    }
+
     final id = await widget.repository.createEmoji(
       emoji: emoji,
       label: label,
