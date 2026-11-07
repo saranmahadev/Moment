@@ -193,4 +193,43 @@ void main() {
       await db.close();
     },
   );
+
+  testWidgets('tapping a text card on Home opens TextDetailScreen', (
+    tester,
+  ) async {
+    final db = AppDatabase(NativeDatabase.memory());
+    final repo = LogRepository(db, clock: () => now);
+    await repo.createText(body: 'Open me');
+
+    await pump(tester, repo);
+    await tester.pump();
+    await tester.tap(find.text('Open me'));
+    await tester.pumpAndSettle();
+
+    expect(find.bySemanticsLabel('Edit'), findsOneWidget);
+    expect(find.bySemanticsLabel('Delete'), findsOneWidget);
+
+    await tester.pumpWidget(const SizedBox());
+    await tester.pumpAndSettle();
+    await db.close();
+  });
+
+  testWidgets('tapping an emoji card on Home opens EmojiDetailScreen', (
+    tester,
+  ) async {
+    final db = AppDatabase(NativeDatabase.memory());
+    final repo = LogRepository(db, clock: () => now);
+    await repo.createEmoji(emoji: '😌', label: 'Calm', strength: 4);
+
+    await pump(tester, repo);
+    await tester.pump();
+    await tester.tap(find.text('Calm'));
+    await tester.pumpAndSettle();
+
+    expect(find.text('Strong · 4 of 5'), findsOneWidget);
+
+    await tester.pumpWidget(const SizedBox());
+    await tester.pumpAndSettle();
+    await db.close();
+  });
 }

@@ -45,6 +45,14 @@ void main() {
       await tester.tap(find.byType(FeedCard));
       expect(tapped, isTrue);
     });
+
+    testWidgets('shows the full weekday, date and time when asked to', (
+      tester,
+    ) async {
+      await pump(tester, FeedCard(log: log, showFullDate: true));
+      expect(find.text('Fri 6 Nov · 20:12'), findsOneWidget);
+      expect(find.text('20:12'), findsNothing);
+    });
   });
 
   group('EmojiLogCard', () {

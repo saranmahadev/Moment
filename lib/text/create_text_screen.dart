@@ -4,6 +4,7 @@ import 'package:intl/intl.dart';
 import '../data/log_repository.dart';
 import '../design/glass_surface.dart';
 import '../design/tokens.dart';
+import '../domain/log.dart';
 import '../domain/log_type.dart';
 
 final _dateTimeFormat = DateFormat('EEE d MMM');
@@ -18,6 +19,7 @@ class CreateTextScreen extends StatefulWidget {
     DateTime Function()? now,
     required this.onSaved,
     required this.onClose,
+    this.editing,
   }) : now = now ?? DateTime.now;
 
   final LogRepository repository;
@@ -25,18 +27,25 @@ class CreateTextScreen extends StatefulWidget {
   final ValueChanged<String> onSaved;
   final VoidCallback onClose;
 
+  /// When set, this screen edits that log in place instead of creating a
+  /// new one.
+  final TextLog? editing;
+
   @override
   State<CreateTextScreen> createState() => _CreateTextScreenState();
 }
 
 class _CreateTextScreenState extends State<CreateTextScreen> {
-  late DateTime _createdAt = widget.now();
-  final _controller = TextEditingController();
+  late DateTime _createdAt = widget.editing?.createdAt ?? widget.now();
+  late final _controller = TextEditingController(
+    text: widget.editing?.body ?? '',
+  );
   int _wordCount = 0;
 
   @override
   void initState() {
     super.initState();
+    _wordCount = _wordsIn(_controller.text);
     _controller.addListener(_updateWordCount);
   }
 
@@ -46,17 +55,28 @@ class _CreateTextScreenState extends State<CreateTextScreen> {
     super.dispose();
   }
 
+  static int _wordsIn(String text) =>
+      text.split(RegExp(r'\s+')).where((w) => w.isNotEmpty).length;
+
   void _updateWordCount() {
-    final count = _controller.text
-        .split(RegExp(r'\s+'))
-        .where((w) => w.isNotEmpty)
-        .length;
+    final count = _wordsIn(_controller.text);
     if (count != _wordCount) setState(() => _wordCount = count);
   }
 
   Future<void> _save() async {
     final body = _controller.text;
     if (body.trim().isEmpty) return;
+
+    final editing = widget.editing;
+    if (editing != null) {
+      await widget.repository.updateText(editing.id, body: body);
+      if (_createdAt != editing.createdAt) {
+        await widget.repository.setCreatedAt(editing.id, _createdAt);
+      }
+      widget.onSaved(editing.id);
+      return;
+    }
+
     final id = await widget.repository.createText(
       body: body,
       createdAt: _createdAt,

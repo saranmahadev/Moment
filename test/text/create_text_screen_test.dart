@@ -15,6 +15,7 @@ void main() {
     LogRepository repo, {
     ValueChanged<String>? onSaved,
     VoidCallback? onClose,
+    TextLog? editing,
   }) async {
     await tester.binding.setSurfaceSize(const Size(390, 844));
     addTearDown(() => tester.binding.setSurfaceSize(null));
@@ -26,6 +27,7 @@ void main() {
           now: () => now,
           onSaved: onSaved ?? (_) {},
           onClose: onClose ?? () {},
+          editing: editing,
         ),
       ),
     );
@@ -116,5 +118,56 @@ void main() {
     await tester.pumpWidget(const SizedBox());
     await tester.pumpAndSettle();
     await db.close();
+  });
+
+  group('editing an existing log', () {
+    testWidgets('prefills the body and the original time', (tester) async {
+      final db = AppDatabase(NativeDatabase.memory());
+      final repo = LogRepository(db, clock: () => now);
+      final id = await repo.createText(
+        body: 'Original entry',
+        createdAt: DateTime.utc(2026, 11, 5, 9, 15),
+      );
+      final existing = await repo.getById(id) as TextLog;
+
+      await pump(tester, repo, editing: existing);
+
+      expect(find.text('Original entry'), findsOneWidget);
+      expect(find.text('Thu 5 Nov · 09:15'), findsOneWidget);
+
+      await tester.pumpWidget(const SizedBox());
+      await tester.pumpAndSettle();
+      await db.close();
+    });
+
+    testWidgets('Save updates the log in place instead of creating one', (
+      tester,
+    ) async {
+      final db = AppDatabase(NativeDatabase.memory());
+      final repo = LogRepository(db, clock: () => now);
+      final id = await repo.createText(body: 'Original entry');
+      final existing = await repo.getById(id) as TextLog;
+      String? savedId;
+
+      await pump(
+        tester,
+        repo,
+        editing: existing,
+        onSaved: (savedWith) => savedId = savedWith,
+      );
+      await tester.enterText(find.byType(TextField), 'Edited entry');
+      await tester.tap(find.text('Save'));
+      await tester.pumpAndSettle();
+
+      expect(savedId, id);
+      final updated = await repo.getById(id) as TextLog;
+      expect(updated.body, 'Edited entry');
+      expect(updated.editedAt, now);
+      expect(await db.select(db.logsTable).get(), hasLength(1));
+
+      await tester.pumpWidget(const SizedBox());
+      await tester.pumpAndSettle();
+      await db.close();
+    });
   });
 }

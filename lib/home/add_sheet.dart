@@ -5,15 +5,6 @@ import '../design/tokens.dart';
 import '../design/type_icons.dart';
 import '../domain/log_type.dart';
 
-String _labelFor(LogType type) => switch (type) {
-  LogType.text => 'Text',
-  LogType.emoji => 'Emoji',
-  LogType.photo => 'Photo',
-  LogType.video => 'Video',
-  LogType.audio => 'Audio',
-  LogType.location => 'Location',
-};
-
 String _blurbFor(LogType type) => switch (type) {
   LogType.text => 'Write what is on your mind',
   LogType.emoji => 'Log how you feel',
@@ -158,7 +149,7 @@ class _TypeCard extends StatelessWidget {
               ),
               const SizedBox(height: 12),
               Text(
-                _labelFor(type),
+                momentLabelFor(type),
                 style: TextStyle(fontWeight: FontWeight.w600, fontSize: 16),
               ),
               const SizedBox(height: 4),

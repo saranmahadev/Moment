@@ -15,6 +15,7 @@ void main() {
     LogRepository repo, {
     ValueChanged<String>? onSaved,
     VoidCallback? onClose,
+    EmojiLog? editing,
   }) async {
     await tester.binding.setSurfaceSize(const Size(390, 844));
     addTearDown(() => tester.binding.setSurfaceSize(null));
@@ -26,6 +27,7 @@ void main() {
           now: () => now,
           onSaved: onSaved ?? (_) {},
           onClose: onClose ?? () {},
+          editing: editing,
         ),
       ),
     );
@@ -122,5 +124,66 @@ void main() {
     await tester.pumpWidget(const SizedBox());
     await tester.pumpAndSettle();
     await db.close();
+  });
+
+  group('editing an existing log', () {
+    testWidgets('prefills the emoji, label and strength', (tester) async {
+      final db = AppDatabase(NativeDatabase.memory());
+      final repo = LogRepository(db, clock: () => now);
+      final id = await repo.createEmoji(
+        emoji: '😤',
+        label: 'Frustrated',
+        strength: 2,
+      );
+      final existing = await repo.getById(id) as EmojiLog;
+
+      await pump(tester, repo, editing: existing);
+
+      expect(find.text('Frustrated'), findsOneWidget);
+      expect(
+        find.bySemanticsLabel('Intensity 2 of 5, selected'),
+        findsOneWidget,
+      );
+
+      await tester.pumpWidget(const SizedBox());
+      await tester.pumpAndSettle();
+      await db.close();
+    });
+
+    testWidgets('Log mood updates the log in place instead of creating one', (
+      tester,
+    ) async {
+      final db = AppDatabase(NativeDatabase.memory());
+      final repo = LogRepository(db, clock: () => now);
+      final id = await repo.createEmoji(
+        emoji: '😤',
+        label: 'Frustrated',
+        strength: 2,
+      );
+      final existing = await repo.getById(id) as EmojiLog;
+      String? savedId;
+
+      await pump(
+        tester,
+        repo,
+        editing: existing,
+        onSaved: (savedWith) => savedId = savedWith,
+      );
+      await tester.tap(find.bySemanticsLabel('Intensity 5 of 5'));
+      await tester.pump();
+      await tester.tap(find.text('Log mood'));
+      await tester.pumpAndSettle();
+
+      expect(savedId, id);
+      final updated = await repo.getById(id) as EmojiLog;
+      expect(updated.emoji, '😤');
+      expect(updated.strength, 5);
+      expect(updated.editedAt, now);
+      expect(await db.select(db.logsTable).get(), hasLength(1));
+
+      await tester.pumpWidget(const SizedBox());
+      await tester.pumpAndSettle();
+      await db.close();
+    });
   });
 }
