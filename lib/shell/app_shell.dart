@@ -108,6 +108,8 @@ class _AppShellState extends State<AppShell> {
         now: widget.now,
         onBack: () => Navigator.of(context).pop(),
       ),
+      // Not reachable yet: no screen creates one, so none can appear here.
+      PhotoLog() => throw UnimplementedError('Photo detail is not built yet'),
     };
     Navigator.of(context).push(MaterialPageRoute<void>(builder: (_) => screen));
   }

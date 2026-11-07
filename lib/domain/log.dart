@@ -61,6 +61,32 @@ final class TextLog extends Log {
   LogType get type => LogType.text;
 }
 
+/// A photo, stored EXIF-stripped with a thumbnail, and an optional caption.
+final class PhotoLog extends Log {
+  const PhotoLog({
+    required super.id,
+    required super.createdAt,
+    required super.tzOffsetMinutes,
+    required super.editedAt,
+    required super.deletedAt,
+    required this.path,
+    required this.thumbnailPath,
+    required this.caption,
+  });
+
+  /// Path to the EXIF-stripped photo file, under this app's private media
+  /// directory.
+  final String path;
+
+  /// Path to the thumbnail generated alongside [path].
+  final String thumbnailPath;
+
+  final String? caption;
+
+  @override
+  LogType get type => LogType.photo;
+}
+
 /// A one-tap mood entry: an emoji, an optional label and a strength from 1
 /// to 5.
 final class EmojiLog extends Log {

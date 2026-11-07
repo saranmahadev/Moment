@@ -63,3 +63,27 @@ class EmojiLogsTable extends Table {
   @override
   Set<Column> get primaryKey => {logId};
 }
+
+/// The stored file paths and caption of a photo log. One row per
+/// [LogsTable] row of type `photo`. Added in schema version 2.
+@DataClassName('PhotoLogRow')
+class PhotoLogsTable extends Table {
+  @override
+  String get tableName => 'photo_log';
+
+  TextColumn get logId => text()
+      .named('log_id')
+      .references(LogsTable, #id, onDelete: KeyAction.cascade)();
+
+  /// Path to the EXIF-stripped photo file, under this app's private media
+  /// directory.
+  TextColumn get path => text()();
+
+  /// Path to the thumbnail generated alongside [path].
+  TextColumn get thumbnailPath => text().named('thumbnail_path')();
+
+  TextColumn get caption => text().nullable()();
+
+  @override
+  Set<Column> get primaryKey => {logId};
+}

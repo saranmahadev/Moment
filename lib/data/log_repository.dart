@@ -1,3 +1,5 @@
+import 'dart:io';
+
 import 'package:drift/drift.dart';
 import 'package:uuid/uuid.dart';
 
@@ -104,6 +106,57 @@ class LogRepository {
     return id;
   }
 
+  /// Creates a photo log from an already-imported photo (see
+  /// `MediaStore.importPhoto`) and returns its id.
+  ///
+  /// [createdAt] backdates the log; it defaults to now.
+  Future<String> createPhoto({
+    required String path,
+    required String thumbnailPath,
+    String? caption,
+    DateTime? createdAt,
+  }) async {
+    final id = _generateId();
+    final at = createdAt ?? _clock();
+    await _db.transaction(() async {
+      await _db
+          .into(_db.logsTable)
+          .insert(
+            LogsTableCompanion.insert(
+              id: id,
+              type: LogType.photo.name,
+              createdAtMs: at.toUtc().millisecondsSinceEpoch,
+              tzOffsetMinutes: at.timeZoneOffset.inMinutes,
+            ),
+          );
+      await _db
+          .into(_db.photoLogsTable)
+          .insert(
+            PhotoLogsTableCompanion.insert(
+              logId: id,
+              path: path,
+              thumbnailPath: thumbnailPath,
+              caption: Value(caption),
+            ),
+          );
+    });
+    return id;
+  }
+
+  /// Changes a photo log's [caption] and stamps `editedAt`. Throws if [id]
+  /// does not name a photo log.
+  Future<void> updateCaption(String id, {String? caption}) async {
+    if (await getById(id) is! PhotoLog) {
+      throw ArgumentError.value(id, 'id', 'is not a photo log');
+    }
+
+    await _db.transaction(() async {
+      await (_db.update(_db.photoLogsTable)..where((p) => p.logId.equals(id)))
+          .write(PhotoLogsTableCompanion(caption: Value(caption)));
+      await _touch(id);
+    });
+  }
+
   /// Returns the log with [id], of whichever type it is, or `null` if no
   /// such log exists. Returns soft-deleted logs too.
   Future<Log?> getById(String id) async {
@@ -170,6 +223,10 @@ class LogRepository {
           _db.emojiLogsTable,
           _db.emojiLogsTable.logId.equalsExp(_db.logsTable.id),
         ),
+        leftOuterJoin(
+          _db.photoLogsTable,
+          _db.photoLogsTable.logId.equalsExp(_db.logsTable.id),
+        ),
       ]);
 
   Log _rowToLog(TypedResult row) {
@@ -180,6 +237,7 @@ class LogRepository {
       case LogType.emoji:
         return _toEmojiLog(log, row.readTable(_db.emojiLogsTable));
       case LogType.photo:
+        return _toPhotoLog(log, row.readTable(_db.photoLogsTable));
       case LogType.video:
       case LogType.audio:
       case LogType.location:
@@ -187,25 +245,61 @@ class LogRepository {
     }
   }
 
-  /// Permanently removes log [id] and its type-specific row.
+  /// Permanently removes log [id] and its type-specific row, deleting its
+  /// files from disk first if it has any.
   Future<void> deletePermanently(String id) async {
+    final log = await getById(id);
+    if (log is PhotoLog) {
+      await _deletePhotoFiles(log);
+    }
     await (_db.delete(_db.logsTable)..where((l) => l.id.equals(id))).go();
   }
 
-  /// Permanently removes every log currently in Trash.
+  /// Permanently removes every log currently in Trash, deleting files from
+  /// disk first for any that have them.
   Future<void> emptyTrash() async {
+    await _deleteFilesForTrashed((_db.logsTable.deletedAtMs.isNotNull()));
     await (_db.delete(
       _db.logsTable,
     )..where((l) => l.deletedAtMs.isNotNull())).go();
   }
 
   /// Permanently removes every log that has been in Trash for more than 30
-  /// days, as measured against [now].
+  /// days, as measured against [now], deleting files from disk first for
+  /// any that have them.
   Future<void> purgeExpired(DateTime now) async {
     final cutoff = now.subtract(_trashRetention).toUtc().millisecondsSinceEpoch;
+    await _deleteFilesForTrashed(
+      (_db.logsTable.deletedAtMs.isSmallerOrEqualValue(cutoff)),
+    );
     await (_db.delete(
       _db.logsTable,
     )..where((l) => l.deletedAtMs.isSmallerOrEqualValue(cutoff))).go();
+  }
+
+  /// Deletes the on-disk files of every log matching [predicate] that has
+  /// any, ahead of a bulk row delete using the same predicate.
+  Future<void> _deleteFilesForTrashed(Expression<bool> predicate) async {
+    final rows = await (_db.select(
+      _db.logsTable,
+    )..where((l) => predicate)).get();
+    for (final row in rows) {
+      if (row.type == LogType.photo.name) {
+        final log = await _hydrate(row);
+        if (log is PhotoLog) {
+          await _deletePhotoFiles(log);
+        }
+      }
+    }
+  }
+
+  Future<void> _deletePhotoFiles(PhotoLog log) async {
+    for (final path in [log.path, log.thumbnailPath]) {
+      final file = File(path);
+      if (await file.exists()) {
+        await file.delete();
+      }
+    }
   }
 
   /// Backdates or postdates log [id] to [createdAt], recomputing the
@@ -292,6 +386,10 @@ class LogRepository {
         )..where((e) => e.logId.equals(row.id))).getSingle();
         return _toEmojiLog(row, emoji);
       case LogType.photo:
+        final photo = await (_db.select(
+          _db.photoLogsTable,
+        )..where((p) => p.logId.equals(row.id))).getSingle();
+        return _toPhotoLog(row, photo);
       case LogType.video:
       case LogType.audio:
       case LogType.location:
@@ -323,6 +421,20 @@ class LogRepository {
     emoji: emoji.emoji,
     label: emoji.label,
     strength: emoji.strength,
+  );
+
+  PhotoLog _toPhotoLog(LogRow log, PhotoLogRow photo) => PhotoLog(
+    id: log.id,
+    createdAt: DateTime.fromMillisecondsSinceEpoch(
+      log.createdAtMs,
+      isUtc: true,
+    ),
+    tzOffsetMinutes: log.tzOffsetMinutes,
+    editedAt: _msToUtc(log.editedAtMs),
+    deletedAt: _msToUtc(log.deletedAtMs),
+    path: photo.path,
+    thumbnailPath: photo.thumbnailPath,
+    caption: photo.caption,
   );
 
   static DateTime? _msToUtc(int? ms) =>

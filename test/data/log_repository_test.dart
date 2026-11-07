@@ -89,14 +89,17 @@ void main() {
       expect(photoLog.type, LogType.photo);
     });
 
-    test('a photo log without a caption reads back with a null caption', () async {
-      final id = await repo.createPhoto(
-        path: photoFile('a.jpg').path,
-        thumbnailPath: photoFile('a-thumb.jpg').path,
-      );
-      final log = await repo.getById(id) as PhotoLog;
-      expect(log.caption, isNull);
-    });
+    test(
+      'a photo log without a caption reads back with a null caption',
+      () async {
+        final id = await repo.createPhoto(
+          path: photoFile('a.jpg').path,
+          thumbnailPath: photoFile('a-thumb.jpg').path,
+        );
+        final log = await repo.getById(id) as PhotoLog;
+        expect(log.caption, isNull);
+      },
+    );
 
     test('an emoji log without a label reads back with a null label', () async {
       final id = await repo.createEmoji(emoji: '😴', strength: 1);
@@ -230,10 +233,7 @@ void main() {
 
     test('updateCaption on a text log throws', () async {
       final id = await repo.createText(body: 'hi');
-      expect(
-        () => repo.updateCaption(id, caption: 'x'),
-        throwsArgumentError,
-      );
+      expect(() => repo.updateCaption(id, caption: 'x'), throwsArgumentError);
     });
   });
 

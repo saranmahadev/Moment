@@ -35,15 +35,15 @@ void _writeV1Database(String path) {
     );
   ''');
   raw.execute(
-    "INSERT INTO log (id, type, created_at_ms, tz_offset_minutes) "
+    'INSERT INTO log (id, type, created_at_ms, tz_offset_minutes) '
     "VALUES ('from-0.1.0', 'text', 0, 0)",
   );
   raw.execute(
-    "INSERT INTO text_log (log_id, body) "
+    'INSERT INTO text_log (log_id, body) '
     "VALUES ('from-0.1.0', 'written before the upgrade')",
   );
   raw.execute('PRAGMA user_version = 1');
-  raw.dispose();
+  raw.close();
 }
 
 void main() {
