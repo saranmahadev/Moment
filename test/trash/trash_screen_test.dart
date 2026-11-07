@@ -92,6 +92,7 @@ void main() {
     await tester.pump();
     await tester.tap(find.text('Restore'));
     await tester.pump();
+    await tester.pump();
 
     expect(find.text('Bring me back'), findsNothing);
     final restored = await repo.getById(id);
