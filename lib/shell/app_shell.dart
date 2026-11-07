@@ -13,6 +13,7 @@ import '../home/home_screen.dart';
 import '../library/library_screen.dart';
 import '../section/section_screen.dart';
 import '../text/create_text_screen.dart';
+import '../trash/trash_screen.dart';
 
 enum _Tab { home, library, calendar, settings }
 
@@ -105,6 +106,18 @@ class _AppShellState extends State<AppShell> {
     Navigator.of(context).push(MaterialPageRoute<void>(builder: (_) => screen));
   }
 
+  void _openTrash() {
+    Navigator.of(context).push(
+      MaterialPageRoute<void>(
+        builder: (_) => TrashScreen(
+          repository: widget.repository,
+          now: widget.now,
+          onBack: () => Navigator.of(context).pop(),
+        ),
+      ),
+    );
+  }
+
   void _openSection(LogType type) {
     Navigator.of(context).push(
       MaterialPageRoute<void>(
@@ -139,6 +152,7 @@ class _AppShellState extends State<AppShell> {
                 repository: widget.repository,
                 now: widget.now,
                 onOpenType: _openSection,
+                onOpenTrash: _openTrash,
               ),
               const _Placeholder('Calendar'),
               const _Placeholder('Settings'),

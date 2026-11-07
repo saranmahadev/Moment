@@ -219,6 +219,27 @@ void main() {
     },
   );
 
+  testWidgets('tapping Trash in Library opens TrashScreen', (tester) async {
+    final db = AppDatabase(NativeDatabase.memory());
+    final repo = LogRepository(db, clock: () => now);
+    final id = await repo.createText(body: 'In the trash');
+    await repo.softDelete(id);
+
+    await pump(tester, repo);
+    await tester.pump();
+    await tester.tap(find.bySemanticsLabel('Library'));
+    await tester.pump();
+    await tester.tap(find.text('Trash'));
+    await tester.pumpAndSettle();
+
+    expect(find.text('In the trash'), findsOneWidget);
+    expect(find.text('Restore'), findsOneWidget);
+
+    await tester.pumpWidget(const SizedBox());
+    await tester.pumpAndSettle();
+    await db.close();
+  });
+
   testWidgets('tapping a text card on Home opens TextDetailScreen', (
     tester,
   ) async {
