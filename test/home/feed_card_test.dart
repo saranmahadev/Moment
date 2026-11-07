@@ -206,9 +206,7 @@ void main() {
       expect(find.byIcon(Icons.play_arrow), findsOneWidget);
     });
 
-    testWidgets('falls back to "Audio" when there is no title', (
-      tester,
-    ) async {
+    testWidgets('falls back to "Audio" when there is no title', (tester) async {
       final untitled = AudioLog(
         id: '7',
         createdAt: DateTime.utc(2026, 11, 6, 18, 5),
