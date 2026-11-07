@@ -121,6 +121,7 @@ class _Body extends StatelessWidget {
       TextLog() => _TextBody(log: log, tokens: tokens),
       EmojiLog() => _EmojiBody(log: log, tokens: tokens),
       PhotoLog() => _PhotoBody(log: log, tokens: tokens),
+      AudioLog() => throw UnimplementedError('Audio cards are not built yet'),
     };
   }
 }

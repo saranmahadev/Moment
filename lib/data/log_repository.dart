@@ -1,3 +1,4 @@
+import 'dart:convert';
 import 'dart:io';
 
 import 'package:drift/drift.dart';
@@ -157,6 +158,68 @@ class LogRepository {
     });
   }
 
+  /// Creates an audio log from an already-recorded clip (see
+  /// `MediaStore.importAudio`) and returns its id.
+  ///
+  /// [createdAt] backdates the log; it defaults to now.
+  Future<String> createAudio({
+    required String path,
+    required Duration duration,
+    required List<double> peaks,
+    String? title,
+    String? note,
+    DateTime? createdAt,
+  }) async {
+    final id = _generateId();
+    final at = createdAt ?? _clock();
+    await _db.transaction(() async {
+      await _db
+          .into(_db.logsTable)
+          .insert(
+            LogsTableCompanion.insert(
+              id: id,
+              type: LogType.audio.name,
+              createdAtMs: at.toUtc().millisecondsSinceEpoch,
+              tzOffsetMinutes: at.timeZoneOffset.inMinutes,
+            ),
+          );
+      await _db
+          .into(_db.audioLogsTable)
+          .insert(
+            AudioLogsTableCompanion.insert(
+              logId: id,
+              path: path,
+              durationMs: duration.inMilliseconds,
+              peaks: jsonEncode(peaks),
+              title: Value(title),
+              note: Value(note),
+            ),
+          );
+    });
+    return id;
+  }
+
+  /// Changes an audio log's [title] and/or [note], leaving any field not
+  /// passed unchanged, and stamps `editedAt`. Throws if [id] does not name
+  /// an audio log.
+  Future<void> updateAudio(String id, {String? title, String? note}) async {
+    if (await getById(id) is! AudioLog) {
+      throw ArgumentError.value(id, 'id', 'is not an audio log');
+    }
+
+    await _db.transaction(() async {
+      await (_db.update(
+        _db.audioLogsTable,
+      )..where((a) => a.logId.equals(id))).write(
+        AudioLogsTableCompanion(
+          title: title == null ? const Value.absent() : Value(title),
+          note: note == null ? const Value.absent() : Value(note),
+        ),
+      );
+      await _touch(id);
+    });
+  }
+
   /// Returns the log with [id], of whichever type it is, or `null` if no
   /// such log exists. Returns soft-deleted logs too.
   Future<Log?> getById(String id) async {
@@ -227,6 +290,10 @@ class LogRepository {
           _db.photoLogsTable,
           _db.photoLogsTable.logId.equalsExp(_db.logsTable.id),
         ),
+        leftOuterJoin(
+          _db.audioLogsTable,
+          _db.audioLogsTable.logId.equalsExp(_db.logsTable.id),
+        ),
       ]);
 
   Log _rowToLog(TypedResult row) {
@@ -238,8 +305,9 @@ class LogRepository {
         return _toEmojiLog(log, row.readTable(_db.emojiLogsTable));
       case LogType.photo:
         return _toPhotoLog(log, row.readTable(_db.photoLogsTable));
-      case LogType.video:
       case LogType.audio:
+        return _toAudioLog(log, row.readTable(_db.audioLogsTable));
+      case LogType.video:
       case LogType.location:
         throw UnimplementedError('${log.type} logs are not built yet');
     }
@@ -251,6 +319,8 @@ class LogRepository {
     final log = await getById(id);
     if (log is PhotoLog) {
       await _deletePhotoFiles(log);
+    } else if (log is AudioLog) {
+      await _deleteAudioFile(log);
     }
     await (_db.delete(_db.logsTable)..where((l) => l.id.equals(id))).go();
   }
@@ -289,6 +359,11 @@ class LogRepository {
         if (log is PhotoLog) {
           await _deletePhotoFiles(log);
         }
+      } else if (row.type == LogType.audio.name) {
+        final log = await _hydrate(row);
+        if (log is AudioLog) {
+          await _deleteAudioFile(log);
+        }
       }
     }
   }
@@ -299,6 +374,13 @@ class LogRepository {
       if (await file.exists()) {
         await file.delete();
       }
+    }
+  }
+
+  Future<void> _deleteAudioFile(AudioLog log) async {
+    final file = File(log.path);
+    if (await file.exists()) {
+      await file.delete();
     }
   }
 
@@ -390,8 +472,12 @@ class LogRepository {
           _db.photoLogsTable,
         )..where((p) => p.logId.equals(row.id))).getSingle();
         return _toPhotoLog(row, photo);
-      case LogType.video:
       case LogType.audio:
+        final audio = await (_db.select(
+          _db.audioLogsTable,
+        )..where((a) => a.logId.equals(row.id))).getSingle();
+        return _toAudioLog(row, audio);
+      case LogType.video:
       case LogType.location:
         throw UnimplementedError('${row.type} logs are not built yet');
     }
@@ -435,6 +521,25 @@ class LogRepository {
     path: photo.path,
     thumbnailPath: photo.thumbnailPath,
     caption: photo.caption,
+  );
+
+  AudioLog _toAudioLog(LogRow log, AudioLogRow audio) => AudioLog(
+    id: log.id,
+    createdAt: DateTime.fromMillisecondsSinceEpoch(
+      log.createdAtMs,
+      isUtc: true,
+    ),
+    tzOffsetMinutes: log.tzOffsetMinutes,
+    editedAt: _msToUtc(log.editedAtMs),
+    deletedAt: _msToUtc(log.deletedAtMs),
+    path: audio.path,
+    duration: Duration(milliseconds: audio.durationMs),
+    peaks: (jsonDecode(audio.peaks) as List)
+        .cast<num>()
+        .map((n) => n.toDouble())
+        .toList(),
+    title: audio.title,
+    note: audio.note,
   );
 
   static DateTime? _msToUtc(int? ms) =>

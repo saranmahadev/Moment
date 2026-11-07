@@ -268,32 +268,26 @@ void main() {
       expect(() => repo.updateCaption(id, caption: 'x'), throwsArgumentError);
     });
 
-    test(
-      'updateAudio changes title and/or note and stamps editedAt',
-      () async {
-        final id = await repo.createAudio(
-          path: photoFile('a.m4a').path,
-          duration: const Duration(seconds: 5),
-          peaks: [0.1],
-          title: 'Original title',
-        );
-        now = now.add(const Duration(hours: 1));
+    test('updateAudio changes title and/or note and stamps editedAt', () async {
+      final id = await repo.createAudio(
+        path: photoFile('a.m4a').path,
+        duration: const Duration(seconds: 5),
+        peaks: [0.1],
+        title: 'Original title',
+      );
+      now = now.add(const Duration(hours: 1));
 
-        await repo.updateAudio(id, title: 'Edited title', note: 'A note');
+      await repo.updateAudio(id, title: 'Edited title', note: 'A note');
 
-        final log = await repo.getById(id) as AudioLog;
-        expect(log.title, 'Edited title');
-        expect(log.note, 'A note');
-        expect(log.editedAt, now);
-      },
-    );
+      final log = await repo.getById(id) as AudioLog;
+      expect(log.title, 'Edited title');
+      expect(log.note, 'A note');
+      expect(log.editedAt, now);
+    });
 
     test('updateAudio on a text log throws', () async {
       final id = await repo.createText(body: 'hi');
-      expect(
-        () => repo.updateAudio(id, title: 'x'),
-        throwsArgumentError,
-      );
+      expect(() => repo.updateAudio(id, title: 'x'), throwsArgumentError);
     });
   });
 
