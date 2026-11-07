@@ -97,7 +97,10 @@ class _MomentAppState extends State<MomentApp> with WidgetsBindingObserver {
             controller: resources.lockController,
             biometrics: DeviceBiometricAuthenticator(),
             hasPin: resources.hasPin,
-            child: AppShell(repository: resources.repository),
+            child: AppShell(
+              repository: resources.repository,
+              lockController: resources.lockController,
+            ),
           );
         },
       ),
