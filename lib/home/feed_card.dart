@@ -118,6 +118,8 @@ class _Body extends StatelessWidget {
     return switch (log) {
       TextLog() => _TextBody(log: log, tokens: tokens),
       EmojiLog() => _EmojiBody(log: log, tokens: tokens),
+      // Not reachable yet: no screen creates one, so none can appear here.
+      PhotoLog() => throw UnimplementedError('Photo cards are not built yet'),
     };
   }
 }

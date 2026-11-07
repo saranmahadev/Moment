@@ -1,9 +1,12 @@
+import 'dart:io';
+
 import 'package:drift/native.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:moment/data/database.dart';
 import 'package:moment/data/log_repository.dart';
 import 'package:moment/domain/log.dart';
 import 'package:moment/domain/log_type.dart';
+import 'package:path/path.dart' as p;
 
 IdGenerator _sequentialIds() {
   var next = 0;
@@ -14,16 +17,28 @@ void main() {
   late AppDatabase db;
   late LogRepository repo;
   late DateTime now;
+  late Directory tempDir;
 
   setUp(() {
     now = DateTime.utc(2026, 1, 15, 12);
     db = AppDatabase(NativeDatabase.memory());
     repo = LogRepository(db, clock: () => now, generateId: _sequentialIds());
+    tempDir = Directory.systemTemp.createTempSync('log_repository_test_');
   });
 
   tearDown(() async {
     await db.close();
+    tempDir.deleteSync(recursive: true);
   });
+
+  /// Creates a throwaway file (standing in for an imported photo + its
+  /// thumbnail) under [tempDir], so photo tests can prove deletion for
+  /// real instead of just on the database row.
+  File photoFile(String name) {
+    final file = File(p.join(tempDir.path, name));
+    file.writeAsStringSync('fake image bytes');
+    return file;
+  }
 
   group('create and read', () {
     test('creates a text log and reads it back', () async {
@@ -55,6 +70,36 @@ void main() {
       expect(emoji.strength, 3);
       expect(emoji.type, LogType.emoji);
     });
+
+    test('creates a photo log and reads it back', () async {
+      final photo = photoFile('a.jpg');
+      final thumb = photoFile('a-thumb.jpg');
+
+      final id = await repo.createPhoto(
+        path: photo.path,
+        thumbnailPath: thumb.path,
+        caption: 'By the lake',
+      );
+      final log = await repo.getById(id);
+
+      final photoLog = log! as PhotoLog;
+      expect(photoLog.path, photo.path);
+      expect(photoLog.thumbnailPath, thumb.path);
+      expect(photoLog.caption, 'By the lake');
+      expect(photoLog.type, LogType.photo);
+    });
+
+    test(
+      'a photo log without a caption reads back with a null caption',
+      () async {
+        final id = await repo.createPhoto(
+          path: photoFile('a.jpg').path,
+          thumbnailPath: photoFile('a-thumb.jpg').path,
+        );
+        final log = await repo.getById(id) as PhotoLog;
+        expect(log.caption, isNull);
+      },
+    );
 
     test('an emoji log without a label reads back with a null label', () async {
       final id = await repo.createEmoji(emoji: '😴', strength: 1);
@@ -170,6 +215,26 @@ void main() {
       final id = await repo.createEmoji(emoji: '😌', strength: 2);
       expect(() => repo.updateEmoji(id, strength: 9), throwsArgumentError);
     });
+
+    test('updateCaption changes the caption and stamps editedAt', () async {
+      final id = await repo.createPhoto(
+        path: photoFile('a.jpg').path,
+        thumbnailPath: photoFile('a-thumb.jpg').path,
+        caption: 'Original',
+      );
+      now = now.add(const Duration(hours: 1));
+
+      await repo.updateCaption(id, caption: 'Edited');
+
+      final log = await repo.getById(id) as PhotoLog;
+      expect(log.caption, 'Edited');
+      expect(log.editedAt, now);
+    });
+
+    test('updateCaption on a text log throws', () async {
+      final id = await repo.createText(body: 'hi');
+      expect(() => repo.updateCaption(id, caption: 'x'), throwsArgumentError);
+    });
   });
 
   group('trash', () {
@@ -249,6 +314,17 @@ void main() {
       expect(feed.map((l) => l.id), [text]);
     });
 
+    test('includes photo logs', () async {
+      final id = await repo.createPhoto(
+        path: photoFile('a.jpg').path,
+        thumbnailPath: photoFile('a-thumb.jpg').path,
+      );
+
+      final feed = await repo.watchFeed().first;
+      expect(feed.map((l) => l.id), [id]);
+      expect(feed.single, isA<PhotoLog>());
+    });
+
     test('re-emits when a log already in the feed is edited', () async {
       final id = await repo.createText(body: 'Original');
 
@@ -311,6 +387,71 @@ void main() {
 
       expect(await repo.getById(kept), isNotNull);
     });
+
+    test('deletePermanently removes a photo log\'s files from disk', () async {
+      final photo = photoFile('a.jpg');
+      final thumb = photoFile('a-thumb.jpg');
+      final id = await repo.createPhoto(
+        path: photo.path,
+        thumbnailPath: thumb.path,
+      );
+
+      await repo.deletePermanently(id);
+
+      expect(photo.existsSync(), isFalse);
+      expect(thumb.existsSync(), isFalse);
+    });
+
+    test('emptyTrash removes a trashed photo log\'s files from disk', () async {
+      final photo = photoFile('a.jpg');
+      final thumb = photoFile('a-thumb.jpg');
+      final id = await repo.createPhoto(
+        path: photo.path,
+        thumbnailPath: thumb.path,
+      );
+      await repo.softDelete(id);
+
+      await repo.emptyTrash();
+
+      expect(photo.existsSync(), isFalse);
+      expect(thumb.existsSync(), isFalse);
+    });
+
+    test(
+      'purgeExpired removes an expired photo log\'s files from disk',
+      () async {
+        final photo = photoFile('a.jpg');
+        final thumb = photoFile('a-thumb.jpg');
+        final id = await repo.createPhoto(
+          path: photo.path,
+          thumbnailPath: thumb.path,
+        );
+        await repo.softDelete(id);
+
+        await repo.purgeExpired(now.add(const Duration(days: 31)));
+
+        expect(photo.existsSync(), isFalse);
+        expect(thumb.existsSync(), isFalse);
+      },
+    );
+
+    test(
+      'purgeExpired leaves a not-yet-expired photo log\'s files alone',
+      () async {
+        final photo = photoFile('a.jpg');
+        final thumb = photoFile('a-thumb.jpg');
+        final id = await repo.createPhoto(
+          path: photo.path,
+          thumbnailPath: thumb.path,
+        );
+        await repo.softDelete(id);
+
+        await repo.purgeExpired(now.add(const Duration(days: 29)));
+
+        expect(photo.existsSync(), isTrue);
+        expect(thumb.existsSync(), isTrue);
+      },
+    );
   });
 
   group('setCreatedAt', () {

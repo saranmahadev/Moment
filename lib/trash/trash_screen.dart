@@ -10,6 +10,7 @@ import '../domain/log.dart';
 String _previewFor(Log log) => switch (log) {
   TextLog() => log.body,
   EmojiLog() => log.label ?? log.emoji,
+  PhotoLog() => log.caption ?? 'Photo',
 };
 
 String _deletedLabelFor(Log log, DateTime now) {
