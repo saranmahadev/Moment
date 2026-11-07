@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:moment/design/orb_field.dart';
 import 'package:moment/lock/app_lock_controller.dart';
 import 'package:moment/lock/create_pin_screen.dart';
 import 'package:moment/lock/pin_storage.dart';
@@ -52,6 +53,11 @@ void main() {
   testWidgets('asks to choose a PIN first', (tester) async {
     await pump(tester);
     expect(find.text('Choose a PIN'), findsOneWidget);
+  });
+
+  testWidgets('shows the decorative background orbs', (tester) async {
+    await pump(tester);
+    expect(find.byType(OrbField), findsOneWidget);
   });
 
   testWidgets('after 4 digits, asks to confirm the PIN', (tester) async {

@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:moment/design/orb_field.dart';
 import 'package:moment/design/theme.dart';
 import 'package:moment/lock/app_lock_controller.dart';
 import 'package:moment/lock/pin_storage.dart';
@@ -45,6 +46,7 @@ void main() {
       find.text('No account, no servers, no internet permission.'),
       findsOneWidget,
     );
+    expect(find.byType(OrbField), findsOneWidget);
   });
 
   testWidgets('shows the Security section with App lock and Lock after', (

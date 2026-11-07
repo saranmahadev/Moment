@@ -4,6 +4,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:moment/data/database.dart';
 import 'package:moment/data/log_repository.dart';
 import 'package:moment/design/theme.dart';
+import 'package:moment/design/orb_field.dart';
 import 'package:moment/lock/app_lock_controller.dart';
 import 'package:moment/lock/pin_storage.dart';
 import 'package:moment/shell/app_shell.dart';
@@ -47,6 +48,29 @@ void main() {
     await tester.pump();
 
     expect(find.text('Friday'), findsOneWidget);
+
+    await tester.pumpWidget(const SizedBox());
+    await tester.pumpAndSettle();
+    await db.close();
+  });
+
+  testWidgets('shows the decorative background orbs behind every tab', (
+    tester,
+  ) async {
+    final db = AppDatabase(NativeDatabase.memory());
+    final repo = LogRepository(db, clock: () => now);
+
+    await pump(tester, repo);
+    await tester.pump();
+    expect(find.byType(OrbField), findsOneWidget);
+
+    await tester.tap(find.bySemanticsLabel('Library'));
+    await tester.pump();
+    expect(find.byType(OrbField), findsOneWidget);
+
+    await tester.tap(find.bySemanticsLabel('Settings'));
+    await tester.pump();
+    expect(find.byType(OrbField), findsOneWidget);
 
     await tester.pumpWidget(const SizedBox());
     await tester.pumpAndSettle();
