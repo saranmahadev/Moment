@@ -150,7 +150,11 @@ class _TypeCard extends StatelessWidget {
               const SizedBox(height: 12),
               Text(
                 momentLabelFor(type),
-                style: TextStyle(fontWeight: FontWeight.w600, fontSize: 16),
+                style: TextStyle(
+                  fontWeight: FontWeight.w600,
+                  fontSize: 16,
+                  color: tokens.ink,
+                ),
               ),
               const SizedBox(height: 4),
               Text(

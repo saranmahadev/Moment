@@ -123,11 +123,12 @@ class SectionScreen extends StatelessWidget {
                       child: Row(
                         mainAxisSize: MainAxisSize.min,
                         children: [
-                          const Text(
+                          Text(
                             'Newest first',
                             style: TextStyle(
                               fontSize: 14.5,
                               fontWeight: FontWeight.w500,
+                              color: tokens.ink,
                             ),
                           ),
                           const SizedBox(width: 6),

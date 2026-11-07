@@ -167,11 +167,12 @@ class _CreateTextScreenState extends State<CreateTextScreen> {
                               ),
                             ),
                             const SizedBox(width: 8),
-                            const Text(
+                            Text(
                               'Text',
                               style: TextStyle(
                                 fontSize: 15,
                                 fontWeight: FontWeight.w600,
+                                color: tokens.ink,
                               ),
                             ),
                           ],
@@ -225,9 +226,10 @@ class _CreateTextScreenState extends State<CreateTextScreen> {
                             Text(
                               '${_dateTimeFormat.format(_createdAt)} · '
                               '${_timeFormat.format(_createdAt)}',
-                              style: const TextStyle(
+                              style: TextStyle(
                                 fontSize: 14,
                                 fontWeight: FontWeight.w500,
+                                color: tokens.ink,
                               ),
                             ),
                           ],
@@ -253,10 +255,11 @@ class _CreateTextScreenState extends State<CreateTextScreen> {
                             maxLines: null,
                             expands: true,
                             textAlignVertical: TextAlignVertical.top,
-                            style: const TextStyle(
+                            style: TextStyle(
                               fontFamily: 'Newsreader',
                               fontSize: 23,
                               height: 1.45,
+                              color: tokens.ink,
                             ),
                             decoration: const InputDecoration(
                               border: InputBorder.none,

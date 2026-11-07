@@ -121,10 +121,11 @@ class TextDetailScreen extends StatelessWidget {
                   padding: const EdgeInsets.all(22),
                   child: Text(
                     log.body,
-                    style: const TextStyle(
+                    style: TextStyle(
                       fontFamily: 'Newsreader',
                       fontSize: 23,
                       height: 1.45,
+                      color: tokens.ink,
                     ),
                   ),
                 ),

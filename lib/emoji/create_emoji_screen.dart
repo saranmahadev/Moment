@@ -146,13 +146,14 @@ class _CreateEmojiScreenState extends State<CreateEmojiScreen> {
                                   ),
                                 ),
                                 const SizedBox(width: 8),
-                                const Flexible(
+                                Flexible(
                                   child: Text(
                                     'Emoji',
                                     overflow: TextOverflow.ellipsis,
                                     style: TextStyle(
                                       fontSize: 15,
                                       fontWeight: FontWeight.w600,
+                                      color: tokens.ink,
                                     ),
                                   ),
                                 ),

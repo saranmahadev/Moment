@@ -143,10 +143,11 @@ class _TextBody extends StatelessWidget {
           log.body,
           maxLines: 3,
           overflow: TextOverflow.ellipsis,
-          style: const TextStyle(
+          style: TextStyle(
             fontFamily: 'Newsreader',
             fontSize: 19,
             height: 1.4,
+            color: tokens.ink,
           ),
         ),
         const SizedBox(height: 8),
@@ -189,7 +190,11 @@ class _EmojiBody extends StatelessWidget {
             if (log.label != null)
               Text(
                 log.label!,
-                style: const TextStyle(fontFamily: 'Newsreader', fontSize: 24),
+                style: TextStyle(
+                  fontFamily: 'Newsreader',
+                  fontSize: 24,
+                  color: tokens.ink,
+                ),
               ),
             const SizedBox(height: 8),
             Semantics(
