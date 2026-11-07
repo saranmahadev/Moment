@@ -105,4 +105,41 @@ void main() {
 
     expect(() => store.importPhoto(source), throwsArgumentError);
   });
+
+  group('importAudio', () {
+    test(
+      'copies the recording into media/YYYY/MM under the app-private root',
+      () async {
+        final source = File(p.join(tempDir.path, 'source.m4a'))
+          ..writeAsBytesSync([1, 2, 3, 4]);
+        final now = DateTime.utc(2026, 11, 7);
+        final store = MediaStore(
+          root: root,
+          clock: () => now,
+          generateId: () => 'audio123',
+        );
+
+        final imported = await store.importAudio(source);
+
+        final expectedDir = p.join(root.path, 'media', '2026', '11');
+        expect(p.dirname(imported.path), expectedDir);
+        expect(File(imported.path).existsSync(), isTrue);
+        expect(File(imported.path).readAsBytesSync(), [1, 2, 3, 4]);
+      },
+    );
+
+    test('leaves the original recording untouched', () async {
+      final source = File(p.join(tempDir.path, 'source.m4a'))
+        ..writeAsBytesSync([5, 6, 7]);
+      final store = MediaStore(
+        root: root,
+        clock: () => DateTime.utc(2026, 11, 7),
+      );
+
+      await store.importAudio(source);
+
+      expect(source.existsSync(), isTrue);
+      expect(source.readAsBytesSync(), [5, 6, 7]);
+    });
+  });
 }
