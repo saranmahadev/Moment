@@ -5,6 +5,8 @@ import '../design/glass_surface.dart';
 import '../design/tokens.dart';
 import '../domain/log.dart';
 import '../domain/log_type.dart';
+import '../detail/emoji_detail_screen.dart';
+import '../detail/text_detail_screen.dart';
 import '../emoji/create_emoji_screen.dart';
 import '../home/add_sheet.dart';
 import '../home/home_screen.dart';
@@ -20,12 +22,10 @@ class AppShell extends StatefulWidget {
     super.key,
     required this.repository,
     DateTime Function()? now,
-    this.onOpenLog,
   }) : now = now ?? DateTime.now;
 
   final LogRepository repository;
   final DateTime Function() now;
-  final ValueChanged<Log>? onOpenLog;
 
   @override
   State<AppShell> createState() => _AppShellState();
@@ -85,6 +85,24 @@ class _AppShellState extends State<AppShell> {
     }
   }
 
+  void _openDetail(Log log) {
+    final screen = switch (log) {
+      TextLog() => TextDetailScreen(
+        log: log,
+        repository: widget.repository,
+        now: widget.now,
+        onBack: () => Navigator.of(context).pop(),
+      ),
+      EmojiLog() => EmojiDetailScreen(
+        log: log,
+        repository: widget.repository,
+        now: widget.now,
+        onBack: () => Navigator.of(context).pop(),
+      ),
+    };
+    Navigator.of(context).push(MaterialPageRoute<void>(builder: (_) => screen));
+  }
+
   @override
   Widget build(BuildContext context) {
     final tokens =
@@ -100,7 +118,7 @@ class _AppShellState extends State<AppShell> {
               HomeScreen(
                 repository: widget.repository,
                 now: widget.now,
-                onOpenLog: widget.onOpenLog,
+                onOpenLog: _openDetail,
               ),
               const _Placeholder('Library'),
               const _Placeholder('Calendar'),
