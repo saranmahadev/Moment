@@ -1,8 +1,11 @@
+import 'dart:async';
 import 'dart:io';
 
 import 'package:drift/native.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:moment/audio/audio_playback_controller.dart';
+import 'package:moment/audio/audio_recorder_controller.dart';
 import 'package:moment/data/database.dart';
 import 'package:moment/data/log_repository.dart';
 import 'package:moment/data/media_store.dart';
@@ -34,6 +37,58 @@ class _FakePhotoPicker implements PhotoPicker {
   Future<File?> pickFromGallery() async => null;
 }
 
+class _FakeAudioRecorderController implements AudioRecorderController {
+  @override
+  Stream<double> get amplitudeStream => const Stream.empty();
+
+  @override
+  Future<bool> hasPermission() async => true;
+
+  @override
+  Future<void> start() async {}
+
+  @override
+  Future<void> pause() async {}
+
+  @override
+  Future<void> resume() async {}
+
+  @override
+  Future<String?> stop() async => null;
+
+  @override
+  Future<void> cancel() async {}
+
+  @override
+  Future<void> dispose() async {}
+}
+
+class _FakeAudioPlaybackController implements AudioPlaybackController {
+  @override
+  Stream<Duration> get positionStream => const Stream.empty();
+
+  @override
+  Stream<bool> get playingStream => const Stream.empty();
+
+  @override
+  Future<void> load(String path) async {}
+
+  @override
+  Future<void> play() async {}
+
+  @override
+  Future<void> pause() async {}
+
+  @override
+  Future<void> seek(Duration position) async {}
+
+  @override
+  Future<void> setSpeed(double speed) async {}
+
+  @override
+  Future<void> dispose() async {}
+}
+
 void main() {
   // End-to-end through the real app shell, matching docs/ROADMAP.md's
   // Phase 1 exit gate: "create a text log, see it on Home, edit it,
@@ -61,6 +116,8 @@ void main() {
             lockController: lockController,
             mediaStore: mediaStore,
             picker: _FakePhotoPicker(),
+            createAudioRecorder: _FakeAudioRecorderController.new,
+            createAudioPlayback: _FakeAudioPlaybackController.new,
           ),
         ),
       );

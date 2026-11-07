@@ -12,6 +12,11 @@ import '../domain/log_type.dart';
 final _timeFormat = DateFormat('HH:mm');
 final _fullDateFormat = DateFormat('EEE d MMM');
 
+String _formatDuration(Duration d) {
+  final seconds = d.inSeconds.remainder(60).toString().padLeft(2, '0');
+  return '${d.inMinutes}:$seconds';
+}
+
 /// One entry in the Home feed (or a type's section list): a type badge,
 /// label and time, then whatever that type shows. Matches the card style
 /// in design/mockups/Main.dc.html.
@@ -92,15 +97,19 @@ class _Header extends StatelessWidget {
           ),
         ),
         const Spacer(),
-        Text(
-          showFullDate
-              ? '${_fullDateFormat.format(log.localMoment)} · '
-                    '${_timeFormat.format(log.localMoment)}'
-              : _timeFormat.format(log.localMoment),
-          style: TextStyle(
-            fontSize: 13,
-            fontWeight: FontWeight.w500,
-            color: tokens.secondary,
+        Flexible(
+          child: Text(
+            showFullDate
+                ? '${_fullDateFormat.format(log.localMoment)} · '
+                      '${_timeFormat.format(log.localMoment)}'
+                : _timeFormat.format(log.localMoment),
+            overflow: TextOverflow.ellipsis,
+            textAlign: TextAlign.end,
+            style: TextStyle(
+              fontSize: 13,
+              fontWeight: FontWeight.w500,
+              color: tokens.secondary,
+            ),
           ),
         ),
       ],
@@ -121,6 +130,7 @@ class _Body extends StatelessWidget {
       TextLog() => _TextBody(log: log, tokens: tokens),
       EmojiLog() => _EmojiBody(log: log, tokens: tokens),
       PhotoLog() => _PhotoBody(log: log, tokens: tokens),
+      AudioLog() => _AudioBody(log: log, tokens: tokens),
     };
   }
 }
@@ -260,6 +270,94 @@ class _PhotoBody extends StatelessWidget {
           ),
         ],
       ],
+    );
+  }
+}
+
+class _AudioBody extends StatelessWidget {
+  const _AudioBody({required this.log, required this.tokens});
+
+  final AudioLog log;
+  final MomentTokens tokens;
+
+  @override
+  Widget build(BuildContext context) {
+    final color = tokens.colorFor(LogType.audio);
+
+    return Row(
+      children: [
+        Container(
+          width: 44,
+          height: 44,
+          decoration: BoxDecoration(color: color, shape: BoxShape.circle),
+          child: const Icon(Icons.play_arrow, color: Colors.white, size: 22),
+        ),
+        const SizedBox(width: 12),
+        Expanded(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Text(
+                log.title ?? 'Audio',
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+                style: TextStyle(
+                  fontFamily: 'Newsreader',
+                  fontSize: 18,
+                  color: tokens.ink,
+                ),
+              ),
+              const SizedBox(height: 6),
+              _MiniWaveform(peaks: log.peaks, color: color),
+            ],
+          ),
+        ),
+        const SizedBox(width: 10),
+        Text(
+          _formatDuration(log.duration),
+          style: TextStyle(fontSize: 13, color: tokens.secondary),
+        ),
+      ],
+    );
+  }
+}
+
+class _MiniWaveform extends StatelessWidget {
+  const _MiniWaveform({required this.peaks, required this.color});
+
+  final List<double> peaks;
+  final Color color;
+
+  @override
+  Widget build(BuildContext context) {
+    const maxBars = 24;
+    final shown = peaks.length <= maxBars
+        ? peaks
+        : [
+            for (var i = 0; i < maxBars; i++)
+              peaks[(i * peaks.length / maxBars).floor()],
+          ];
+
+    return SizedBox(
+      height: 18,
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          for (final peak in shown)
+            Padding(
+              padding: const EdgeInsets.only(right: 2),
+              child: Container(
+                width: 2.5,
+                height: 4 + peak * 14,
+                decoration: BoxDecoration(
+                  color: color,
+                  borderRadius: BorderRadius.circular(2),
+                ),
+              ),
+            ),
+        ],
+      ),
     );
   }
 }

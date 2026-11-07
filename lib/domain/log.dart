@@ -87,6 +87,39 @@ final class PhotoLog extends Log {
   LogType get type => LogType.photo;
 }
 
+/// A voice recording, with its waveform peaks, a title and an optional
+/// note.
+final class AudioLog extends Log {
+  const AudioLog({
+    required super.id,
+    required super.createdAt,
+    required super.tzOffsetMinutes,
+    required super.editedAt,
+    required super.deletedAt,
+    required this.path,
+    required this.duration,
+    required this.peaks,
+    required this.title,
+    required this.note,
+  });
+
+  /// Path to the recorded audio file, under this app's private media
+  /// directory.
+  final String path;
+
+  final Duration duration;
+
+  /// Normalized (0.0 to 1.0) amplitude samples, evenly spaced across
+  /// [duration], for drawing the waveform without decoding the audio file.
+  final List<double> peaks;
+
+  final String? title;
+  final String? note;
+
+  @override
+  LogType get type => LogType.audio;
+}
+
 /// A one-tap mood entry: an emoji, an optional label and a strength from 1
 /// to 5.
 final class EmojiLog extends Log {

@@ -101,6 +101,38 @@ void main() {
       },
     );
 
+    test('creates an audio log and reads it back', () async {
+      final id = await repo.createAudio(
+        path: photoFile('a.m4a').path,
+        duration: const Duration(seconds: 42),
+        peaks: [0.1, 0.5, 0.9, 0.3],
+        title: 'Voice note',
+        note: 'Idea for the weekend',
+      );
+      final log = await repo.getById(id) as AudioLog;
+
+      expect(log.path, photoFile('a.m4a').path);
+      expect(log.duration, const Duration(seconds: 42));
+      expect(log.peaks, [0.1, 0.5, 0.9, 0.3]);
+      expect(log.title, 'Voice note');
+      expect(log.note, 'Idea for the weekend');
+      expect(log.type, LogType.audio);
+    });
+
+    test(
+      'an audio log without a title or note reads back with both null',
+      () async {
+        final id = await repo.createAudio(
+          path: photoFile('a.m4a').path,
+          duration: const Duration(seconds: 10),
+          peaks: [0.2, 0.4],
+        );
+        final log = await repo.getById(id) as AudioLog;
+        expect(log.title, isNull);
+        expect(log.note, isNull);
+      },
+    );
+
     test('an emoji log without a label reads back with a null label', () async {
       final id = await repo.createEmoji(emoji: '😴', strength: 1);
       final emoji = await repo.getById(id) as EmojiLog;
@@ -235,6 +267,28 @@ void main() {
       final id = await repo.createText(body: 'hi');
       expect(() => repo.updateCaption(id, caption: 'x'), throwsArgumentError);
     });
+
+    test('updateAudio changes title and/or note and stamps editedAt', () async {
+      final id = await repo.createAudio(
+        path: photoFile('a.m4a').path,
+        duration: const Duration(seconds: 5),
+        peaks: [0.1],
+        title: 'Original title',
+      );
+      now = now.add(const Duration(hours: 1));
+
+      await repo.updateAudio(id, title: 'Edited title', note: 'A note');
+
+      final log = await repo.getById(id) as AudioLog;
+      expect(log.title, 'Edited title');
+      expect(log.note, 'A note');
+      expect(log.editedAt, now);
+    });
+
+    test('updateAudio on a text log throws', () async {
+      final id = await repo.createText(body: 'hi');
+      expect(() => repo.updateAudio(id, title: 'x'), throwsArgumentError);
+    });
   });
 
   group('trash', () {
@@ -323,6 +377,18 @@ void main() {
       final feed = await repo.watchFeed().first;
       expect(feed.map((l) => l.id), [id]);
       expect(feed.single, isA<PhotoLog>());
+    });
+
+    test('includes audio logs', () async {
+      final id = await repo.createAudio(
+        path: photoFile('a.m4a').path,
+        duration: const Duration(seconds: 5),
+        peaks: [0.1],
+      );
+
+      final feed = await repo.watchFeed().first;
+      expect(feed.map((l) => l.id), [id]);
+      expect(feed.single, isA<AudioLog>());
     });
 
     test('re-emits when a log already in the feed is edited', () async {
@@ -452,6 +518,19 @@ void main() {
         expect(thumb.existsSync(), isTrue);
       },
     );
+
+    test('deletePermanently removes an audio log\'s file from disk', () async {
+      final audio = photoFile('a.m4a');
+      final id = await repo.createAudio(
+        path: audio.path,
+        duration: const Duration(seconds: 5),
+        peaks: [0.1],
+      );
+
+      await repo.deletePermanently(id);
+
+      expect(audio.existsSync(), isFalse);
+    });
   });
 
   group('setCreatedAt', () {

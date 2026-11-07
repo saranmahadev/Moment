@@ -87,3 +87,31 @@ class PhotoLogsTable extends Table {
   @override
   Set<Column> get primaryKey => {logId};
 }
+
+/// The stored file, waveform, title and note of an audio log. One row per
+/// [LogsTable] row of type `audio`. Added in schema version 3.
+@DataClassName('AudioLogRow')
+class AudioLogsTable extends Table {
+  @override
+  String get tableName => 'audio_log';
+
+  TextColumn get logId => text()
+      .named('log_id')
+      .references(LogsTable, #id, onDelete: KeyAction.cascade)();
+
+  /// Path to the recorded audio file, under this app's private media
+  /// directory.
+  TextColumn get path => text()();
+
+  IntColumn get durationMs => integer().named('duration_ms')();
+
+  /// Normalized (0.0 to 1.0) amplitude samples, JSON-encoded as a list of
+  /// numbers.
+  TextColumn get peaks => text()();
+
+  TextColumn get title => text().nullable()();
+  TextColumn get note => text().nullable()();
+
+  @override
+  Set<Column> get primaryKey => {logId};
+}

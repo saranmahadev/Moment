@@ -19,6 +19,14 @@ class ImportedPhoto {
   final String thumbnailPath;
 }
 
+/// The file for an imported audio recording, under the app-private media
+/// directory.
+class ImportedAudio {
+  const ImportedAudio({required this.path});
+
+  final String path;
+}
+
 class _ProcessedPhoto {
   const _ProcessedPhoto(this.strippedBytes, this.thumbnailBytes);
 
@@ -68,12 +76,9 @@ class MediaStore {
   final DateTime Function() _clock;
   final IdGenerator _generateId;
 
-  Future<ImportedPhoto> importPhoto(File source) async {
-    final originalBytes = await source.readAsBytes();
-    final processed = await compute(_processPhoto, originalBytes);
-
+  Future<Directory> _monthDir() async {
     final now = _clock();
-    final monthDir = Directory(
+    final dir = Directory(
       p.join(
         _root.path,
         'media',
@@ -81,8 +86,15 @@ class MediaStore {
         now.month.toString().padLeft(2, '0'),
       ),
     );
-    await monthDir.create(recursive: true);
+    await dir.create(recursive: true);
+    return dir;
+  }
 
+  Future<ImportedPhoto> importPhoto(File source) async {
+    final originalBytes = await source.readAsBytes();
+    final processed = await compute(_processPhoto, originalBytes);
+
+    final monthDir = await _monthDir();
     final id = _generateId();
     final photoPath = p.join(monthDir.path, '$id.jpg');
     final thumbnailPath = p.join(monthDir.path, '$id-thumb.jpg');
@@ -91,5 +103,19 @@ class MediaStore {
     await File(thumbnailPath).writeAsBytes(processed.thumbnailBytes);
 
     return ImportedPhoto(path: photoPath, thumbnailPath: thumbnailPath);
+  }
+
+  /// Copies a recorded audio file into this app's private storage. Unlike
+  /// [importPhoto], there is no decoding to do off the main thread: the
+  /// bytes are copied as-is.
+  Future<ImportedAudio> importAudio(File source) async {
+    final monthDir = await _monthDir();
+    final id = _generateId();
+    final extension = p.extension(source.path);
+    final audioPath = p.join(monthDir.path, '$id$extension');
+
+    await source.copy(audioPath);
+
+    return ImportedAudio(path: audioPath);
   }
 }

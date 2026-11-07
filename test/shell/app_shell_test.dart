@@ -1,8 +1,11 @@
+import 'dart:async';
 import 'dart:io';
 
 import 'package:drift/native.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:moment/audio/audio_playback_controller.dart';
+import 'package:moment/audio/audio_recorder_controller.dart';
 import 'package:moment/data/database.dart';
 import 'package:moment/data/log_repository.dart';
 import 'package:moment/data/media_store.dart';
@@ -49,6 +52,71 @@ class _FakePhotoPicker implements PhotoPicker {
   Future<File?> pickFromGallery() async => galleryResult;
 }
 
+class _FakeAudioRecorderController implements AudioRecorderController {
+  _FakeAudioRecorderController({this.stopPath});
+
+  String? stopPath;
+  final _amplitude = StreamController<double>.broadcast();
+
+  @override
+  Stream<double> get amplitudeStream => _amplitude.stream;
+
+  @override
+  Future<bool> hasPermission() async => true;
+
+  @override
+  Future<void> start() async {}
+
+  @override
+  Future<void> pause() async {}
+
+  @override
+  Future<void> resume() async {}
+
+  @override
+  Future<String?> stop() async => stopPath;
+
+  @override
+  Future<void> cancel() async {}
+
+  @override
+  Future<void> dispose() async => _amplitude.close();
+
+  void emit(double value) => _amplitude.add(value);
+}
+
+class _FakeAudioPlaybackController implements AudioPlaybackController {
+  final _position = StreamController<Duration>.broadcast();
+  final _playing = StreamController<bool>.broadcast();
+
+  @override
+  Stream<Duration> get positionStream => _position.stream;
+
+  @override
+  Stream<bool> get playingStream => _playing.stream;
+
+  @override
+  Future<void> load(String path) async {}
+
+  @override
+  Future<void> play() async => _playing.add(true);
+
+  @override
+  Future<void> pause() async => _playing.add(false);
+
+  @override
+  Future<void> seek(Duration position) async => _position.add(position);
+
+  @override
+  Future<void> setSpeed(double speed) async {}
+
+  @override
+  Future<void> dispose() async {
+    await _position.close();
+    await _playing.close();
+  }
+}
+
 void main() {
   final now = DateTime.utc(2026, 11, 6, 21, 50);
   late Directory tempDir;
@@ -70,6 +138,8 @@ void main() {
     WidgetTester tester,
     LogRepository repo, {
     PhotoPicker? picker,
+    AudioRecorderController Function()? createAudioRecorder,
+    AudioPlaybackController Function()? createAudioPlayback,
   }) async {
     await tester.binding.setSurfaceSize(const Size(390, 844));
     addTearDown(() => tester.binding.setSurfaceSize(null));
@@ -81,6 +151,10 @@ void main() {
           lockController: AppLockController(_FakePinStorage()),
           mediaStore: mediaStore,
           picker: picker ?? _FakePhotoPicker(),
+          createAudioRecorder:
+              createAudioRecorder ?? _FakeAudioRecorderController.new,
+          createAudioPlayback:
+              createAudioPlayback ?? _FakeAudioPlaybackController.new,
           now: () => now,
         ),
       ),
@@ -615,6 +689,126 @@ void main() {
       await db.close();
     },
   );
+
+  testWidgets('picking Audio from the Add sheet opens CreateAudioScreen', (
+    tester,
+  ) async {
+    final db = AppDatabase(NativeDatabase.memory());
+    final repo = LogRepository(db, clock: () => now);
+
+    await pump(tester, repo);
+    await tester.pump();
+
+    await tester.tap(find.bySemanticsLabel('Add a log'));
+    await tester.pumpAndSettle();
+    await tester.tap(
+      find.byKey(const ValueKey('add-sheet-type-LogType.audio')),
+    );
+    await tester.pumpAndSettle();
+
+    expect(find.text('Add to your log'), findsNothing);
+    expect(find.text('00:00'), findsOneWidget);
+    expect(find.text('Discard'), findsOneWidget);
+
+    await tester.pumpWidget(const SizedBox());
+    await tester.pumpAndSettle();
+    await db.close();
+  });
+
+  testWidgets(
+    'saving a new audio log from the Add flow returns to Home with it '
+    'visible',
+    (tester) async {
+      final db = AppDatabase(NativeDatabase.memory());
+      final repo = LogRepository(db, clock: () => now);
+      final recordedFile = File(p.join(tempDir.path, 'recorded.m4a'))
+        ..writeAsBytesSync([1, 2, 3]);
+      final recorder = _FakeAudioRecorderController(
+        stopPath: recordedFile.path,
+      );
+
+      await pump(tester, repo, createAudioRecorder: () => recorder);
+      await tester.pump();
+
+      await tester.tap(find.bySemanticsLabel('Add a log'));
+      await tester.pumpAndSettle();
+      await tester.tap(
+        find.byKey(const ValueKey('add-sheet-type-LogType.audio')),
+      );
+      await tester.pumpAndSettle();
+
+      await tester.enterText(find.byType(TextField), 'From the shell');
+      await tester.runAsync(() async {
+        await tester.tap(find.text('Save'));
+        await Future<void>.delayed(const Duration(milliseconds: 50));
+      });
+      await tester.pump();
+      await tester.pumpAndSettle();
+
+      expect(find.text('Discard'), findsNothing);
+      expect(find.text('From the shell'), findsOneWidget);
+
+      await tester.pumpWidget(const SizedBox());
+      await tester.pumpAndSettle();
+      await db.close();
+    },
+  );
+
+  testWidgets('tapping an audio tile in Library opens its SectionScreen', (
+    tester,
+  ) async {
+    final db = AppDatabase(NativeDatabase.memory());
+    final repo = LogRepository(db, clock: () => now);
+    await repo.createAudio(
+      path: (File(
+        p.join(tempDir.path, 'a.m4a'),
+      )..writeAsStringSync('fake')).path,
+      duration: const Duration(seconds: 10),
+      peaks: [0.2, 0.4],
+      title: 'In the section',
+    );
+
+    await pump(tester, repo);
+    await tester.pump();
+    await tester.tap(find.bySemanticsLabel('Library'));
+    await tester.pump();
+    await tester.tap(find.text('Audio'));
+    await tester.pumpAndSettle();
+
+    expect(find.text('In the section'), findsOneWidget);
+    expect(find.text('1 log'), findsOneWidget);
+
+    await tester.pumpWidget(const SizedBox());
+    await tester.pumpAndSettle();
+    await db.close();
+  });
+
+  testWidgets('tapping an audio card on Home opens AudioDetailScreen', (
+    tester,
+  ) async {
+    final db = AppDatabase(NativeDatabase.memory());
+    final repo = LogRepository(db, clock: () => now);
+    await repo.createAudio(
+      path: (File(
+        p.join(tempDir.path, 'a.m4a'),
+      )..writeAsStringSync('fake')).path,
+      duration: const Duration(seconds: 10),
+      peaks: [0.2, 0.4],
+      title: 'Tap me',
+    );
+
+    await pump(tester, repo);
+    await tester.pump();
+    await tester.tap(find.text('Tap me'));
+    await tester.pumpAndSettle();
+
+    expect(find.bySemanticsLabel('Edit'), findsOneWidget);
+    expect(find.bySemanticsLabel('Delete'), findsOneWidget);
+
+    await tester.pumpWidget(const SizedBox());
+    await tester.pumpAndSettle();
+    await db.close();
+  });
 
   testWidgets('tapping Trash in Settings opens TrashScreen', (tester) async {
     final db = AppDatabase(NativeDatabase.memory());
