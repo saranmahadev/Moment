@@ -114,7 +114,9 @@ void main() {
     await tester.pump();
 
     final trashBottom = tester.getBottomLeft(find.text('Trash')).dy;
-    final dockTop = tester.getTopLeft(find.bySemanticsLabel('Library')).dy;
+    final dockTop = tester
+        .getTopLeft(find.byKey(const ValueKey('dock-tab-Library')))
+        .dy;
     expect(trashBottom, lessThan(dockTop));
 
     await tester.pumpWidget(const SizedBox());
@@ -379,7 +381,9 @@ void main() {
       await tester.pump();
 
       final versionBottom = tester.getBottomLeft(find.text('Version')).dy;
-      final dockTop = tester.getTopLeft(find.bySemanticsLabel('Settings')).dy;
+      final dockTop = tester
+          .getTopLeft(find.byKey(const ValueKey('dock-tab-Settings')))
+          .dy;
       expect(versionBottom, lessThan(dockTop));
 
       await tester.pumpWidget(const SizedBox());

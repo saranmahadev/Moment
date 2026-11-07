@@ -37,7 +37,7 @@ class LibraryScreen extends StatelessWidget {
       backgroundColor: tokens.ground,
       body: SafeArea(
         child: ListView(
-          padding: const EdgeInsets.fromLTRB(20, 16, 20, 20),
+          padding: const EdgeInsets.fromLTRB(20, 16, 20, 140),
           children: [
             Row(
               crossAxisAlignment: CrossAxisAlignment.start,
