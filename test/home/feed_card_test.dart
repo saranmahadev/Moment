@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:moment/design/theme.dart';
+import 'package:moment/design/tokens.dart';
 import 'package:moment/domain/log.dart';
 import 'package:moment/home/feed_card.dart';
 
@@ -36,6 +37,17 @@ void main() {
         findsOneWidget,
       );
       expect(find.text('9 words'), findsOneWidget);
+    });
+
+    testWidgets('the body is set in the ink colour, not the default', (
+      tester,
+    ) async {
+      await pump(tester, FeedCard(log: log));
+
+      final text = tester.widget<Text>(
+        find.text('Quiet evening. Finished the book I started in October.'),
+      );
+      expect(text.style?.color, MomentTokens.standard.ink);
     });
 
     testWidgets('calls onTap when tapped', (tester) async {
@@ -76,6 +88,15 @@ void main() {
       expect(find.text('21:40'), findsOneWidget);
       expect(find.text('😌'), findsOneWidget);
       expect(find.text('Calm'), findsOneWidget);
+    });
+
+    testWidgets('the mood label is set in the ink colour, not the default', (
+      tester,
+    ) async {
+      await pump(tester, FeedCard(log: log));
+
+      final text = tester.widget<Text>(find.text('Calm'));
+      expect(text.style?.color, MomentTokens.standard.ink);
     });
 
     testWidgets('shows the strength as "Intensity n of 5"', (tester) async {

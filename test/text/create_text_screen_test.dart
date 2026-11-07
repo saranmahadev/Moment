@@ -4,6 +4,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:moment/data/database.dart';
 import 'package:moment/data/log_repository.dart';
 import 'package:moment/design/theme.dart';
+import 'package:moment/design/tokens.dart';
 import 'package:moment/domain/log.dart';
 import 'package:moment/text/create_text_screen.dart';
 
@@ -49,6 +50,31 @@ void main() {
     await tester.pumpAndSettle();
     await db.close();
   });
+
+  testWidgets(
+    'the badge, date row and typed text are in the ink colour, not the default',
+    (tester) async {
+      final db = AppDatabase(NativeDatabase.memory());
+      final repo = LogRepository(db, clock: () => now);
+
+      await pump(tester, repo);
+      await tester.enterText(find.byType(TextField), 'Some words');
+      await tester.pump();
+
+      final badge = tester.widget<Text>(find.text('Text'));
+      expect(badge.style?.color, MomentTokens.standard.ink);
+
+      final dateRow = tester.widget<Text>(find.text('Fri 6 Nov · 21:42'));
+      expect(dateRow.style?.color, MomentTokens.standard.ink);
+
+      final field = tester.widget<TextField>(find.byType(TextField));
+      expect(field.style?.color, MomentTokens.standard.ink);
+
+      await tester.pumpWidget(const SizedBox());
+      await tester.pumpAndSettle();
+      await db.close();
+    },
+  );
 
   testWidgets('matches its approved baseline', (tester) async {
     final db = AppDatabase(NativeDatabase.memory());

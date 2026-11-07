@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:moment/design/theme.dart';
+import 'package:moment/design/tokens.dart';
 import 'package:moment/home/mood_row.dart';
 
 void main() {
@@ -16,6 +17,15 @@ void main() {
   testWidgets('shows the "How are you?" prompt', (tester) async {
     await pump(tester, (_) {});
     expect(find.text('How are you?'), findsOneWidget);
+  });
+
+  testWidgets('"How are you?" is set in the ink colour, not the default', (
+    tester,
+  ) async {
+    await pump(tester, (_) {});
+
+    final text = tester.widget<Text>(find.text('How are you?'));
+    expect(text.style?.color, MomentTokens.standard.ink);
   });
 
   testWidgets('shows all five moods with accessible labels', (tester) async {

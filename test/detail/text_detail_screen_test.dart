@@ -4,6 +4,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:moment/data/database.dart';
 import 'package:moment/data/log_repository.dart';
 import 'package:moment/design/theme.dart';
+import 'package:moment/design/tokens.dart';
 import 'package:moment/detail/text_detail_screen.dart';
 import 'package:moment/domain/log.dart';
 
@@ -44,6 +45,9 @@ void main() {
 
     expect(find.text('Friday 6 November · 20:12'), findsOneWidget);
     expect(find.text('Quiet evening.'), findsOneWidget);
+
+    final body = tester.widget<Text>(find.text('Quiet evening.'));
+    expect(body.style?.color, MomentTokens.standard.ink);
 
     await tester.pumpWidget(const SizedBox());
     await tester.pumpAndSettle();
