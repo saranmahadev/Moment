@@ -125,24 +125,33 @@ void main() {
     await close(tester);
   });
 
+  testWidgets('does not start recording when permission is denied', (
+    tester,
+  ) async {
+    final recorder = _FakeAudioRecorderController(permissionGranted: false);
+    await pump(tester, recorder: recorder);
+
+    expect(recorder.started, isFalse);
+
+    await close(tester);
+  });
+
   testWidgets('each amplitude sample grows the timer and the waveform', (
     tester,
   ) async {
     final recorder = _FakeAudioRecorderController();
     await pump(tester, recorder: recorder);
 
-    recorder.emit(0.4);
-    await tester.pump();
-    recorder.emit(0.8);
-    await tester.pump();
+    // audioSampleInterval is 200ms: five samples cross the one-second mark.
+    // A broadcast stream's event dispatch is scheduled as a microtask, which
+    // a zero-duration pump() does not flush; pumping a (fake) duration does.
+    for (var i = 0; i < 5; i++) {
+      recorder.emit(0.4);
+      await tester.pump(const Duration(milliseconds: 1));
+    }
 
     expect(find.text('00:00'), findsNothing);
-    expect(
-      find.text(
-        '00:${(audioSampleInterval.inMilliseconds * 2 ~/ 1000).toString().padLeft(2, '0')}',
-      ),
-      findsOneWidget,
-    );
+    expect(find.text('00:01'), findsOneWidget);
 
     await close(tester);
   });
@@ -173,7 +182,14 @@ void main() {
     var closed = false;
     await pump(tester, recorder: recorder, onClose: () => closed = true);
 
-    await tester.tap(find.text('Discard'));
+    // _discard awaits cancelling the subscription and the recorder before
+    // calling onClose: a chain a fake-clock pump() does not reliably drain,
+    // so the tap that starts it runs inside runAsync, with a real delay
+    // after it to let those awaits actually resolve.
+    await tester.runAsync(() async {
+      await tester.tap(find.text('Discard'));
+      await Future<void>.delayed(const Duration(milliseconds: 50));
+    });
     await tester.pump();
 
     expect(recorder.canceled, isTrue);
@@ -187,24 +203,23 @@ void main() {
       'audio log', (tester) async {
     final recordedFile = File(p.join(tempDir.path, 'recorded.m4a'))
       ..writeAsBytesSync([9, 9, 9]);
-    final recorder = _FakeAudioRecorderController(
-      stopPath: recordedFile.path,
-    );
+    final recorder = _FakeAudioRecorderController(stopPath: recordedFile.path);
     String? savedId;
-    await pump(
-      tester,
-      recorder: recorder,
-      onSaved: (id) => savedId = id,
-    );
+    await pump(tester, recorder: recorder, onSaved: (id) => savedId = id);
 
     recorder.emit(0.2);
-    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 1));
     recorder.emit(0.6);
-    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 1));
 
     await tester.enterText(find.byType(TextField), 'Morning thoughts');
-    await tester.tap(find.text('Save'));
-    await tester.pump();
+    // _save awaits cancelling the subscription, stopping the recorder,
+    // importing the file and writing the log: a chain a fake-clock pump()
+    // does not reliably drain, so the tap runs inside runAsync.
+    await tester.runAsync(() async {
+      await tester.tap(find.text('Save'));
+      await Future<void>.delayed(const Duration(milliseconds: 50));
+    });
     await tester.pump();
 
     expect(recorder.stopped, isTrue);
@@ -223,14 +238,14 @@ void main() {
   testWidgets('Save with a blank title saves a null title', (tester) async {
     final recordedFile = File(p.join(tempDir.path, 'recorded.m4a'))
       ..writeAsBytesSync([1]);
-    final recorder = _FakeAudioRecorderController(
-      stopPath: recordedFile.path,
-    );
+    final recorder = _FakeAudioRecorderController(stopPath: recordedFile.path);
     String? savedId;
     await pump(tester, recorder: recorder, onSaved: (id) => savedId = id);
 
-    await tester.tap(find.text('Save'));
-    await tester.pump();
+    await tester.runAsync(() async {
+      await tester.tap(find.text('Save'));
+      await Future<void>.delayed(const Duration(milliseconds: 50));
+    });
     await tester.pump();
 
     final log = await repo.getById(savedId!) as AudioLog;
