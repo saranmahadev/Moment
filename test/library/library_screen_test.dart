@@ -86,7 +86,8 @@ void main() {
     expect(find.text('2 logs · Last: Today'), findsOneWidget);
     expect(find.text('Emoji'), findsOneWidget);
     expect(find.text('1 log · Last: Today'), findsOneWidget);
-    expect(find.text('Photo'), findsNothing);
+    expect(find.text('Photo'), findsOneWidget);
+    expect(find.text('No logs yet'), findsOneWidget);
 
     await tester.pumpWidget(const SizedBox());
     await tester.pumpAndSettle();

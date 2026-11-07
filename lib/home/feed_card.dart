@@ -1,3 +1,5 @@
+import 'dart:io';
+
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 
@@ -118,8 +120,7 @@ class _Body extends StatelessWidget {
     return switch (log) {
       TextLog() => _TextBody(log: log, tokens: tokens),
       EmojiLog() => _EmojiBody(log: log, tokens: tokens),
-      // Not reachable yet: no screen creates one, so none can appear here.
-      PhotoLog() => throw UnimplementedError('Photo cards are not built yet'),
+      PhotoLog() => _PhotoBody(log: log, tokens: tokens),
     };
   }
 }
@@ -223,6 +224,41 @@ class _EmojiBody extends StatelessWidget {
             ),
           ],
         ),
+      ],
+    );
+  }
+}
+
+class _PhotoBody extends StatelessWidget {
+  const _PhotoBody({required this.log, required this.tokens});
+
+  final PhotoLog log;
+  final MomentTokens tokens;
+
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        ClipRRect(
+          borderRadius: BorderRadius.circular(16),
+          child: Image.file(
+            File(log.thumbnailPath),
+            height: 180,
+            width: double.infinity,
+            fit: BoxFit.cover,
+          ),
+        ),
+        if (log.caption != null) ...[
+          const SizedBox(height: 8),
+          Text(
+            log.caption!,
+            maxLines: 2,
+            overflow: TextOverflow.ellipsis,
+            style: TextStyle(fontSize: 14, color: tokens.ink),
+          ),
+        ],
       ],
     );
   }

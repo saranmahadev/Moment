@@ -1,13 +1,27 @@
+import 'dart:io';
+
 import 'package:drift/native.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:moment/data/database.dart';
 import 'package:moment/data/log_repository.dart';
+import 'package:moment/data/media_store.dart';
 import 'package:moment/design/theme.dart';
 import 'package:moment/design/orb_field.dart';
 import 'package:moment/lock/app_lock_controller.dart';
 import 'package:moment/lock/pin_storage.dart';
+import 'package:image/image.dart' as img;
+import 'package:moment/photo/photo_picker.dart';
 import 'package:moment/shell/app_shell.dart';
+import 'package:path/path.dart' as p;
+
+File _sampleSourcePhoto(String path) {
+  final image = img.Image(width: 800, height: 600);
+  img.fill(image, color: img.ColorRgb8(180, 140, 100));
+  final file = File(path);
+  file.writeAsBytesSync(img.encodeJpg(image));
+  return file;
+}
 
 class _FakePinStorage implements PinStorage {
   String? stored;
@@ -22,10 +36,41 @@ class _FakePinStorage implements PinStorage {
   Future<void> clear() async => stored = null;
 }
 
+class _FakePhotoPicker implements PhotoPicker {
+  _FakePhotoPicker({this.cameraResult, this.galleryResult});
+
+  File? cameraResult;
+  File? galleryResult;
+
+  @override
+  Future<File?> pickFromCamera() async => cameraResult;
+
+  @override
+  Future<File?> pickFromGallery() async => galleryResult;
+}
+
 void main() {
   final now = DateTime.utc(2026, 11, 6, 21, 50);
+  late Directory tempDir;
+  late MediaStore mediaStore;
 
-  Future<void> pump(WidgetTester tester, LogRepository repo) async {
+  setUp(() {
+    tempDir = Directory.systemTemp.createTempSync('app_shell_test_');
+    mediaStore = MediaStore(
+      root: Directory(p.join(tempDir.path, 'app_support')),
+      clock: () => now,
+    );
+  });
+
+  tearDown(() {
+    tempDir.deleteSync(recursive: true);
+  });
+
+  Future<void> pump(
+    WidgetTester tester,
+    LogRepository repo, {
+    PhotoPicker? picker,
+  }) async {
     await tester.binding.setSurfaceSize(const Size(390, 844));
     addTearDown(() => tester.binding.setSurfaceSize(null));
     return tester.pumpWidget(
@@ -34,6 +79,8 @@ void main() {
         home: AppShell(
           repository: repo,
           lockController: AppLockController(_FakePinStorage()),
+          mediaStore: mediaStore,
+          picker: picker ?? _FakePhotoPicker(),
           now: () => now,
         ),
       ),
@@ -289,6 +336,159 @@ void main() {
       await db.close();
     },
   );
+
+  testWidgets('picking Photo from the Add sheet opens CreatePhotoScreen', (
+    tester,
+  ) async {
+    final db = AppDatabase(NativeDatabase.memory());
+    final repo = LogRepository(db, clock: () => now);
+
+    await pump(tester, repo);
+    await tester.pump();
+
+    await tester.tap(find.bySemanticsLabel('Add a log'));
+    await tester.pumpAndSettle();
+    await tester.tap(
+      find.byKey(const ValueKey('add-sheet-type-LogType.photo')),
+    );
+    await tester.pumpAndSettle();
+
+    expect(find.text('Add to your log'), findsNothing);
+    expect(find.text('Take Photo'), findsOneWidget);
+
+    await tester.pumpWidget(const SizedBox());
+    await tester.pumpAndSettle();
+    await db.close();
+  });
+
+  testWidgets(
+    'taking a new photo from the Add flow returns to Home with it visible',
+    (tester) async {
+      final db = AppDatabase(NativeDatabase.memory());
+      final repo = LogRepository(db, clock: () => now);
+      final source = _sampleSourcePhoto(p.join(tempDir.path, 'source.jpg'));
+
+      await pump(tester, repo, picker: _FakePhotoPicker(cameraResult: source));
+      await tester.pump();
+
+      await tester.tap(find.bySemanticsLabel('Add a log'));
+      await tester.pumpAndSettle();
+      await tester.tap(
+        find.byKey(const ValueKey('add-sheet-type-LogType.photo')),
+      );
+      await tester.pumpAndSettle();
+      await tester.tap(find.text('Take Photo'));
+      await tester.pumpAndSettle();
+
+      await tester.runAsync(() async {
+        await tester.tap(find.text('Save'));
+        await Future<void>.delayed(const Duration(seconds: 2));
+      });
+      await tester.pump();
+      await tester.pumpAndSettle();
+
+      expect(find.text('Choose from Library'), findsNothing);
+
+      await tester.pumpWidget(const SizedBox());
+      await tester.pumpAndSettle();
+      await db.close();
+    },
+  );
+
+  testWidgets(
+    'saving a new photo from the Add flow returns to Home with it visible',
+    (tester) async {
+      final db = AppDatabase(NativeDatabase.memory());
+      final repo = LogRepository(db, clock: () => now);
+      final source = _sampleSourcePhoto(p.join(tempDir.path, 'source.jpg'));
+
+      await pump(tester, repo, picker: _FakePhotoPicker(galleryResult: source));
+      await tester.pump();
+
+      await tester.tap(find.bySemanticsLabel('Add a log'));
+      await tester.pumpAndSettle();
+      await tester.tap(
+        find.byKey(const ValueKey('add-sheet-type-LogType.photo')),
+      );
+      await tester.pumpAndSettle();
+      await tester.tap(find.text('Choose from Library'));
+      await tester.pumpAndSettle();
+      await tester.enterText(find.byType(TextField), 'From the shell');
+
+      // MediaStore.importPhoto runs in a real isolate (compute()), so the
+      // Save tap has to happen inside runAsync for its completion to be
+      // observed from flutter_test's fake-clock zone.
+      await tester.runAsync(() async {
+        await tester.tap(find.text('Save'));
+        await Future<void>.delayed(const Duration(seconds: 2));
+      });
+      await tester.pump();
+      await tester.pumpAndSettle();
+
+      expect(find.text('Take Photo'), findsNothing);
+      expect(find.text('From the shell'), findsOneWidget);
+
+      await tester.pumpWidget(const SizedBox());
+      await tester.pumpAndSettle();
+      await db.close();
+    },
+  );
+
+  testWidgets('tapping a photo tile in Library opens PhotoSectionScreen', (
+    tester,
+  ) async {
+    final db = AppDatabase(NativeDatabase.memory());
+    final repo = LogRepository(db, clock: () => now);
+    await repo.createPhoto(
+      path: (File(
+        p.join(tempDir.path, 'a.jpg'),
+      )..writeAsStringSync('fake')).path,
+      thumbnailPath: (File(
+        p.join(tempDir.path, 'a-thumb.jpg'),
+      )..writeAsStringSync('fake')).path,
+    );
+
+    await pump(tester, repo);
+    await tester.pump();
+    await tester.tap(find.bySemanticsLabel('Library'));
+    await tester.pump();
+    await tester.tap(find.text('Photo'));
+    await tester.pumpAndSettle();
+
+    expect(find.text('1 log'), findsOneWidget);
+
+    await tester.pumpWidget(const SizedBox());
+    await tester.pumpAndSettle();
+    await db.close();
+  });
+
+  testWidgets('tapping a photo card on Home opens PhotoDetailScreen', (
+    tester,
+  ) async {
+    final db = AppDatabase(NativeDatabase.memory());
+    final repo = LogRepository(db, clock: () => now);
+    await repo.createPhoto(
+      path: (File(
+        p.join(tempDir.path, 'a.jpg'),
+      )..writeAsStringSync('fake')).path,
+      thumbnailPath: (File(
+        p.join(tempDir.path, 'a-thumb.jpg'),
+      )..writeAsStringSync('fake')).path,
+      caption: 'Tap me',
+    );
+
+    await pump(tester, repo);
+    await tester.pump();
+    await tester.tap(find.text('Tap me'));
+    await tester.pumpAndSettle();
+
+    expect(find.bySemanticsLabel('Edit'), findsOneWidget);
+    expect(find.bySemanticsLabel('Delete'), findsOneWidget);
+
+    await tester.pumpWidget(const SizedBox());
+    await tester.pumpAndSettle();
+    await db.close();
+  });
 
   testWidgets('tapping Trash in Library opens TrashScreen', (tester) async {
     final db = AppDatabase(NativeDatabase.memory());

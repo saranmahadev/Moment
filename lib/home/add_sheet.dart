@@ -31,83 +31,90 @@ class AddSheet extends StatelessWidget {
     final tokens =
         Theme.of(context).extension<MomentTokens>() ?? MomentTokens.standard;
 
-    return Padding(
-      padding: const EdgeInsets.fromLTRB(24, 12, 24, 24),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          Center(
-            child: Container(
-              width: 36,
-              height: 4,
-              decoration: BoxDecoration(
-                color: tokens.ink.withValues(alpha: 0.2),
-                borderRadius: BorderRadius.circular(2),
-              ),
-            ),
-          ),
-          const SizedBox(height: 20),
-          Row(
+    return SafeArea(
+      child: Padding(
+        padding: const EdgeInsets.fromLTRB(24, 12, 24, 24),
+        child: SingleChildScrollView(
+          child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
+            mainAxisSize: MainAxisSize.min,
             children: [
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      'Add to your log',
-                      style: TextStyle(
-                        fontFamily: 'Newsreader',
-                        fontWeight: FontWeight.w500,
-                        fontSize: 30,
-                        color: tokens.ink,
-                      ),
-                    ),
-                    Text(
-                      'Each type is its own log. Pick one.',
-                      style: TextStyle(fontSize: 14, color: tokens.secondary),
-                    ),
-                  ],
-                ),
-              ),
-              Semantics(
-                button: true,
-                label: 'Close',
-                excludeSemantics: true,
-                child: GestureDetector(
-                  onTap: onClose,
-                  child: SizedBox(
-                    width: 44,
-                    height: 44,
-                    child: GlassSurface(
-                      variant: GlassVariant.card,
-                      borderRadius: 22,
-                      child: Icon(Icons.close, size: 20, color: tokens.ink),
-                    ),
+              Center(
+                child: Container(
+                  width: 36,
+                  height: 4,
+                  decoration: BoxDecoration(
+                    color: tokens.ink.withValues(alpha: 0.2),
+                    borderRadius: BorderRadius.circular(2),
                   ),
                 ),
               ),
+              const SizedBox(height: 20),
+              Row(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          'Add to your log',
+                          style: TextStyle(
+                            fontFamily: 'Newsreader',
+                            fontWeight: FontWeight.w500,
+                            fontSize: 30,
+                            color: tokens.ink,
+                          ),
+                        ),
+                        Text(
+                          'Each type is its own log. Pick one.',
+                          style: TextStyle(
+                            fontSize: 14,
+                            color: tokens.secondary,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                  Semantics(
+                    button: true,
+                    label: 'Close',
+                    excludeSemantics: true,
+                    child: GestureDetector(
+                      onTap: onClose,
+                      child: SizedBox(
+                        width: 44,
+                        height: 44,
+                        child: GlassSurface(
+                          variant: GlassVariant.card,
+                          borderRadius: 22,
+                          child: Icon(Icons.close, size: 20, color: tokens.ink),
+                        ),
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 20),
+              GridView.count(
+                crossAxisCount: 2,
+                shrinkWrap: true,
+                physics: const NeverScrollableScrollPhysics(),
+                mainAxisSpacing: 12,
+                crossAxisSpacing: 12,
+                childAspectRatio: 0.92,
+                children: [
+                  for (final type in builtLogTypes)
+                    _TypeCard(
+                      type: type,
+                      tokens: tokens,
+                      onTap: () => onTypeSelected(type),
+                    ),
+                ],
+              ),
             ],
           ),
-          const SizedBox(height: 20),
-          GridView.count(
-            crossAxisCount: 2,
-            shrinkWrap: true,
-            physics: const NeverScrollableScrollPhysics(),
-            mainAxisSpacing: 12,
-            crossAxisSpacing: 12,
-            childAspectRatio: 0.92,
-            children: [
-              for (final type in builtLogTypes)
-                _TypeCard(
-                  type: type,
-                  tokens: tokens,
-                  onTap: () => onTypeSelected(type),
-                ),
-            ],
-          ),
-        ],
+        ),
       ),
     );
   }

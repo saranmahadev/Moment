@@ -37,7 +37,8 @@ void main() {
     expect(find.text('Write what is on your mind'), findsOneWidget);
     expect(find.text('Emoji'), findsOneWidget);
     expect(find.text('Log how you feel'), findsOneWidget);
-    expect(find.text('Photo'), findsNothing);
+    expect(find.text('Photo'), findsOneWidget);
+    expect(find.text('Take or choose a photo'), findsOneWidget);
     expect(find.text('Video'), findsNothing);
     expect(find.text('Audio'), findsNothing);
     expect(find.text('Location'), findsNothing);
