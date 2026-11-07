@@ -4,7 +4,22 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:moment/data/database.dart';
 import 'package:moment/data/log_repository.dart';
 import 'package:moment/design/theme.dart';
+import 'package:moment/lock/app_lock_controller.dart';
+import 'package:moment/lock/pin_storage.dart';
 import 'package:moment/shell/app_shell.dart';
+
+class _FakePinStorage implements PinStorage {
+  String? stored;
+
+  @override
+  Future<String?> read() async => stored;
+
+  @override
+  Future<void> write(String value) async => stored = value;
+
+  @override
+  Future<void> clear() async => stored = null;
+}
 
 void main() {
   final now = DateTime.utc(2026, 11, 6, 21, 50);
@@ -15,7 +30,11 @@ void main() {
     return tester.pumpWidget(
       MaterialApp(
         theme: momentTheme(),
-        home: AppShell(repository: repo, now: () => now),
+        home: AppShell(
+          repository: repo,
+          lockController: AppLockController(_FakePinStorage()),
+          now: () => now,
+        ),
       ),
     );
   }
@@ -273,6 +292,66 @@ void main() {
     await tester.pumpAndSettle();
 
     expect(find.text('Strong · 4 of 5'), findsOneWidget);
+
+    await tester.pumpWidget(const SizedBox());
+    await tester.pumpAndSettle();
+    await db.close();
+  });
+
+  testWidgets('tapping Settings switches to the Settings hub', (
+    tester,
+  ) async {
+    final db = AppDatabase(NativeDatabase.memory());
+    final repo = LogRepository(db, clock: () => now);
+
+    await pump(tester, repo);
+    await tester.pump();
+
+    await tester.tap(find.bySemanticsLabel('Settings'));
+    await tester.pump();
+
+    expect(find.text('YOUR DATA'), findsOneWidget);
+
+    await tester.pumpWidget(const SizedBox());
+    await tester.pumpAndSettle();
+    await db.close();
+  });
+
+  testWidgets(
+    'tapping Privacy and backup in Settings opens PrivacyScreen',
+    (tester) async {
+      final db = AppDatabase(NativeDatabase.memory());
+      final repo = LogRepository(db, clock: () => now);
+
+      await pump(tester, repo);
+      await tester.pump();
+      await tester.tap(find.bySemanticsLabel('Settings'));
+      await tester.pump();
+      await tester.tap(find.text('Privacy and backup'));
+      await tester.pumpAndSettle();
+
+      expect(find.text('App lock'), findsOneWidget);
+
+      await tester.pumpWidget(const SizedBox());
+      await tester.pumpAndSettle();
+      await db.close();
+    },
+  );
+
+  testWidgets('tapping Trash in Settings opens TrashScreen', (tester) async {
+    final db = AppDatabase(NativeDatabase.memory());
+    final repo = LogRepository(db, clock: () => now);
+    final id = await repo.createText(body: 'From settings');
+    await repo.softDelete(id);
+
+    await pump(tester, repo);
+    await tester.pump();
+    await tester.tap(find.bySemanticsLabel('Settings'));
+    await tester.pump();
+    await tester.tap(find.text('Trash'));
+    await tester.pumpAndSettle();
+
+    expect(find.text('From settings'), findsOneWidget);
 
     await tester.pumpWidget(const SizedBox());
     await tester.pumpAndSettle();
