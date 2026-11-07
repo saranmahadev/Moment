@@ -37,6 +37,9 @@ void main() {
     expect(find.text('Settings'), findsOneWidget);
     expect(find.text('YOUR DATA'), findsOneWidget);
     expect(find.text('LOGGING'), findsOneWidget);
+
+    await tester.scrollUntilVisible(find.text('ABOUT'), 300);
+    await tester.pump();
     expect(find.text('APPEARANCE'), findsOneWidget);
     expect(find.text('ABOUT'), findsOneWidget);
 
@@ -45,9 +48,7 @@ void main() {
     await db.close();
   });
 
-  testWidgets('tapping Privacy and backup calls onOpenPrivacy', (
-    tester,
-  ) async {
+  testWidgets('tapping Privacy and backup calls onOpenPrivacy', (tester) async {
     final db = AppDatabase(NativeDatabase.memory());
     final repo = LogRepository(db);
     var opened = false;
@@ -97,6 +98,9 @@ void main() {
     expect(find.text('Video and photo quality'), findsOneWidget);
     expect(find.text('Theme'), findsOneWidget);
     expect(find.text('Reduce transparency'), findsOneWidget);
+
+    await tester.scrollUntilVisible(find.text('Version'), 300);
+    await tester.pump();
     expect(find.text('How Moment stays local'), findsOneWidget);
     expect(find.text('Version'), findsOneWidget);
     expect(find.text('0.1.0'), findsOneWidget);
