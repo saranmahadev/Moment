@@ -31,9 +31,7 @@ void main() {
     );
   }
 
-  testWidgets('defaults to the first emoji, Happy, strength 3', (
-    tester,
-  ) async {
+  testWidgets('defaults to the first emoji, Happy, strength 3', (tester) async {
     final db = AppDatabase(NativeDatabase.memory());
     final repo = LogRepository(db, clock: () => now);
 
@@ -59,7 +57,7 @@ void main() {
     await tester.tap(find.bySemanticsLabel('Calm'));
     await tester.pump();
 
-    expect(find.text('Calm'), findsNWidgets(2)); // big label + grid cell
+    expect(find.text('Calm'), findsOneWidget); // the big label
     expect(find.bySemanticsLabel('Calm, selected'), findsOneWidget);
 
     await tester.pumpWidget(const SizedBox());
@@ -76,10 +74,7 @@ void main() {
     await tester.pump();
 
     expect(find.bySemanticsLabel('Intensity 5 of 5, selected'), findsOneWidget);
-    expect(
-      find.bySemanticsLabel('Intensity 3 of 5, selected'),
-      findsNothing,
-    );
+    expect(find.bySemanticsLabel('Intensity 3 of 5, selected'), findsNothing);
 
     await tester.pumpWidget(const SizedBox());
     await tester.pumpAndSettle();
