@@ -11,8 +11,11 @@ import 'package:flutter_test/flutter_test.dart';
 /// calls instead of pumpAndSettle().
 Future<void> testExecutable(FutureOr<void> Function() testMain) async {
   TestWidgetsFlutterBinding.ensureInitialized();
-  TestWidgetsFlutterBinding.instance.platformDispatcher
-          .accessibilityFeaturesTestValue =
-      const FakeAccessibilityFeatures(disableAnimations: true);
+  TestWidgetsFlutterBinding
+      .instance
+      .platformDispatcher
+      .accessibilityFeaturesTestValue = const FakeAccessibilityFeatures(
+    disableAnimations: true,
+  );
   await testMain();
 }
