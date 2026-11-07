@@ -3,11 +3,13 @@ import 'package:path/path.dart' as p;
 import 'package:path_provider/path_provider.dart';
 
 import '../data/log_repository.dart';
+import '../data/media_store.dart';
 import '../data/secure_database.dart';
 import '../design/theme.dart';
 import '../lock/app_lock_controller.dart';
 import '../lock/biometric_authenticator.dart';
 import '../lock/pin_storage.dart';
+import '../photo/photo_picker.dart';
 import '../shell/app_shell.dart';
 import 'lock_gate.dart';
 import '../data/database.dart';
@@ -17,11 +19,13 @@ class _Resources {
   _Resources({
     required this.repository,
     required this.lockController,
+    required this.mediaStore,
     required this.hasPin,
   });
 
   final LogRepository repository;
   final AppLockController lockController;
+  final MediaStore mediaStore;
   final bool hasPin;
 }
 
@@ -42,6 +46,7 @@ Future<_Resources> _bootstrap() async {
   return _Resources(
     repository: LogRepository(db),
     lockController: lockController,
+    mediaStore: MediaStore(root: supportDir),
     hasPin: hasPin,
   );
 }
@@ -100,6 +105,8 @@ class _MomentAppState extends State<MomentApp> with WidgetsBindingObserver {
             child: AppShell(
               repository: resources.repository,
               lockController: resources.lockController,
+              mediaStore: resources.mediaStore,
+              picker: DevicePhotoPicker(),
             ),
           );
         },

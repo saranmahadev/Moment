@@ -362,6 +362,40 @@ void main() {
   });
 
   testWidgets(
+    'taking a new photo from the Add flow returns to Home with it visible',
+    (tester) async {
+      final db = AppDatabase(NativeDatabase.memory());
+      final repo = LogRepository(db, clock: () => now);
+      final source = _sampleSourcePhoto(p.join(tempDir.path, 'source.jpg'));
+
+      await pump(tester, repo, picker: _FakePhotoPicker(cameraResult: source));
+      await tester.pump();
+
+      await tester.tap(find.bySemanticsLabel('Add a log'));
+      await tester.pumpAndSettle();
+      await tester.tap(
+        find.byKey(const ValueKey('add-sheet-type-LogType.photo')),
+      );
+      await tester.pumpAndSettle();
+      await tester.tap(find.text('Take Photo'));
+      await tester.pumpAndSettle();
+
+      await tester.runAsync(() async {
+        await tester.tap(find.text('Save'));
+        await Future<void>.delayed(const Duration(seconds: 2));
+      });
+      await tester.pump();
+      await tester.pumpAndSettle();
+
+      expect(find.text('Choose from Library'), findsNothing);
+
+      await tester.pumpWidget(const SizedBox());
+      await tester.pumpAndSettle();
+      await db.close();
+    },
+  );
+
+  testWidgets(
     'saving a new photo from the Add flow returns to Home with it visible',
     (tester) async {
       final db = AppDatabase(NativeDatabase.memory());
@@ -389,7 +423,7 @@ void main() {
         await Future<void>.delayed(const Duration(seconds: 2));
       });
       await tester.pump();
-      await tester.pump();
+      await tester.pumpAndSettle();
 
       expect(find.text('Take Photo'), findsNothing);
       expect(find.text('From the shell'), findsOneWidget);

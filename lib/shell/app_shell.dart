@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
 import '../data/log_repository.dart';
+import '../data/media_store.dart';
 import '../design/glass_surface.dart';
 import '../design/orb_field.dart';
 import '../design/tokens.dart';
@@ -13,6 +14,10 @@ import '../home/add_sheet.dart';
 import '../home/home_screen.dart';
 import '../library/library_screen.dart';
 import '../lock/app_lock_controller.dart';
+import '../photo/create_photo_screen.dart';
+import '../photo/photo_detail_screen.dart';
+import '../photo/photo_picker.dart';
+import '../photo/photo_section_screen.dart';
 import '../privacy/privacy_screen.dart';
 import '../section/section_screen.dart';
 import '../settings/settings_screen.dart';
@@ -29,11 +34,15 @@ class AppShell extends StatefulWidget {
     super.key,
     required this.repository,
     required this.lockController,
+    required this.mediaStore,
+    required this.picker,
     DateTime Function()? now,
   }) : now = now ?? DateTime.now;
 
   final LogRepository repository;
   final AppLockController lockController;
+  final MediaStore mediaStore;
+  final PhotoPicker picker;
   final DateTime Function() now;
 
   @override
@@ -48,6 +57,7 @@ class _AppShellState extends State<AppShell> {
         Theme.of(context).extension<MomentTokens>() ?? MomentTokens.standard;
     await showModalBottomSheet<void>(
       context: context,
+      isScrollControlled: true,
       backgroundColor: tokens.ground,
       shape: const RoundedRectangleBorder(
         borderRadius: BorderRadius.vertical(top: Radius.circular(28)),
@@ -84,9 +94,21 @@ class _AppShellState extends State<AppShell> {
             ),
           ),
         );
+      case LogType.photo:
+        Navigator.of(context).push(
+          MaterialPageRoute<void>(
+            builder: (_) => CreatePhotoScreen(
+              repository: widget.repository,
+              mediaStore: widget.mediaStore,
+              picker: widget.picker,
+              now: widget.now,
+              onSaved: (_) => Navigator.of(context).pop(),
+              onClose: () => Navigator.of(context).pop(),
+            ),
+          ),
+        );
       // Not in builtLogTypes yet, so AddSheet never offers these: nothing
       // to wire up until their own chunks add both the screen and the type.
-      case LogType.photo:
       case LogType.video:
       case LogType.audio:
       case LogType.location:
@@ -108,8 +130,14 @@ class _AppShellState extends State<AppShell> {
         now: widget.now,
         onBack: () => Navigator.of(context).pop(),
       ),
-      // Not reachable yet: no screen creates one, so none can appear here.
-      PhotoLog() => throw UnimplementedError('Photo detail is not built yet'),
+      PhotoLog() => PhotoDetailScreen(
+        log: log,
+        repository: widget.repository,
+        mediaStore: widget.mediaStore,
+        picker: widget.picker,
+        now: widget.now,
+        onBack: () => Navigator.of(context).pop(),
+      ),
     };
     Navigator.of(context).push(MaterialPageRoute<void>(builder: (_) => screen));
   }
@@ -140,12 +168,18 @@ class _AppShellState extends State<AppShell> {
   void _openSection(LogType type) {
     Navigator.of(context).push(
       MaterialPageRoute<void>(
-        builder: (_) => SectionScreen(
-          type: type,
-          repository: widget.repository,
-          onBack: () => Navigator.of(context).pop(),
-          onOpenLog: _openDetail,
-        ),
+        builder: (_) => type == LogType.photo
+            ? PhotoSectionScreen(
+                repository: widget.repository,
+                onBack: () => Navigator.of(context).pop(),
+                onOpenLog: _openDetail,
+              )
+            : SectionScreen(
+                type: type,
+                repository: widget.repository,
+                onBack: () => Navigator.of(context).pop(),
+                onOpenLog: _openDetail,
+              ),
       ),
     );
   }

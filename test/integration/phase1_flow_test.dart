@@ -1,12 +1,17 @@
+import 'dart:io';
+
 import 'package:drift/native.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:moment/data/database.dart';
 import 'package:moment/data/log_repository.dart';
+import 'package:moment/data/media_store.dart';
 import 'package:moment/design/theme.dart';
 import 'package:moment/lock/app_lock_controller.dart';
 import 'package:moment/lock/pin_storage.dart';
+import 'package:moment/photo/photo_picker.dart';
 import 'package:moment/shell/app_shell.dart';
+import 'package:path/path.dart' as p;
 
 class _FakePinStorage implements PinStorage {
   String? stored;
@@ -21,6 +26,14 @@ class _FakePinStorage implements PinStorage {
   Future<void> clear() async => stored = null;
 }
 
+class _FakePhotoPicker implements PhotoPicker {
+  @override
+  Future<File?> pickFromCamera() async => null;
+
+  @override
+  Future<File?> pickFromGallery() async => null;
+}
+
 void main() {
   // End-to-end through the real app shell, matching docs/ROADMAP.md's
   // Phase 1 exit gate: "create a text log, see it on Home, edit it,
@@ -31,14 +44,24 @@ void main() {
       await tester.binding.setSurfaceSize(const Size(390, 844));
       addTearDown(() => tester.binding.setSurfaceSize(null));
 
+      final tempDir = Directory.systemTemp.createTempSync('phase1_flow_test_');
+      addTearDown(() => tempDir.deleteSync(recursive: true));
       final db = AppDatabase(NativeDatabase.memory());
       final repo = LogRepository(db);
       final lockController = AppLockController(_FakePinStorage());
+      final mediaStore = MediaStore(
+        root: Directory(p.join(tempDir.path, 'app_support')),
+      );
 
       await tester.pumpWidget(
         MaterialApp(
           theme: momentTheme(),
-          home: AppShell(repository: repo, lockController: lockController),
+          home: AppShell(
+            repository: repo,
+            lockController: lockController,
+            mediaStore: mediaStore,
+            picker: _FakePhotoPicker(),
+          ),
         ),
       );
       await tester.pump();
