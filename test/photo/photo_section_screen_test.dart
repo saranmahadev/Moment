@@ -123,7 +123,7 @@ void main() {
 
     await pump(tester, repo, onBack: () => backed = true);
     await tester.pump();
-    await tester.tap(find.bySemanticsLabel('Back to Library'));
+    await tester.tap(find.byKey(const ValueKey('photo-section-back')));
 
     expect(backed, isTrue);
 
