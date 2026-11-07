@@ -4,23 +4,18 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:moment/data/database.dart';
 import 'package:moment/data/log_repository.dart';
 import 'package:moment/design/theme.dart';
-import 'package:moment/domain/log_type.dart';
 import 'package:moment/shell/app_shell.dart';
 
 void main() {
   final now = DateTime.utc(2026, 11, 6, 21, 50);
 
-  Future<void> pump(
-    WidgetTester tester,
-    LogRepository repo, {
-    ValueChanged<LogType>? onAddType,
-  }) async {
+  Future<void> pump(WidgetTester tester, LogRepository repo) async {
     await tester.binding.setSurfaceSize(const Size(390, 844));
     addTearDown(() => tester.binding.setSurfaceSize(null));
     return tester.pumpWidget(
       MaterialApp(
         theme: momentTheme(),
-        home: AppShell(repository: repo, now: () => now, onAddType: onAddType),
+        home: AppShell(repository: repo, now: () => now),
       ),
     );
   }
@@ -96,14 +91,13 @@ void main() {
     await db.close();
   });
 
-  testWidgets('picking a type not built yet falls back to onAddType', (
+  testWidgets('picking Emoji from the Add sheet opens CreateEmojiScreen', (
     tester,
   ) async {
     final db = AppDatabase(NativeDatabase.memory());
     final repo = LogRepository(db, clock: () => now);
-    LogType? picked;
 
-    await pump(tester, repo, onAddType: (type) => picked = type);
+    await pump(tester, repo);
     await tester.pump();
 
     await tester.tap(find.bySemanticsLabel('Add a log'));
@@ -113,13 +107,41 @@ void main() {
     );
     await tester.pumpAndSettle();
 
-    expect(picked, LogType.emoji);
     expect(find.text('Add to your log'), findsNothing);
+    expect(find.text('Log mood'), findsOneWidget);
 
     await tester.pumpWidget(const SizedBox());
     await tester.pumpAndSettle();
     await db.close();
   });
+
+  testWidgets(
+    'saving a new mood from the Add flow returns to Home with it visible',
+    (tester) async {
+      final db = AppDatabase(NativeDatabase.memory());
+      final repo = LogRepository(db, clock: () => now);
+
+      await pump(tester, repo);
+      await tester.pump();
+
+      await tester.tap(find.bySemanticsLabel('Add a log'));
+      await tester.pumpAndSettle();
+      await tester.tap(
+        find.byKey(const ValueKey('add-sheet-type-LogType.emoji')),
+      );
+      await tester.pumpAndSettle();
+
+      await tester.tap(find.text('Log mood'));
+      await tester.pumpAndSettle();
+
+      expect(find.text('Happy'), findsOneWidget);
+      expect(find.text('Log mood'), findsNothing);
+
+      await tester.pumpWidget(const SizedBox());
+      await tester.pumpAndSettle();
+      await db.close();
+    },
+  );
 
   testWidgets('picking Text from the Add sheet opens CreateTextScreen', (
     tester,
