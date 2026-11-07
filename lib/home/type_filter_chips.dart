@@ -5,15 +5,6 @@ import '../design/tokens.dart';
 import '../design/type_icons.dart';
 import '../domain/log_type.dart';
 
-String _labelFor(LogType type) => switch (type) {
-  LogType.text => 'Text',
-  LogType.emoji => 'Emoji',
-  LogType.photo => 'Photo',
-  LogType.video => 'Video',
-  LogType.audio => 'Audio',
-  LogType.location => 'Location',
-};
-
 /// Home's "All" plus one chip per type that has been built so far.
 /// Matches the filter row in design/mockups/Main.dc.html.
 class TypeFilterChips extends StatelessWidget {
@@ -50,7 +41,7 @@ class TypeFilterChips extends StatelessWidget {
           for (final type in availableTypes) ...[
             const SizedBox(width: 8),
             _Chip(
-              label: _labelFor(type),
+              label: momentLabelFor(type),
               icon: momentIconFor(type),
               iconColor: tokens.colorFor(type),
               isSelected: selected == type,

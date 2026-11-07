@@ -82,14 +82,7 @@ class _Header extends StatelessWidget {
         ),
         const SizedBox(width: 8),
         Text(
-          switch (log.type) {
-            LogType.text => 'Text',
-            LogType.emoji => 'Emoji',
-            LogType.photo => 'Photo',
-            LogType.video => 'Video',
-            LogType.audio => 'Audio',
-            LogType.location => 'Location',
-          },
+          momentLabelFor(log.type),
           style: TextStyle(
             fontSize: 13,
             fontWeight: FontWeight.w600,
