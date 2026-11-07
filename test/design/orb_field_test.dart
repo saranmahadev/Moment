@@ -53,4 +53,35 @@ void main() {
     await pump(tester, 844);
     expect(find.byType(IgnorePointer), findsOneWidget);
   });
+
+  testWidgets('drifts continuously unless the device asks to reduce motion', (
+    tester,
+  ) async {
+    tester.platformDispatcher.accessibilityFeaturesTestValue =
+        const FakeAccessibilityFeatures(disableAnimations: false);
+    addTearDown(() {
+      tester.platformDispatcher.accessibilityFeaturesTestValue =
+          const FakeAccessibilityFeatures(disableAnimations: true);
+    });
+
+    await pump(tester, 844);
+    final before = tester.getTopLeft(find.byType(Container).first);
+
+    await tester.pump(const Duration(seconds: 5));
+    final after = tester.getTopLeft(find.byType(Container).first);
+
+    expect(after, isNot(before));
+  });
+
+  testWidgets('does not move when the device asks to reduce motion', (
+    tester,
+  ) async {
+    await pump(tester, 844);
+    final before = tester.getTopLeft(find.byType(Container).first);
+
+    await tester.pump(const Duration(seconds: 5));
+    final after = tester.getTopLeft(find.byType(Container).first);
+
+    expect(after, before);
+  });
 }
