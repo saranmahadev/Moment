@@ -11,7 +11,10 @@ import '../emoji/create_emoji_screen.dart';
 import '../home/add_sheet.dart';
 import '../home/home_screen.dart';
 import '../library/library_screen.dart';
+import '../lock/app_lock_controller.dart';
+import '../privacy/privacy_screen.dart';
 import '../section/section_screen.dart';
+import '../settings/settings_screen.dart';
 import '../text/create_text_screen.dart';
 import '../trash/trash_screen.dart';
 
@@ -24,10 +27,12 @@ class AppShell extends StatefulWidget {
   const AppShell({
     super.key,
     required this.repository,
+    required this.lockController,
     DateTime Function()? now,
   }) : now = now ?? DateTime.now;
 
   final LogRepository repository;
+  final AppLockController lockController;
   final DateTime Function() now;
 
   @override
@@ -118,6 +123,17 @@ class _AppShellState extends State<AppShell> {
     );
   }
 
+  void _openPrivacy() {
+    Navigator.of(context).push(
+      MaterialPageRoute<void>(
+        builder: (_) => PrivacyScreen(
+          controller: widget.lockController,
+          onBack: () => Navigator.of(context).pop(),
+        ),
+      ),
+    );
+  }
+
   void _openSection(LogType type) {
     Navigator.of(context).push(
       MaterialPageRoute<void>(
@@ -155,7 +171,11 @@ class _AppShellState extends State<AppShell> {
                 onOpenTrash: _openTrash,
               ),
               const _Placeholder('Calendar'),
-              const _Placeholder('Settings'),
+              SettingsScreen(
+                repository: widget.repository,
+                onOpenPrivacy: _openPrivacy,
+                onOpenTrash: _openTrash,
+              ),
             ],
           ),
           Align(

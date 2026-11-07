@@ -89,31 +89,30 @@ void main() {
     expect(find.text('Choose a PIN'), findsOneWidget);
   });
 
-  testWidgets(
-    'finishing CreatePinScreen returns to Privacy with App lock on',
-    (tester) async {
-      final controller = AppLockController(_FakePinStorage());
-      await pump(tester, controller);
+  testWidgets('finishing CreatePinScreen returns to Privacy with App lock on', (
+    tester,
+  ) async {
+    final controller = AppLockController(_FakePinStorage());
+    await pump(tester, controller);
 
-      await tester.tap(find.byType(Switch));
-      await tester.pumpAndSettle();
+    await tester.tap(find.byType(Switch));
+    await tester.pumpAndSettle();
 
-      for (final digit in '1234'.split('')) {
-        await tester.tap(find.byKey(ValueKey('digit-$digit')));
-        await tester.pump();
-      }
-      for (final digit in '1234'.split('')) {
-        await tester.tap(find.byKey(ValueKey('digit-$digit')));
-        await tester.pump();
-      }
-      await tester.pumpAndSettle();
+    for (final digit in '1234'.split('')) {
+      await tester.tap(find.byKey(ValueKey('digit-$digit')));
+      await tester.pump();
+    }
+    for (final digit in '1234'.split('')) {
+      await tester.tap(find.byKey(ValueKey('digit-$digit')));
+      await tester.pump();
+    }
+    await tester.pumpAndSettle();
 
-      expect(find.text('Privacy and backup'), findsOneWidget);
-      final toggle = tester.widget<Switch>(find.byType(Switch));
-      expect(toggle.value, isTrue);
-      expect(await controller.hasPin(), isTrue);
-    },
-  );
+    expect(find.text('Privacy and backup'), findsOneWidget);
+    final toggle = tester.widget<Switch>(find.byType(Switch));
+    expect(toggle.value, isTrue);
+    expect(await controller.hasPin(), isTrue);
+  });
 
   testWidgets('turning App lock off clears the PIN', (tester) async {
     final storage = _FakePinStorage();

@@ -298,9 +298,7 @@ void main() {
     await db.close();
   });
 
-  testWidgets('tapping Settings switches to the Settings hub', (
-    tester,
-  ) async {
+  testWidgets('tapping Settings switches to the Settings hub', (tester) async {
     final db = AppDatabase(NativeDatabase.memory());
     final repo = LogRepository(db, clock: () => now);
 
@@ -317,26 +315,25 @@ void main() {
     await db.close();
   });
 
-  testWidgets(
-    'tapping Privacy and backup in Settings opens PrivacyScreen',
-    (tester) async {
-      final db = AppDatabase(NativeDatabase.memory());
-      final repo = LogRepository(db, clock: () => now);
+  testWidgets('tapping Privacy and backup in Settings opens PrivacyScreen', (
+    tester,
+  ) async {
+    final db = AppDatabase(NativeDatabase.memory());
+    final repo = LogRepository(db, clock: () => now);
 
-      await pump(tester, repo);
-      await tester.pump();
-      await tester.tap(find.bySemanticsLabel('Settings'));
-      await tester.pump();
-      await tester.tap(find.text('Privacy and backup'));
-      await tester.pumpAndSettle();
+    await pump(tester, repo);
+    await tester.pump();
+    await tester.tap(find.bySemanticsLabel('Settings'));
+    await tester.pump();
+    await tester.tap(find.text('Privacy and backup'));
+    await tester.pumpAndSettle();
 
-      expect(find.text('App lock'), findsOneWidget);
+    expect(find.text('App lock'), findsOneWidget);
 
-      await tester.pumpWidget(const SizedBox());
-      await tester.pumpAndSettle();
-      await db.close();
-    },
-  );
+    await tester.pumpWidget(const SizedBox());
+    await tester.pumpAndSettle();
+    await db.close();
+  });
 
   testWidgets('tapping Trash in Settings opens TrashScreen', (tester) async {
     final db = AppDatabase(NativeDatabase.memory());
