@@ -119,8 +119,13 @@ void main() {
     addTearDown(() => tester.binding.setSurfaceSize(null));
     final db = AppDatabase(NativeDatabase.memory());
     final repo = LogRepository(db, clock: () => now);
-    await repo.createText(body: 'Quiet evening.');
-    await repo.createEmoji(emoji: '😌', label: 'Calm', strength: 4);
+    await repo.createEmoji(
+      emoji: '😌',
+      label: 'Calm',
+      strength: 4,
+      createdAt: now.subtract(const Duration(minutes: 5)),
+    );
+    await repo.createText(body: 'Quiet evening.', createdAt: now);
 
     await pump(tester, repo);
     await tester.pump();
