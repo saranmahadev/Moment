@@ -67,7 +67,32 @@ void main() {
     await tester.pump();
 
     expect(find.text('Friday'), findsNothing);
-    expect(find.text('Library'), findsWidgets);
+    expect(
+      find.text('Everything you have logged, one section per type.'),
+      findsOneWidget,
+    );
+
+    await tester.pumpWidget(const SizedBox());
+    await tester.pumpAndSettle();
+    await db.close();
+  });
+
+  testWidgets('tapping a type tile in Library opens its SectionScreen', (
+    tester,
+  ) async {
+    final db = AppDatabase(NativeDatabase.memory());
+    final repo = LogRepository(db, clock: () => now);
+    await repo.createText(body: 'In the section');
+
+    await pump(tester, repo);
+    await tester.pump();
+    await tester.tap(find.bySemanticsLabel('Library'));
+    await tester.pump();
+    await tester.tap(find.text('Text'));
+    await tester.pumpAndSettle();
+
+    expect(find.text('In the section'), findsOneWidget);
+    expect(find.text('1 log'), findsOneWidget);
 
     await tester.pumpWidget(const SizedBox());
     await tester.pumpAndSettle();
