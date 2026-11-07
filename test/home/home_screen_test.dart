@@ -114,6 +114,27 @@ void main() {
     await db.close();
   });
 
+  testWidgets('matches its approved baseline', (tester) async {
+    await tester.binding.setSurfaceSize(const Size(390, 844));
+    addTearDown(() => tester.binding.setSurfaceSize(null));
+    final db = AppDatabase(NativeDatabase.memory());
+    final repo = LogRepository(db, clock: () => now);
+    await repo.createText(body: 'Quiet evening.');
+    await repo.createEmoji(emoji: '😌', label: 'Calm', strength: 4);
+
+    await pump(tester, repo);
+    await tester.pump();
+
+    await expectLater(
+      find.byType(HomeScreen),
+      matchesGoldenFile('goldens/home_screen.png'),
+    );
+
+    await tester.pumpWidget(const SizedBox());
+    await tester.pumpAndSettle();
+    await db.close();
+  });
+
   testWidgets('tapping a card reports the log', (tester) async {
     final db = AppDatabase(NativeDatabase.memory());
     final repo = LogRepository(db, clock: () => now);

@@ -49,6 +49,27 @@ void main() {
     await db.close();
   });
 
+  testWidgets('matches its approved baseline', (tester) async {
+    final db = AppDatabase(NativeDatabase.memory());
+    final repo = LogRepository(db, clock: () => now);
+    await repo.createText(body: 'one');
+    await repo.createText(body: 'two');
+    final deleted = await repo.createEmoji(emoji: '😌', strength: 3);
+    await repo.softDelete(deleted);
+
+    await pump(tester, repo);
+    await tester.pump();
+
+    await expectLater(
+      find.byType(LibraryScreen),
+      matchesGoldenFile('goldens/library_screen.png'),
+    );
+
+    await tester.pumpWidget(const SizedBox());
+    await tester.pumpAndSettle();
+    await db.close();
+  });
+
   testWidgets('shows a tile per built type with its count and last date', (
     tester,
   ) async {

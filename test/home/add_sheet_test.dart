@@ -57,4 +57,15 @@ void main() {
     await tester.tap(find.bySemanticsLabel('Close'));
     expect(closed, isTrue);
   });
+
+  testWidgets('matches its approved baseline', (tester) async {
+    await tester.binding.setSurfaceSize(const Size(390, 844));
+    addTearDown(() => tester.binding.setSurfaceSize(null));
+    await pump(tester, onSelected: (_) {});
+
+    await expectLater(
+      find.byType(AddSheet),
+      matchesGoldenFile('goldens/add_sheet.png'),
+    );
+  });
 }
