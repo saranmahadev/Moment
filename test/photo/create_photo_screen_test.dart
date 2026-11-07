@@ -97,29 +97,39 @@ void main() {
     await close(tester);
   });
 
-  testWidgets(
-    'choosing from the library shows a preview and the Save button',
-    (tester) async {
-      final source = _sampleSourcePhoto(p.join(tempDir.path, 'source.jpg'));
-      await pump(
-        tester,
-        picker: _FakePhotoPicker(galleryResult: source),
-      );
-
-      await tester.tap(find.text('Choose from Library'));
-      await tester.pumpAndSettle();
-
-      expect(find.text('Take Photo'), findsNothing);
-      expect(find.byType(Image), findsWidgets);
-      expect(find.text('Save'), findsOneWidget);
-
-      await close(tester);
-    },
-  );
-
-  testWidgets('Save imports the photo and creates a photo log', (
+  testWidgets('taking a photo shows a preview and the Save button', (
     tester,
   ) async {
+    final source = _sampleSourcePhoto(p.join(tempDir.path, 'source.jpg'));
+    await pump(tester, picker: _FakePhotoPicker(cameraResult: source));
+
+    await tester.tap(find.text('Take Photo'));
+    await tester.pumpAndSettle();
+
+    expect(find.text('Choose from Library'), findsNothing);
+    expect(find.byType(Image), findsWidgets);
+    expect(find.text('Save'), findsOneWidget);
+
+    await close(tester);
+  });
+
+  testWidgets('choosing from the library shows a preview and the Save button', (
+    tester,
+  ) async {
+    final source = _sampleSourcePhoto(p.join(tempDir.path, 'source.jpg'));
+    await pump(tester, picker: _FakePhotoPicker(galleryResult: source));
+
+    await tester.tap(find.text('Choose from Library'));
+    await tester.pumpAndSettle();
+
+    expect(find.text('Take Photo'), findsNothing);
+    expect(find.byType(Image), findsWidgets);
+    expect(find.text('Save'), findsOneWidget);
+
+    await close(tester);
+  });
+
+  testWidgets('Save imports the photo and creates a photo log', (tester) async {
     final source = _sampleSourcePhoto(p.join(tempDir.path, 'source.jpg'));
     String? savedId;
     await pump(
@@ -131,8 +141,16 @@ void main() {
     await tester.tap(find.text('Choose from Library'));
     await tester.pumpAndSettle();
     await tester.enterText(find.byType(TextField), 'By the lake');
-    await tester.tap(find.text('Save'));
-    await tester.pumpAndSettle();
+    // MediaStore.importPhoto runs the real image codec in a real isolate
+    // (compute()): the tap that triggers it has to happen inside runAsync,
+    // not just be followed by one, or the isolate's completion is never
+    // observed from flutter_test's fake-clock zone.
+    await tester.runAsync(() async {
+      await tester.tap(find.text('Save'));
+      await Future<void>.delayed(const Duration(seconds: 2));
+    });
+    await tester.pump();
+    await tester.pump();
 
     expect(savedId, isNotNull);
     final log = await repo.getById(savedId!) as PhotoLog;
@@ -164,7 +182,13 @@ void main() {
       tester,
     ) async {
       final source = _sampleSourcePhoto(p.join(tempDir.path, 'source.jpg'));
-      final imported = await mediaStore.importPhoto(source);
+      // importPhoto runs in a real isolate (compute()), whose completion
+      // flutter_test's fake-clock zone never observes unless it is awaited
+      // inside runAsync.
+      late ImportedPhoto imported;
+      await tester.runAsync(() async {
+        imported = await mediaStore.importPhoto(source);
+      });
       final id = await repo.createPhoto(
         path: imported.path,
         thumbnailPath: imported.thumbnailPath,
@@ -172,11 +196,7 @@ void main() {
       );
       final existing = await repo.getById(id) as PhotoLog;
 
-      await pump(
-        tester,
-        picker: _FakePhotoPicker(),
-        editing: existing,
-      );
+      await pump(tester, picker: _FakePhotoPicker(), editing: existing);
 
       expect(find.text('Take Photo'), findsNothing);
       expect(find.text('Original caption'), findsOneWidget);
@@ -187,7 +207,10 @@ void main() {
 
     testWidgets('Save updates the caption in place', (tester) async {
       final source = _sampleSourcePhoto(p.join(tempDir.path, 'source.jpg'));
-      final imported = await mediaStore.importPhoto(source);
+      late ImportedPhoto imported;
+      await tester.runAsync(() async {
+        imported = await mediaStore.importPhoto(source);
+      });
       final id = await repo.createPhoto(
         path: imported.path,
         thumbnailPath: imported.thumbnailPath,
