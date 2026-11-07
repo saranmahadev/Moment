@@ -179,4 +179,52 @@ void main() {
       expect(find.byType(Image), findsOneWidget);
     });
   });
+
+  group('AudioLogCard', () {
+    final log = AudioLog(
+      id: '6',
+      createdAt: DateTime.utc(2026, 11, 6, 18, 5),
+      tzOffsetMinutes: 0,
+      editedAt: null,
+      deletedAt: null,
+      path: '/media/2026/11/a.m4a',
+      duration: const Duration(seconds: 42),
+      peaks: [0.2, 0.5, 0.8, 0.3],
+      title: 'Voice note',
+      note: null,
+    );
+
+    testWidgets('shows the type label, time, title and duration', (
+      tester,
+    ) async {
+      await pump(tester, FeedCard(log: log));
+
+      expect(find.text('Audio'), findsOneWidget);
+      expect(find.text('18:05'), findsOneWidget);
+      expect(find.text('Voice note'), findsOneWidget);
+      expect(find.text('0:42'), findsOneWidget);
+      expect(find.byIcon(Icons.play_arrow), findsOneWidget);
+    });
+
+    testWidgets('falls back to "Audio" when there is no title', (
+      tester,
+    ) async {
+      final untitled = AudioLog(
+        id: '7',
+        createdAt: DateTime.utc(2026, 11, 6, 18, 5),
+        tzOffsetMinutes: 0,
+        editedAt: null,
+        deletedAt: null,
+        path: '/media/2026/11/b.m4a',
+        duration: const Duration(seconds: 5),
+        peaks: [0.1],
+        title: null,
+        note: null,
+      );
+
+      await pump(tester, FeedCard(log: untitled));
+
+      expect(find.text('Audio'), findsNWidgets(2));
+    });
+  });
 }
