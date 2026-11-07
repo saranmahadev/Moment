@@ -97,15 +97,19 @@ class _Header extends StatelessWidget {
           ),
         ),
         const Spacer(),
-        Text(
-          showFullDate
-              ? '${_fullDateFormat.format(log.localMoment)} · '
-                    '${_timeFormat.format(log.localMoment)}'
-              : _timeFormat.format(log.localMoment),
-          style: TextStyle(
-            fontSize: 13,
-            fontWeight: FontWeight.w500,
-            color: tokens.secondary,
+        Flexible(
+          child: Text(
+            showFullDate
+                ? '${_fullDateFormat.format(log.localMoment)} · '
+                      '${_timeFormat.format(log.localMoment)}'
+                : _timeFormat.format(log.localMoment),
+            overflow: TextOverflow.ellipsis,
+            textAlign: TextAlign.end,
+            style: TextStyle(
+              fontSize: 13,
+              fontWeight: FontWeight.w500,
+              color: tokens.secondary,
+            ),
           ),
         ),
       ],

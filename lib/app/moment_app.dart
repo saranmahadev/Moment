@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:path/path.dart' as p;
 import 'package:path_provider/path_provider.dart';
 
+import '../audio/audio_playback_controller.dart';
+import '../audio/audio_recorder_controller.dart';
 import '../data/log_repository.dart';
 import '../data/media_store.dart';
 import '../data/secure_database.dart';
@@ -107,6 +109,8 @@ class _MomentAppState extends State<MomentApp> with WidgetsBindingObserver {
               lockController: resources.lockController,
               mediaStore: resources.mediaStore,
               picker: DevicePhotoPicker(),
+              createAudioRecorder: DeviceAudioRecorderController.new,
+              createAudioPlayback: DeviceAudioPlaybackController.new,
             ),
           );
         },

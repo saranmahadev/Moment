@@ -1,5 +1,9 @@
 import 'package:flutter/material.dart';
 
+import '../audio/audio_detail_screen.dart';
+import '../audio/audio_playback_controller.dart';
+import '../audio/audio_recorder_controller.dart';
+import '../audio/create_audio_screen.dart';
 import '../data/log_repository.dart';
 import '../data/media_store.dart';
 import '../design/glass_surface.dart';
@@ -36,6 +40,8 @@ class AppShell extends StatefulWidget {
     required this.lockController,
     required this.mediaStore,
     required this.picker,
+    required this.createAudioRecorder,
+    required this.createAudioPlayback,
     DateTime Function()? now,
   }) : now = now ?? DateTime.now;
 
@@ -43,6 +49,8 @@ class AppShell extends StatefulWidget {
   final AppLockController lockController;
   final MediaStore mediaStore;
   final PhotoPicker picker;
+  final AudioRecorderController Function() createAudioRecorder;
+  final AudioPlaybackController Function() createAudioPlayback;
   final DateTime Function() now;
 
   @override
@@ -107,10 +115,22 @@ class _AppShellState extends State<AppShell> {
             ),
           ),
         );
+      case LogType.audio:
+        Navigator.of(context).push(
+          MaterialPageRoute<void>(
+            builder: (_) => CreateAudioScreen(
+              repository: widget.repository,
+              mediaStore: widget.mediaStore,
+              recorder: widget.createAudioRecorder(),
+              now: widget.now,
+              onSaved: (_) => Navigator.of(context).pop(),
+              onClose: () => Navigator.of(context).pop(),
+            ),
+          ),
+        );
       // Not in builtLogTypes yet, so AddSheet never offers these: nothing
       // to wire up until their own chunks add both the screen and the type.
       case LogType.video:
-      case LogType.audio:
       case LogType.location:
         break;
     }
@@ -138,7 +158,13 @@ class _AppShellState extends State<AppShell> {
         now: widget.now,
         onBack: () => Navigator.of(context).pop(),
       ),
-      AudioLog() => throw UnimplementedError('Audio detail is not built yet'),
+      AudioLog() => AudioDetailScreen(
+        log: log,
+        repository: widget.repository,
+        playback: widget.createAudioPlayback(),
+        now: widget.now,
+        onBack: () => Navigator.of(context).pop(),
+      ),
     };
     Navigator.of(context).push(MaterialPageRoute<void>(builder: (_) => screen));
   }
