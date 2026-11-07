@@ -33,6 +33,22 @@ void main() {
     );
   }
 
+  testWidgets('matches its approved baseline', (tester) async {
+    final db = AppDatabase(NativeDatabase.memory());
+    final repo = LogRepository(db, clock: () => now);
+
+    await pump(tester, repo);
+
+    await expectLater(
+      find.byType(CreateEmojiScreen),
+      matchesGoldenFile('goldens/create_emoji_screen.png'),
+    );
+
+    await tester.pumpWidget(const SizedBox());
+    await tester.pumpAndSettle();
+    await db.close();
+  });
+
   testWidgets('defaults to the first emoji, Happy, strength 3', (tester) async {
     final db = AppDatabase(NativeDatabase.memory());
     final repo = LogRepository(db, clock: () => now);

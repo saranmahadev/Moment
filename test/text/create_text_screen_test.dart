@@ -50,6 +50,22 @@ void main() {
     await db.close();
   });
 
+  testWidgets('matches its approved baseline', (tester) async {
+    final db = AppDatabase(NativeDatabase.memory());
+    final repo = LogRepository(db, clock: () => now);
+
+    await pump(tester, repo);
+
+    await expectLater(
+      find.byType(CreateTextScreen),
+      matchesGoldenFile('goldens/create_text_screen.png'),
+    );
+
+    await tester.pumpWidget(const SizedBox());
+    await tester.pumpAndSettle();
+    await db.close();
+  });
+
   testWidgets('shows a live word count as the user types', (tester) async {
     final db = AppDatabase(NativeDatabase.memory());
     final repo = LogRepository(db, clock: () => now);

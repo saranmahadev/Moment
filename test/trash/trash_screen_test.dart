@@ -45,6 +45,28 @@ void main() {
     await db.close();
   });
 
+  testWidgets('matches its approved baseline', (tester) async {
+    final db = AppDatabase(NativeDatabase.memory());
+    final repo = LogRepository(db, clock: () => now);
+    final id = await repo.createText(
+      body: 'Rain all day.',
+      createdAt: now.subtract(const Duration(days: 10)),
+    );
+    await repo.softDelete(id);
+
+    await pump(tester, repo);
+    await tester.pump();
+
+    await expectLater(
+      find.byType(TrashScreen),
+      matchesGoldenFile('goldens/trash_screen.png'),
+    );
+
+    await tester.pumpWidget(const SizedBox());
+    await tester.pumpAndSettle();
+    await db.close();
+  });
+
   testWidgets('lists trashed logs with their preview and days since deletion', (
     tester,
   ) async {
