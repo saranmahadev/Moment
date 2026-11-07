@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 
 import '../data/log_repository.dart';
 import '../design/glass_surface.dart';
+import '../design/orb_field.dart';
 import '../design/tokens.dart';
 import '../design/type_icons.dart';
 import '../domain/log.dart';
@@ -65,113 +66,127 @@ class TrashScreen extends StatelessWidget {
 
     return Scaffold(
       backgroundColor: tokens.ground,
-      body: SafeArea(
-        child: StreamBuilder<List<Log>>(
-          stream: repository.watchTrash(),
-          builder: (context, snapshot) {
-            final logs = snapshot.data ?? const [];
-            return ListView(
-              padding: const EdgeInsets.fromLTRB(20, 16, 20, 20),
-              children: [
-                Semantics(
-                  button: true,
-                  label: 'Back',
-                  excludeSemantics: true,
-                  child: GestureDetector(
-                    onTap: onBack,
-                    child: SizedBox(
-                      width: 44,
-                      height: 44,
-                      child: GlassSurface(
-                        variant: GlassVariant.card,
-                        borderRadius: 22,
-                        child: Icon(Icons.chevron_left, color: tokens.ink),
-                      ),
-                    ),
-                  ),
-                ),
-                const SizedBox(height: 10),
-                Text(
-                  'Trash',
-                  style: TextStyle(
-                    fontFamily: 'Newsreader',
-                    fontWeight: FontWeight.w500,
-                    fontSize: 38,
-                    color: tokens.ink,
-                  ),
-                ),
-                const SizedBox(height: 14),
-                GlassSurface(
-                  variant: GlassVariant.card,
-                  child: Padding(
-                    padding: const EdgeInsets.all(16),
-                    child: Row(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Icon(Icons.delete_outline, size: 18, color: tokens.ink),
-                        const SizedBox(width: 10),
-                        Expanded(
-                          child: Text(
-                            'Deleted logs stay here for 30 days, then are '
-                            'removed for good along with their files.',
-                            style: TextStyle(fontSize: 14, color: tokens.ink),
+      body: Stack(
+        children: [
+          const Positioned.fill(child: OrbField()),
+          SafeArea(
+            child: StreamBuilder<List<Log>>(
+              stream: repository.watchTrash(),
+              builder: (context, snapshot) {
+                final logs = snapshot.data ?? const [];
+                return ListView(
+                  padding: const EdgeInsets.fromLTRB(20, 16, 20, 20),
+                  children: [
+                    Semantics(
+                      button: true,
+                      label: 'Back',
+                      excludeSemantics: true,
+                      child: GestureDetector(
+                        onTap: onBack,
+                        child: SizedBox(
+                          width: 44,
+                          height: 44,
+                          child: GlassSurface(
+                            variant: GlassVariant.card,
+                            borderRadius: 22,
+                            child: Icon(Icons.chevron_left, color: tokens.ink),
                           ),
                         ),
-                      ],
+                      ),
                     ),
-                  ),
-                ),
-                for (final log in logs)
-                  Padding(
-                    padding: const EdgeInsets.only(top: 14),
-                    child: _TrashRow(
-                      log: log,
-                      tokens: tokens,
-                      deletedLabel: _deletedLabelFor(log, now()),
-                      onRestore: () => repository.restore(log.id),
+                    const SizedBox(height: 10),
+                    Text(
+                      'Trash',
+                      style: TextStyle(
+                        fontFamily: 'Newsreader',
+                        fontWeight: FontWeight.w500,
+                        fontSize: 38,
+                        color: tokens.ink,
+                      ),
                     ),
-                  ),
-                if (logs.isNotEmpty) ...[
-                  const SizedBox(height: 20),
-                  Center(
-                    child: GestureDetector(
-                      onTap: () => _confirmEmptyTrash(context),
-                      child: SizedBox(
-                        height: 44,
-                        child: GlassSurface(
-                          variant: GlassVariant.card,
-                          borderRadius: 22,
-                          child: Padding(
-                            padding: const EdgeInsets.symmetric(horizontal: 18),
-                            child: Row(
-                              mainAxisSize: MainAxisSize.min,
-                              children: [
-                                Icon(
-                                  Icons.delete_outline,
-                                  size: 18,
-                                  color: tokens.danger,
+                    const SizedBox(height: 14),
+                    GlassSurface(
+                      variant: GlassVariant.card,
+                      child: Padding(
+                        padding: const EdgeInsets.all(16),
+                        child: Row(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Icon(
+                              Icons.delete_outline,
+                              size: 18,
+                              color: tokens.ink,
+                            ),
+                            const SizedBox(width: 10),
+                            Expanded(
+                              child: Text(
+                                'Deleted logs stay here for 30 days, then are '
+                                'removed for good along with their files.',
+                                style: TextStyle(
+                                  fontSize: 14,
+                                  color: tokens.ink,
                                 ),
-                                const SizedBox(width: 8),
-                                Text(
-                                  'Empty Trash',
-                                  style: TextStyle(
-                                    fontSize: 15,
-                                    fontWeight: FontWeight.w600,
-                                    color: tokens.danger,
-                                  ),
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ),
+                    for (final log in logs)
+                      Padding(
+                        padding: const EdgeInsets.only(top: 14),
+                        child: _TrashRow(
+                          log: log,
+                          tokens: tokens,
+                          deletedLabel: _deletedLabelFor(log, now()),
+                          onRestore: () => repository.restore(log.id),
+                        ),
+                      ),
+                    if (logs.isNotEmpty) ...[
+                      const SizedBox(height: 20),
+                      Center(
+                        child: GestureDetector(
+                          onTap: () => _confirmEmptyTrash(context),
+                          child: SizedBox(
+                            height: 44,
+                            child: GlassSurface(
+                              variant: GlassVariant.card,
+                              borderRadius: 22,
+                              child: Padding(
+                                padding: const EdgeInsets.symmetric(
+                                  horizontal: 18,
                                 ),
-                              ],
+                                child: Row(
+                                  mainAxisSize: MainAxisSize.min,
+                                  children: [
+                                    Icon(
+                                      Icons.delete_outline,
+                                      size: 18,
+                                      color: tokens.danger,
+                                    ),
+                                    const SizedBox(width: 8),
+                                    Text(
+                                      'Empty Trash',
+                                      style: TextStyle(
+                                        fontSize: 15,
+                                        fontWeight: FontWeight.w600,
+                                        color: tokens.danger,
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              ),
                             ),
                           ),
                         ),
                       ),
-                    ),
-                  ),
-                ],
-              ],
-            );
-          },
-        ),
+                    ],
+                  ],
+                );
+              },
+            ),
+          ),
+        ],
       ),
     );
   }

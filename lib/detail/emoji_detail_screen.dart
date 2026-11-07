@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 
 import '../data/log_repository.dart';
 import '../design/glass_surface.dart';
+import '../design/orb_field.dart';
 import '../design/tokens.dart';
 import '../domain/log.dart';
 import '../domain/log_type.dart';
@@ -59,110 +60,120 @@ class EmojiDetailScreen extends StatelessWidget {
 
     return Scaffold(
       backgroundColor: tokens.ground,
-      body: SafeArea(
-        child: SingleChildScrollView(
-          padding: const EdgeInsets.fromLTRB(20, 16, 20, 20),
-          child: Column(
-            children: [
-              Row(
+      body: Stack(
+        children: [
+          const Positioned.fill(child: OrbField()),
+          SafeArea(
+            child: SingleChildScrollView(
+              padding: const EdgeInsets.fromLTRB(20, 16, 20, 20),
+              child: Column(
                 children: [
-                  _RoundIconButton(
-                    icon: Icons.chevron_left,
-                    label: 'Back',
-                    tokens: tokens,
-                    onTap: onBack,
+                  Row(
+                    children: [
+                      _RoundIconButton(
+                        icon: Icons.chevron_left,
+                        label: 'Back',
+                        tokens: tokens,
+                        onTap: onBack,
+                      ),
+                      const Spacer(),
+                      _RoundIconButton(
+                        icon: Icons.edit_outlined,
+                        label: 'Edit',
+                        tokens: tokens,
+                        onTap: () => _edit(context),
+                      ),
+                      const SizedBox(width: 10),
+                      _RoundIconButton(
+                        icon: Icons.delete_outline,
+                        label: 'Delete',
+                        tokens: tokens,
+                        onTap: _delete,
+                      ),
+                    ],
                   ),
-                  const Spacer(),
-                  _RoundIconButton(
-                    icon: Icons.edit_outlined,
-                    label: 'Edit',
-                    tokens: tokens,
-                    onTap: () => _edit(context),
+                  const SizedBox(height: 32),
+                  SizedBox(
+                    width: 150,
+                    height: 150,
+                    child: GlassSurface(
+                      variant: GlassVariant.surface,
+                      borderRadius: 75,
+                      child: Center(
+                        child: Text(
+                          log.emoji,
+                          style: const TextStyle(fontSize: 88),
+                        ),
+                      ),
+                    ),
                   ),
-                  const SizedBox(width: 10),
-                  _RoundIconButton(
-                    icon: Icons.delete_outline,
-                    label: 'Delete',
-                    tokens: tokens,
-                    onTap: _delete,
+                  const SizedBox(height: 10),
+                  if (log.label != null)
+                    Text(
+                      log.label!,
+                      style: TextStyle(
+                        fontFamily: 'Newsreader',
+                        fontSize: 34,
+                        color: tokens.ink,
+                      ),
+                    ),
+                  const SizedBox(height: 8),
+                  SingleChildScrollView(
+                    scrollDirection: Axis.horizontal,
+                    child: Row(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        for (var i = 1; i <= 5; i++)
+                          Padding(
+                            padding: const EdgeInsets.only(right: 6),
+                            child: Container(
+                              width: 10,
+                              height: 10,
+                              decoration: BoxDecoration(
+                                shape: BoxShape.circle,
+                                color: i <= log.strength
+                                    ? color
+                                    : tokens.switchOff,
+                              ),
+                            ),
+                          ),
+                        const SizedBox(width: 4),
+                        Text(
+                          '${_intensityWordFor(log.strength)} · ${log.strength} of 5',
+                          style: TextStyle(
+                            fontSize: 14,
+                            color: tokens.secondary,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                  const SizedBox(height: 20),
+                  SingleChildScrollView(
+                    scrollDirection: Axis.horizontal,
+                    child: Row(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        _PillButton(
+                          icon: Icons.emoji_emotions_outlined,
+                          label: 'Change emoji',
+                          tokens: tokens,
+                          onTap: () => _edit(context),
+                        ),
+                        const SizedBox(width: 12),
+                        _PillButton(
+                          label: 'Change strength',
+                          tokens: tokens,
+                          onTap: () => _edit(context),
+                        ),
+                      ],
+                    ),
                   ),
                 ],
               ),
-              const SizedBox(height: 32),
-              SizedBox(
-                width: 150,
-                height: 150,
-                child: GlassSurface(
-                  variant: GlassVariant.surface,
-                  borderRadius: 75,
-                  child: Center(
-                    child: Text(
-                      log.emoji,
-                      style: const TextStyle(fontSize: 88),
-                    ),
-                  ),
-                ),
-              ),
-              const SizedBox(height: 10),
-              if (log.label != null)
-                Text(
-                  log.label!,
-                  style: TextStyle(
-                    fontFamily: 'Newsreader',
-                    fontSize: 34,
-                    color: tokens.ink,
-                  ),
-                ),
-              const SizedBox(height: 8),
-              SingleChildScrollView(
-                scrollDirection: Axis.horizontal,
-                child: Row(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    for (var i = 1; i <= 5; i++)
-                      Padding(
-                        padding: const EdgeInsets.only(right: 6),
-                        child: Container(
-                          width: 10,
-                          height: 10,
-                          decoration: BoxDecoration(
-                            shape: BoxShape.circle,
-                            color: i <= log.strength ? color : tokens.switchOff,
-                          ),
-                        ),
-                      ),
-                    const SizedBox(width: 4),
-                    Text(
-                      '${_intensityWordFor(log.strength)} · ${log.strength} of 5',
-                      style: TextStyle(fontSize: 14, color: tokens.secondary),
-                    ),
-                  ],
-                ),
-              ),
-              const SizedBox(height: 20),
-              SingleChildScrollView(
-                scrollDirection: Axis.horizontal,
-                child: Row(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    _PillButton(
-                      icon: Icons.emoji_emotions_outlined,
-                      label: 'Change emoji',
-                      tokens: tokens,
-                      onTap: () => _edit(context),
-                    ),
-                    const SizedBox(width: 12),
-                    _PillButton(
-                      label: 'Change strength',
-                      tokens: tokens,
-                      onTap: () => _edit(context),
-                    ),
-                  ],
-                ),
-              ),
-            ],
+            ),
           ),
-        ),
+        ],
       ),
     );
   }

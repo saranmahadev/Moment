@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 
 import '../data/log_repository.dart';
 import '../design/glass_surface.dart';
+import '../design/orb_field.dart';
 import '../design/tokens.dart';
 import '../domain/log.dart';
 import '../domain/log_type.dart';
@@ -156,6 +157,7 @@ class _AppShellState extends State<AppShell> {
       backgroundColor: tokens.ground,
       body: Stack(
         children: [
+          const Positioned.fill(child: OrbField()),
           IndexedStack(
             index: _Tab.values.indexOf(_tab),
             children: [

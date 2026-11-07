@@ -34,7 +34,9 @@ class LibraryScreen extends StatelessWidget {
     final today = DateTime.utc(now().year, now().month, now().day);
 
     return Scaffold(
-      backgroundColor: tokens.ground,
+      // Transparent: this screen is always a tab inside AppShell, which
+      // already paints tokens.ground and the shared OrbField behind it.
+      backgroundColor: Colors.transparent,
       body: SafeArea(
         child: ListView(
           padding: const EdgeInsets.fromLTRB(20, 16, 20, 140),

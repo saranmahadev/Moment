@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 
 import '../data/log_repository.dart';
 import '../design/glass_surface.dart';
+import '../design/orb_field.dart';
 import '../design/tokens.dart';
 import '../design/type_icons.dart';
 import '../domain/log.dart';
@@ -95,180 +96,200 @@ class _CreateEmojiScreenState extends State<CreateEmojiScreen> {
 
     return Scaffold(
       backgroundColor: tokens.ground,
-      body: SafeArea(
-        child: SingleChildScrollView(
-          padding: const EdgeInsets.fromLTRB(20, 16, 20, 20),
-          child: Column(
-            children: [
-              Row(
+      body: Stack(
+        children: [
+          const Positioned.fill(child: OrbField()),
+          SafeArea(
+            child: SingleChildScrollView(
+              padding: const EdgeInsets.fromLTRB(20, 16, 20, 20),
+              child: Column(
                 children: [
-                  Semantics(
-                    button: true,
-                    label: 'Close without saving',
-                    excludeSemantics: true,
-                    child: GestureDetector(
-                      onTap: widget.onClose,
-                      child: SizedBox(
-                        width: 44,
-                        height: 44,
-                        child: GlassSurface(
-                          variant: GlassVariant.card,
-                          borderRadius: 22,
-                          child: Icon(Icons.close, size: 20, color: tokens.ink),
-                        ),
-                      ),
-                    ),
-                  ),
-                  Expanded(
-                    child: Center(
-                      child: SizedBox(
-                        height: 44,
-                        child: GlassSurface(
-                          variant: GlassVariant.card,
-                          borderRadius: 22,
-                          child: Padding(
-                            padding: const EdgeInsets.symmetric(horizontal: 14),
-                            child: Row(
-                              mainAxisSize: MainAxisSize.min,
-                              children: [
-                                Container(
-                                  width: 28,
-                                  height: 28,
-                                  decoration: BoxDecoration(
-                                    color: typeTint,
-                                    shape: BoxShape.circle,
-                                  ),
-                                  alignment: Alignment.center,
-                                  child: Icon(
-                                    momentIconFor(LogType.emoji),
-                                    size: 15,
-                                    color: typeColor,
-                                  ),
-                                ),
-                                const SizedBox(width: 8),
-                                Flexible(
-                                  child: Text(
-                                    'Emoji',
-                                    overflow: TextOverflow.ellipsis,
-                                    style: TextStyle(
-                                      fontSize: 15,
-                                      fontWeight: FontWeight.w600,
-                                      color: tokens.ink,
-                                    ),
-                                  ),
-                                ),
-                              ],
+                  Row(
+                    children: [
+                      Semantics(
+                        button: true,
+                        label: 'Close without saving',
+                        excludeSemantics: true,
+                        child: GestureDetector(
+                          onTap: widget.onClose,
+                          child: SizedBox(
+                            width: 44,
+                            height: 44,
+                            child: GlassSurface(
+                              variant: GlassVariant.card,
+                              borderRadius: 22,
+                              child: Icon(
+                                Icons.close,
+                                size: 20,
+                                color: tokens.ink,
+                              ),
                             ),
                           ),
                         ),
                       ),
+                      Expanded(
+                        child: Center(
+                          child: SizedBox(
+                            height: 44,
+                            child: GlassSurface(
+                              variant: GlassVariant.card,
+                              borderRadius: 22,
+                              child: Padding(
+                                padding: const EdgeInsets.symmetric(
+                                  horizontal: 14,
+                                ),
+                                child: Row(
+                                  mainAxisSize: MainAxisSize.min,
+                                  children: [
+                                    Container(
+                                      width: 28,
+                                      height: 28,
+                                      decoration: BoxDecoration(
+                                        color: typeTint,
+                                        shape: BoxShape.circle,
+                                      ),
+                                      alignment: Alignment.center,
+                                      child: Icon(
+                                        momentIconFor(LogType.emoji),
+                                        size: 15,
+                                        color: typeColor,
+                                      ),
+                                    ),
+                                    const SizedBox(width: 8),
+                                    Flexible(
+                                      child: Text(
+                                        'Emoji',
+                                        overflow: TextOverflow.ellipsis,
+                                        style: TextStyle(
+                                          fontSize: 15,
+                                          fontWeight: FontWeight.w600,
+                                          color: tokens.ink,
+                                        ),
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              ),
+                            ),
+                          ),
+                        ),
+                      ),
+                      GestureDetector(
+                        onTap: _save,
+                        child: Container(
+                          height: 44,
+                          padding: const EdgeInsets.symmetric(horizontal: 22),
+                          decoration: BoxDecoration(
+                            color: tokens.ink,
+                            borderRadius: BorderRadius.circular(22),
+                          ),
+                          alignment: Alignment.center,
+                          child: const Text(
+                            'Log mood',
+                            style: TextStyle(
+                              color: Colors.white,
+                              fontSize: 15,
+                              fontWeight: FontWeight.w600,
+                            ),
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 32),
+                  SizedBox(
+                    width: 150,
+                    height: 150,
+                    child: GlassSurface(
+                      variant: GlassVariant.surface,
+                      borderRadius: 75,
+                      child: Center(
+                        child: Text(
+                          emoji,
+                          style: const TextStyle(fontSize: 88),
+                        ),
+                      ),
                     ),
                   ),
-                  GestureDetector(
-                    onTap: _save,
-                    child: Container(
-                      height: 44,
-                      padding: const EdgeInsets.symmetric(horizontal: 22),
-                      decoration: BoxDecoration(
-                        color: tokens.ink,
-                        borderRadius: BorderRadius.circular(22),
-                      ),
-                      alignment: Alignment.center,
-                      child: const Text(
-                        'Log mood',
-                        style: TextStyle(
-                          color: Colors.white,
-                          fontSize: 15,
-                          fontWeight: FontWeight.w600,
+                  const SizedBox(height: 10),
+                  Text(
+                    label,
+                    style: TextStyle(
+                      fontFamily: 'Newsreader',
+                      fontSize: 34,
+                      color: tokens.ink,
+                    ),
+                  ),
+                  const SizedBox(height: 24),
+                  Text(
+                    'HOW STRONG?',
+                    style: TextStyle(
+                      fontSize: 13,
+                      fontWeight: FontWeight.w600,
+                      letterSpacing: 1.04,
+                      color: tokens.secondary,
+                    ),
+                  ),
+                  const SizedBox(height: 8),
+                  SingleChildScrollView(
+                    scrollDirection: Axis.horizontal,
+                    child: Row(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        Text(
+                          'Light',
+                          style: TextStyle(color: tokens.secondary),
                         ),
+                        const SizedBox(width: 10),
+                        for (var i = 1; i <= 5; i++) ...[
+                          _StrengthButton(
+                            value: i,
+                            isSelected: i == _strength,
+                            tokens: tokens,
+                            onTap: () => setState(() => _strength = i),
+                          ),
+                          if (i < 5) const SizedBox(width: 8),
+                        ],
+                        const SizedBox(width: 10),
+                        Text(
+                          'Strong',
+                          style: TextStyle(color: tokens.secondary),
+                        ),
+                      ],
+                    ),
+                  ),
+                  const SizedBox(height: 18),
+                  GlassSurface(
+                    variant: GlassVariant.surface,
+                    borderRadius: 28,
+                    child: Padding(
+                      padding: const EdgeInsets.all(12),
+                      child: GridView.count(
+                        crossAxisCount: 4,
+                        shrinkWrap: true,
+                        physics: const NeverScrollableScrollPhysics(),
+                        mainAxisSpacing: 6,
+                        crossAxisSpacing: 6,
+                        childAspectRatio: 1,
+                        children: [
+                          for (var i = 0; i < _presetMoods.length; i++)
+                            _MoodCell(
+                              emoji: _presetMoods[i].$1,
+                              label: _presetMoods[i].$2,
+                              isSelected: i == _selectedIndex,
+                              typeColor: typeColor,
+                              typeTint: typeTint,
+                              onTap: () => setState(() => _selectedIndex = i),
+                            ),
+                        ],
                       ),
                     ),
                   ),
                 ],
               ),
-              const SizedBox(height: 32),
-              SizedBox(
-                width: 150,
-                height: 150,
-                child: GlassSurface(
-                  variant: GlassVariant.surface,
-                  borderRadius: 75,
-                  child: Center(
-                    child: Text(emoji, style: const TextStyle(fontSize: 88)),
-                  ),
-                ),
-              ),
-              const SizedBox(height: 10),
-              Text(
-                label,
-                style: TextStyle(
-                  fontFamily: 'Newsreader',
-                  fontSize: 34,
-                  color: tokens.ink,
-                ),
-              ),
-              const SizedBox(height: 24),
-              Text(
-                'HOW STRONG?',
-                style: TextStyle(
-                  fontSize: 13,
-                  fontWeight: FontWeight.w600,
-                  letterSpacing: 1.04,
-                  color: tokens.secondary,
-                ),
-              ),
-              const SizedBox(height: 8),
-              SingleChildScrollView(
-                scrollDirection: Axis.horizontal,
-                child: Row(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    Text('Light', style: TextStyle(color: tokens.secondary)),
-                    const SizedBox(width: 10),
-                    for (var i = 1; i <= 5; i++) ...[
-                      _StrengthButton(
-                        value: i,
-                        isSelected: i == _strength,
-                        tokens: tokens,
-                        onTap: () => setState(() => _strength = i),
-                      ),
-                      if (i < 5) const SizedBox(width: 8),
-                    ],
-                    const SizedBox(width: 10),
-                    Text('Strong', style: TextStyle(color: tokens.secondary)),
-                  ],
-                ),
-              ),
-              const SizedBox(height: 18),
-              GlassSurface(
-                variant: GlassVariant.surface,
-                borderRadius: 28,
-                child: Padding(
-                  padding: const EdgeInsets.all(12),
-                  child: GridView.count(
-                    crossAxisCount: 4,
-                    shrinkWrap: true,
-                    physics: const NeverScrollableScrollPhysics(),
-                    mainAxisSpacing: 6,
-                    crossAxisSpacing: 6,
-                    childAspectRatio: 1,
-                    children: [
-                      for (var i = 0; i < _presetMoods.length; i++)
-                        _MoodCell(
-                          emoji: _presetMoods[i].$1,
-                          label: _presetMoods[i].$2,
-                          isSelected: i == _selectedIndex,
-                          typeColor: typeColor,
-                          typeTint: typeTint,
-                          onTap: () => setState(() => _selectedIndex = i),
-                        ),
-                    ],
-                  ),
-                ),
-              ),
-            ],
+            ),
           ),
-        ),
+        ],
       ),
     );
   }

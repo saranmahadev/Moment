@@ -3,6 +3,7 @@ import 'package:intl/intl.dart';
 
 import '../data/log_repository.dart';
 import '../design/glass_surface.dart';
+import '../design/orb_field.dart';
 import '../design/tokens.dart';
 import '../domain/log.dart';
 import '../domain/log_type.dart';
@@ -118,170 +119,179 @@ class _CreateTextScreenState extends State<CreateTextScreen> {
 
     return Scaffold(
       backgroundColor: tokens.ground,
-      body: SafeArea(
-        child: Padding(
-          padding: const EdgeInsets.fromLTRB(20, 16, 20, 20),
-          child: Column(
-            children: [
-              Row(
+      body: Stack(
+        children: [
+          const Positioned.fill(child: OrbField()),
+          SafeArea(
+            child: Padding(
+              padding: const EdgeInsets.fromLTRB(20, 16, 20, 20),
+              child: Column(
                 children: [
-                  Semantics(
-                    button: true,
-                    label: 'Close without saving',
-                    excludeSemantics: true,
-                    child: GestureDetector(
-                      onTap: widget.onClose,
-                      child: SizedBox(
-                        width: 44,
+                  Row(
+                    children: [
+                      Semantics(
+                        button: true,
+                        label: 'Close without saving',
+                        excludeSemantics: true,
+                        child: GestureDetector(
+                          onTap: widget.onClose,
+                          child: SizedBox(
+                            width: 44,
+                            height: 44,
+                            child: GlassSurface(
+                              variant: GlassVariant.card,
+                              borderRadius: 22,
+                              child: Icon(
+                                Icons.close,
+                                size: 20,
+                                color: tokens.ink,
+                              ),
+                            ),
+                          ),
+                        ),
+                      ),
+                      const Spacer(),
+                      SizedBox(
                         height: 44,
                         child: GlassSurface(
                           variant: GlassVariant.card,
                           borderRadius: 22,
-                          child: Icon(Icons.close, size: 20, color: tokens.ink),
+                          child: Padding(
+                            padding: const EdgeInsets.symmetric(horizontal: 14),
+                            child: Row(
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                Container(
+                                  width: 28,
+                                  height: 28,
+                                  decoration: BoxDecoration(
+                                    color: tokens.tintFor(LogType.text),
+                                    shape: BoxShape.circle,
+                                  ),
+                                  child: Icon(
+                                    Icons.text_fields_rounded,
+                                    size: 15,
+                                    color: tokens.colorFor(LogType.text),
+                                  ),
+                                ),
+                                const SizedBox(width: 8),
+                                Text(
+                                  'Text',
+                                  style: TextStyle(
+                                    fontSize: 15,
+                                    fontWeight: FontWeight.w600,
+                                    color: tokens.ink,
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                        ),
+                      ),
+                      const Spacer(),
+                      GestureDetector(
+                        onTap: _save,
+                        child: Container(
+                          height: 44,
+                          padding: const EdgeInsets.symmetric(horizontal: 22),
+                          decoration: BoxDecoration(
+                            color: tokens.ink,
+                            borderRadius: BorderRadius.circular(22),
+                          ),
+                          alignment: Alignment.center,
+                          child: const Text(
+                            'Save',
+                            style: TextStyle(
+                              color: Colors.white,
+                              fontSize: 15,
+                              fontWeight: FontWeight.w600,
+                            ),
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 14),
+                  Center(
+                    child: GestureDetector(
+                      onTap: _pickDate,
+                      child: SizedBox(
+                        height: 40,
+                        child: GlassSurface(
+                          variant: GlassVariant.card,
+                          borderRadius: 20,
+                          child: Padding(
+                            padding: const EdgeInsets.symmetric(horizontal: 16),
+                            child: Row(
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                Icon(
+                                  Icons.edit_outlined,
+                                  size: 16,
+                                  color: tokens.ink,
+                                ),
+                                const SizedBox(width: 8),
+                                Text(
+                                  '${_dateTimeFormat.format(_createdAt)} · '
+                                  '${_timeFormat.format(_createdAt)}',
+                                  style: TextStyle(
+                                    fontSize: 14,
+                                    fontWeight: FontWeight.w500,
+                                    color: tokens.ink,
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
                         ),
                       ),
                     ),
                   ),
-                  const Spacer(),
-                  SizedBox(
-                    height: 44,
+                  const SizedBox(height: 14),
+                  Expanded(
                     child: GlassSurface(
-                      variant: GlassVariant.card,
-                      borderRadius: 22,
+                      variant: GlassVariant.surface,
                       child: Padding(
-                        padding: const EdgeInsets.symmetric(horizontal: 14),
-                        child: Row(
-                          mainAxisSize: MainAxisSize.min,
+                        padding: const EdgeInsets.all(22),
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
-                            Container(
-                              width: 28,
-                              height: 28,
-                              decoration: BoxDecoration(
-                                color: tokens.tintFor(LogType.text),
-                                shape: BoxShape.circle,
-                              ),
-                              child: Icon(
-                                Icons.text_fields_rounded,
-                                size: 15,
-                                color: tokens.colorFor(LogType.text),
+                            Expanded(
+                              child: TextField(
+                                controller: _controller,
+                                autofocus: true,
+                                maxLines: null,
+                                expands: true,
+                                textAlignVertical: TextAlignVertical.top,
+                                style: TextStyle(
+                                  fontFamily: 'Newsreader',
+                                  fontSize: 23,
+                                  height: 1.45,
+                                  color: tokens.ink,
+                                ),
+                                decoration: const InputDecoration(
+                                  border: InputBorder.none,
+                                  isCollapsed: true,
+                                ),
                               ),
                             ),
-                            const SizedBox(width: 8),
                             Text(
-                              'Text',
+                              '$_wordCount words',
                               style: TextStyle(
-                                fontSize: 15,
-                                fontWeight: FontWeight.w600,
-                                color: tokens.ink,
+                                fontSize: 13,
+                                color: tokens.secondary,
                               ),
                             ),
                           ],
-                        ),
-                      ),
-                    ),
-                  ),
-                  const Spacer(),
-                  GestureDetector(
-                    onTap: _save,
-                    child: Container(
-                      height: 44,
-                      padding: const EdgeInsets.symmetric(horizontal: 22),
-                      decoration: BoxDecoration(
-                        color: tokens.ink,
-                        borderRadius: BorderRadius.circular(22),
-                      ),
-                      alignment: Alignment.center,
-                      child: const Text(
-                        'Save',
-                        style: TextStyle(
-                          color: Colors.white,
-                          fontSize: 15,
-                          fontWeight: FontWeight.w600,
                         ),
                       ),
                     ),
                   ),
                 ],
               ),
-              const SizedBox(height: 14),
-              Center(
-                child: GestureDetector(
-                  onTap: _pickDate,
-                  child: SizedBox(
-                    height: 40,
-                    child: GlassSurface(
-                      variant: GlassVariant.card,
-                      borderRadius: 20,
-                      child: Padding(
-                        padding: const EdgeInsets.symmetric(horizontal: 16),
-                        child: Row(
-                          mainAxisSize: MainAxisSize.min,
-                          children: [
-                            Icon(
-                              Icons.edit_outlined,
-                              size: 16,
-                              color: tokens.ink,
-                            ),
-                            const SizedBox(width: 8),
-                            Text(
-                              '${_dateTimeFormat.format(_createdAt)} · '
-                              '${_timeFormat.format(_createdAt)}',
-                              style: TextStyle(
-                                fontSize: 14,
-                                fontWeight: FontWeight.w500,
-                                color: tokens.ink,
-                              ),
-                            ),
-                          ],
-                        ),
-                      ),
-                    ),
-                  ),
-                ),
-              ),
-              const SizedBox(height: 14),
-              Expanded(
-                child: GlassSurface(
-                  variant: GlassVariant.surface,
-                  child: Padding(
-                    padding: const EdgeInsets.all(22),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Expanded(
-                          child: TextField(
-                            controller: _controller,
-                            autofocus: true,
-                            maxLines: null,
-                            expands: true,
-                            textAlignVertical: TextAlignVertical.top,
-                            style: TextStyle(
-                              fontFamily: 'Newsreader',
-                              fontSize: 23,
-                              height: 1.45,
-                              color: tokens.ink,
-                            ),
-                            decoration: const InputDecoration(
-                              border: InputBorder.none,
-                              isCollapsed: true,
-                            ),
-                          ),
-                        ),
-                        Text(
-                          '$_wordCount words',
-                          style: TextStyle(
-                            fontSize: 13,
-                            color: tokens.secondary,
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                ),
-              ),
-            ],
+            ),
           ),
-        ),
+        ],
       ),
     );
   }
