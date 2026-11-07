@@ -19,6 +19,7 @@ dependencies:
   crypto: ^3.0.6
   local_auth: ^2.3.0
   intl: ^0.20.0
+  image: ^4.3.0
 
 dev_dependencies:
   flutter_test:
