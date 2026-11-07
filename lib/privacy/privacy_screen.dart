@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
 import '../design/glass_surface.dart';
+import '../design/orb_field.dart';
 import '../design/tokens.dart';
 import '../lock/app_lock_controller.dart';
 import '../lock/create_pin_screen.dart';
@@ -63,102 +64,68 @@ class _PrivacyScreenState extends State<PrivacyScreen> {
 
     return Scaffold(
       backgroundColor: tokens.ground,
-      body: SafeArea(
-        child: ListView(
-          padding: const EdgeInsets.fromLTRB(20, 16, 20, 20),
-          children: [
-            Semantics(
-              button: true,
-              label: 'Back',
-              excludeSemantics: true,
-              child: GestureDetector(
-                onTap: widget.onBack,
-                child: SizedBox(
-                  width: 44,
-                  height: 44,
-                  child: GlassSurface(
-                    variant: GlassVariant.card,
-                    borderRadius: 22,
-                    child: Icon(Icons.chevron_left, color: tokens.ink),
+      body: Stack(
+        children: [
+          const Positioned.fill(child: OrbField()),
+          SafeArea(
+            child: ListView(
+              padding: const EdgeInsets.fromLTRB(20, 16, 20, 20),
+              children: [
+                Semantics(
+                  button: true,
+                  label: 'Back',
+                  excludeSemantics: true,
+                  child: GestureDetector(
+                    onTap: widget.onBack,
+                    child: SizedBox(
+                      width: 44,
+                      height: 44,
+                      child: GlassSurface(
+                        variant: GlassVariant.card,
+                        borderRadius: 22,
+                        child: Icon(Icons.chevron_left, color: tokens.ink),
+                      ),
+                    ),
                   ),
                 ),
-              ),
-            ),
-            const SizedBox(height: 10),
-            Text(
-              'Privacy and backup',
-              style: TextStyle(
-                fontFamily: 'Newsreader',
-                fontWeight: FontWeight.w500,
-                fontSize: 34,
-                color: tokens.ink,
-              ),
-            ),
-            const SizedBox(height: 14),
-            GlassSurface(
-              variant: GlassVariant.card,
-              child: Padding(
-                padding: const EdgeInsets.all(16),
-                child: Row(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Container(
-                      width: 48,
-                      height: 48,
-                      decoration: BoxDecoration(
-                        color: tokens.ground,
-                        shape: BoxShape.circle,
-                      ),
-                      child: Icon(
-                        Icons.shield_outlined,
-                        color: tokens.ink,
-                        size: 22,
-                      ),
-                    ),
-                    const SizedBox(width: 12),
-                    Expanded(
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Text(
-                            'Local only',
-                            style: TextStyle(
-                              fontSize: 16,
-                              fontWeight: FontWeight.w600,
-                              color: tokens.ink,
-                            ),
-                          ),
-                          Text(
-                            'No account, no servers, no internet permission.',
-                            style: TextStyle(
-                              fontSize: 13.5,
-                              color: tokens.secondary,
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
-                  ],
+                const SizedBox(height: 10),
+                Text(
+                  'Privacy and backup',
+                  style: TextStyle(
+                    fontFamily: 'Newsreader',
+                    fontWeight: FontWeight.w500,
+                    fontSize: 34,
+                    color: tokens.ink,
+                  ),
                 ),
-              ),
-            ),
-            const SizedBox(height: 20),
-            _SectionLabel('SECURITY', tokens: tokens),
-            const SizedBox(height: 8),
-            GlassSurface(
-              variant: GlassVariant.card,
-              child: Column(
-                children: [
-                  Padding(
+                const SizedBox(height: 14),
+                GlassSurface(
+                  variant: GlassVariant.card,
+                  child: Padding(
                     padding: const EdgeInsets.all(16),
                     child: Row(
+                      crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
+                        Container(
+                          width: 48,
+                          height: 48,
+                          decoration: BoxDecoration(
+                            color: tokens.ground,
+                            shape: BoxShape.circle,
+                          ),
+                          child: Icon(
+                            Icons.shield_outlined,
+                            color: tokens.ink,
+                            size: 22,
+                          ),
+                        ),
+                        const SizedBox(width: 12),
                         Expanded(
                           child: Column(
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
                               Text(
-                                'App lock',
+                                'Local only',
                                 style: TextStyle(
                                   fontSize: 16,
                                   fontWeight: FontWeight.w600,
@@ -166,7 +133,7 @@ class _PrivacyScreenState extends State<PrivacyScreen> {
                                 ),
                               ),
                               Text(
-                                'PIN with Face ID',
+                                'No account, no servers, no internet permission.',
                                 style: TextStyle(
                                   fontSize: 13.5,
                                   color: tokens.secondary,
@@ -175,55 +142,94 @@ class _PrivacyScreenState extends State<PrivacyScreen> {
                             ],
                           ),
                         ),
-                        Switch(
-                          value: _appLockOn,
-                          activeThumbColor: Colors.white,
-                          activeTrackColor: tokens.ink,
-                          inactiveTrackColor: tokens.switchOff,
-                          onChanged: _onAppLockChanged,
-                        ),
                       ],
                     ),
                   ),
-                  Divider(
-                    height: 1,
-                    color: tokens.secondary.withValues(alpha: 0.15),
-                  ),
-                  Padding(
-                    padding: const EdgeInsets.all(16),
-                    child: Row(
-                      children: [
-                        Expanded(
-                          child: Text(
-                            'Lock after',
-                            style: TextStyle(
-                              fontSize: 16,
-                              fontWeight: FontWeight.w600,
-                              color: tokens.ink,
+                ),
+                const SizedBox(height: 20),
+                _SectionLabel('SECURITY', tokens: tokens),
+                const SizedBox(height: 8),
+                GlassSurface(
+                  variant: GlassVariant.card,
+                  child: Column(
+                    children: [
+                      Padding(
+                        padding: const EdgeInsets.all(16),
+                        child: Row(
+                          children: [
+                            Expanded(
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  Text(
+                                    'App lock',
+                                    style: TextStyle(
+                                      fontSize: 16,
+                                      fontWeight: FontWeight.w600,
+                                      color: tokens.ink,
+                                    ),
+                                  ),
+                                  Text(
+                                    'PIN with Face ID',
+                                    style: TextStyle(
+                                      fontSize: 13.5,
+                                      color: tokens.secondary,
+                                    ),
+                                  ),
+                                ],
+                              ),
                             ),
-                          ),
+                            Switch(
+                              value: _appLockOn,
+                              activeThumbColor: Colors.white,
+                              activeTrackColor: tokens.ink,
+                              inactiveTrackColor: tokens.switchOff,
+                              onChanged: _onAppLockChanged,
+                            ),
+                          ],
                         ),
-                        Text(
-                          'Immediately',
-                          style: TextStyle(
-                            fontSize: 15,
-                            color: tokens.secondary,
-                          ),
+                      ),
+                      Divider(
+                        height: 1,
+                        color: tokens.secondary.withValues(alpha: 0.15),
+                      ),
+                      Padding(
+                        padding: const EdgeInsets.all(16),
+                        child: Row(
+                          children: [
+                            Expanded(
+                              child: Text(
+                                'Lock after',
+                                style: TextStyle(
+                                  fontSize: 16,
+                                  fontWeight: FontWeight.w600,
+                                  color: tokens.ink,
+                                ),
+                              ),
+                            ),
+                            Text(
+                              'Immediately',
+                              style: TextStyle(
+                                fontSize: 15,
+                                color: tokens.secondary,
+                              ),
+                            ),
+                            const SizedBox(width: 4),
+                            Icon(
+                              Icons.chevron_right,
+                              size: 18,
+                              color: tokens.secondary,
+                            ),
+                          ],
                         ),
-                        const SizedBox(width: 4),
-                        Icon(
-                          Icons.chevron_right,
-                          size: 18,
-                          color: tokens.secondary,
-                        ),
-                      ],
-                    ),
+                      ),
+                    ],
                   ),
-                ],
-              ),
+                ),
+              ],
             ),
-          ],
-        ),
+          ),
+        ],
       ),
     );
   }

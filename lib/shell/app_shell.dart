@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 
 import '../data/log_repository.dart';
 import '../design/glass_surface.dart';
+import '../design/orb_field.dart';
 import '../design/tokens.dart';
 import '../domain/log.dart';
 import '../domain/log_type.dart';
@@ -156,6 +157,7 @@ class _AppShellState extends State<AppShell> {
       backgroundColor: tokens.ground,
       body: Stack(
         children: [
+          const Positioned.fill(child: OrbField()),
           IndexedStack(
             index: _Tab.values.indexOf(_tab),
             children: [
@@ -232,6 +234,7 @@ class _Dock extends StatelessWidget {
             mainAxisAlignment: MainAxisAlignment.spaceAround,
             children: [
               _DockItem(
+                key: const ValueKey('dock-tab-Home'),
                 label: 'Home',
                 icon: Icons.home_outlined,
                 isActive: tab == _Tab.home,
@@ -239,6 +242,7 @@ class _Dock extends StatelessWidget {
                 onTap: () => onTabSelected(_Tab.home),
               ),
               _DockItem(
+                key: const ValueKey('dock-tab-Library'),
                 label: 'Library',
                 icon: Icons.grid_view_rounded,
                 isActive: tab == _Tab.library,
@@ -247,6 +251,7 @@ class _Dock extends StatelessWidget {
               ),
               _AddButton(tokens: tokens, onTap: onAddTapped),
               _DockItem(
+                key: const ValueKey('dock-tab-Calendar'),
                 label: 'Calendar',
                 icon: Icons.calendar_today_outlined,
                 isActive: tab == _Tab.calendar,
@@ -254,6 +259,7 @@ class _Dock extends StatelessWidget {
                 onTap: () => onTabSelected(_Tab.calendar),
               ),
               _DockItem(
+                key: const ValueKey('dock-tab-Settings'),
                 label: 'Settings',
                 icon: Icons.tune_rounded,
                 isActive: tab == _Tab.settings,
@@ -270,6 +276,7 @@ class _Dock extends StatelessWidget {
 
 class _DockItem extends StatelessWidget {
   const _DockItem({
+    super.key,
     required this.label,
     required this.icon,
     required this.isActive,

@@ -4,6 +4,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:moment/data/database.dart';
 import 'package:moment/data/log_repository.dart';
 import 'package:moment/design/theme.dart';
+import 'package:moment/design/orb_field.dart';
 import 'package:moment/lock/app_lock_controller.dart';
 import 'package:moment/lock/pin_storage.dart';
 import 'package:moment/shell/app_shell.dart';
@@ -53,6 +54,29 @@ void main() {
     await db.close();
   });
 
+  testWidgets('shows the decorative background orbs behind every tab', (
+    tester,
+  ) async {
+    final db = AppDatabase(NativeDatabase.memory());
+    final repo = LogRepository(db, clock: () => now);
+
+    await pump(tester, repo);
+    await tester.pump();
+    expect(find.byType(OrbField), findsOneWidget);
+
+    await tester.tap(find.bySemanticsLabel('Library'));
+    await tester.pump();
+    expect(find.byType(OrbField), findsOneWidget);
+
+    await tester.tap(find.bySemanticsLabel('Settings'));
+    await tester.pump();
+    expect(find.byType(OrbField), findsOneWidget);
+
+    await tester.pumpWidget(const SizedBox());
+    await tester.pumpAndSettle();
+    await db.close();
+  });
+
   testWidgets('the dock has all five destinations', (tester) async {
     final db = AppDatabase(NativeDatabase.memory());
     final repo = LogRepository(db, clock: () => now);
@@ -90,6 +114,34 @@ void main() {
       find.text('Everything you have logged, one section per type.'),
       findsOneWidget,
     );
+
+    await tester.pumpWidget(const SizedBox());
+    await tester.pumpAndSettle();
+    await db.close();
+  });
+
+  testWidgets('Library content clears the floating dock, down to Trash', (
+    tester,
+  ) async {
+    final db = AppDatabase(NativeDatabase.memory());
+    final repo = LogRepository(db, clock: () => now);
+
+    await pump(tester, repo);
+    await tester.pump();
+    await tester.tap(find.bySemanticsLabel('Library'));
+    await tester.pump();
+    await tester.scrollUntilVisible(
+      find.text('Trash'),
+      300,
+      scrollable: find.byType(Scrollable).first,
+    );
+    await tester.pump();
+
+    final trashBottom = tester.getBottomLeft(find.text('Trash')).dy;
+    final dockTop = tester
+        .getTopLeft(find.byKey(const ValueKey('dock-tab-Library')))
+        .dy;
+    expect(trashBottom, lessThan(dockTop));
 
     await tester.pumpWidget(const SizedBox());
     await tester.pumpAndSettle();
@@ -334,6 +386,35 @@ void main() {
     await tester.pumpAndSettle();
     await db.close();
   });
+
+  testWidgets(
+    'Settings content clears the floating dock, down to the last row',
+    (tester) async {
+      final db = AppDatabase(NativeDatabase.memory());
+      final repo = LogRepository(db, clock: () => now);
+
+      await pump(tester, repo);
+      await tester.pump();
+      await tester.tap(find.bySemanticsLabel('Settings'));
+      await tester.pump();
+      await tester.scrollUntilVisible(
+        find.text('Version'),
+        300,
+        scrollable: find.byType(Scrollable).first,
+      );
+      await tester.pump();
+
+      final versionBottom = tester.getBottomLeft(find.text('Version')).dy;
+      final dockTop = tester
+          .getTopLeft(find.byKey(const ValueKey('dock-tab-Settings')))
+          .dy;
+      expect(versionBottom, lessThan(dockTop));
+
+      await tester.pumpWidget(const SizedBox());
+      await tester.pumpAndSettle();
+      await db.close();
+    },
+  );
 
   testWidgets('tapping Trash in Settings opens TrashScreen', (tester) async {
     final db = AppDatabase(NativeDatabase.memory());

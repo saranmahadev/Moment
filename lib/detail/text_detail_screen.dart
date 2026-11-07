@@ -3,6 +3,7 @@ import 'package:intl/intl.dart';
 
 import '../data/log_repository.dart';
 import '../design/glass_surface.dart';
+import '../design/orb_field.dart';
 import '../design/tokens.dart';
 import '../design/type_icons.dart';
 import '../domain/log.dart';
@@ -57,81 +58,87 @@ class TextDetailScreen extends StatelessWidget {
 
     return Scaffold(
       backgroundColor: tokens.ground,
-      body: SafeArea(
-        child: Padding(
-          padding: const EdgeInsets.fromLTRB(20, 16, 20, 20),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Row(
+      body: Stack(
+        children: [
+          const Positioned.fill(child: OrbField()),
+          SafeArea(
+            child: Padding(
+              padding: const EdgeInsets.fromLTRB(20, 16, 20, 20),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  _RoundIconButton(
-                    icon: Icons.chevron_left,
-                    label: 'Back',
-                    tokens: tokens,
-                    onTap: onBack,
+                  Row(
+                    children: [
+                      _RoundIconButton(
+                        icon: Icons.chevron_left,
+                        label: 'Back',
+                        tokens: tokens,
+                        onTap: onBack,
+                      ),
+                      const Spacer(),
+                      _RoundIconButton(
+                        icon: Icons.edit_outlined,
+                        label: 'Edit',
+                        tokens: tokens,
+                        onTap: () => _edit(context),
+                      ),
+                      const SizedBox(width: 10),
+                      _RoundIconButton(
+                        icon: Icons.delete_outline,
+                        label: 'Delete',
+                        tokens: tokens,
+                        onTap: () => _delete(context),
+                      ),
+                    ],
                   ),
-                  const Spacer(),
-                  _RoundIconButton(
-                    icon: Icons.edit_outlined,
-                    label: 'Edit',
-                    tokens: tokens,
-                    onTap: () => _edit(context),
+                  const SizedBox(height: 16),
+                  Row(
+                    children: [
+                      Container(
+                        width: 30,
+                        height: 30,
+                        decoration: BoxDecoration(
+                          color: tokens.tintFor(LogType.text),
+                          shape: BoxShape.circle,
+                        ),
+                        child: Icon(
+                          momentIconFor(LogType.text),
+                          size: 16,
+                          color: tokens.colorFor(LogType.text),
+                        ),
+                      ),
+                      const SizedBox(width: 10),
+                      Flexible(
+                        child: Text(
+                          '${_dateTimeFormat.format(log.localMoment)} · '
+                          '${_timeFormat.format(log.localMoment)}',
+                          overflow: TextOverflow.ellipsis,
+                          style: TextStyle(fontSize: 15, color: tokens.ink),
+                        ),
+                      ),
+                    ],
                   ),
-                  const SizedBox(width: 10),
-                  _RoundIconButton(
-                    icon: Icons.delete_outline,
-                    label: 'Delete',
-                    tokens: tokens,
-                    onTap: () => _delete(context),
+                  const SizedBox(height: 20),
+                  GlassSurface(
+                    variant: GlassVariant.surface,
+                    child: Padding(
+                      padding: const EdgeInsets.all(22),
+                      child: Text(
+                        log.body,
+                        style: TextStyle(
+                          fontFamily: 'Newsreader',
+                          fontSize: 23,
+                          height: 1.45,
+                          color: tokens.ink,
+                        ),
+                      ),
+                    ),
                   ),
                 ],
               ),
-              const SizedBox(height: 16),
-              Row(
-                children: [
-                  Container(
-                    width: 30,
-                    height: 30,
-                    decoration: BoxDecoration(
-                      color: tokens.tintFor(LogType.text),
-                      shape: BoxShape.circle,
-                    ),
-                    child: Icon(
-                      momentIconFor(LogType.text),
-                      size: 16,
-                      color: tokens.colorFor(LogType.text),
-                    ),
-                  ),
-                  const SizedBox(width: 10),
-                  Flexible(
-                    child: Text(
-                      '${_dateTimeFormat.format(log.localMoment)} · '
-                      '${_timeFormat.format(log.localMoment)}',
-                      overflow: TextOverflow.ellipsis,
-                      style: TextStyle(fontSize: 15, color: tokens.ink),
-                    ),
-                  ),
-                ],
-              ),
-              const SizedBox(height: 20),
-              GlassSurface(
-                variant: GlassVariant.surface,
-                child: Padding(
-                  padding: const EdgeInsets.all(22),
-                  child: Text(
-                    log.body,
-                    style: const TextStyle(
-                      fontFamily: 'Newsreader',
-                      fontSize: 23,
-                      height: 1.45,
-                    ),
-                  ),
-                ),
-              ),
-            ],
+            ),
           ),
-        ),
+        ],
       ),
     );
   }

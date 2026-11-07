@@ -3,7 +3,9 @@ import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:moment/data/database.dart';
 import 'package:moment/data/log_repository.dart';
+import 'package:moment/design/orb_field.dart';
 import 'package:moment/design/theme.dart';
+import 'package:moment/design/tokens.dart';
 import 'package:moment/domain/log.dart';
 import 'package:moment/domain/log_type.dart';
 import 'package:moment/section/section_screen.dart';
@@ -44,6 +46,10 @@ void main() {
 
     expect(find.text('Text'), findsWidgets);
     expect(find.text('2 logs'), findsOneWidget);
+
+    final sortLabel = tester.widget<Text>(find.text('Newest first'));
+    expect(sortLabel.style?.color, MomentTokens.standard.ink);
+    expect(find.byType(OrbField), findsOneWidget);
 
     await tester.pumpWidget(const SizedBox());
     await tester.pumpAndSettle();

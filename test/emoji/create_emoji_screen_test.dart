@@ -3,7 +3,9 @@ import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:moment/data/database.dart';
 import 'package:moment/data/log_repository.dart';
+import 'package:moment/design/orb_field.dart';
 import 'package:moment/design/theme.dart';
+import 'package:moment/design/tokens.dart';
 import 'package:moment/domain/log.dart';
 import 'package:moment/emoji/create_emoji_screen.dart';
 
@@ -57,6 +59,10 @@ void main() {
 
     expect(find.text('Emoji'), findsOneWidget);
     expect(find.text('Happy'), findsOneWidget);
+
+    final badge = tester.widget<Text>(find.text('Emoji'));
+    expect(badge.style?.color, MomentTokens.standard.ink);
+    expect(find.byType(OrbField), findsOneWidget);
     expect(find.bySemanticsLabel('Intensity 3 of 5, selected'), findsOneWidget);
     expect(find.text('Log mood'), findsOneWidget);
 

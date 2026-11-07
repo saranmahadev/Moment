@@ -3,6 +3,7 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 
 import '../design/glass_surface.dart';
+import '../design/orb_field.dart';
 import '../design/tokens.dart';
 import 'app_lock_controller.dart';
 
@@ -92,57 +93,65 @@ class _CreatePinScreenState extends State<CreatePinScreen> {
 
     return Scaffold(
       backgroundColor: tokens.ground,
-      body: SafeArea(
-        child: Column(
-          children: [
-            const SizedBox(height: 24),
-            Align(
-              alignment: Alignment.centerLeft,
-              child: Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 20),
-                child: Semantics(
-                  button: true,
-                  label: 'Cancel',
-                  excludeSemantics: true,
-                  child: GestureDetector(
-                    onTap: widget.onCancel,
-                    child: Text(
-                      'Cancel',
-                      style: TextStyle(fontSize: 15, color: tokens.secondary),
+      body: Stack(
+        children: [
+          const Positioned.fill(child: OrbField()),
+          SafeArea(
+            child: Column(
+              children: [
+                const SizedBox(height: 24),
+                Align(
+                  alignment: Alignment.centerLeft,
+                  child: Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: 20),
+                    child: Semantics(
+                      button: true,
+                      label: 'Cancel',
+                      excludeSemantics: true,
+                      child: GestureDetector(
+                        onTap: widget.onCancel,
+                        child: Text(
+                          'Cancel',
+                          style: TextStyle(
+                            fontSize: 15,
+                            color: tokens.secondary,
+                          ),
+                        ),
+                      ),
                     ),
                   ),
                 ),
-              ),
+                const SizedBox(height: 40),
+                Text(
+                  title,
+                  style: TextStyle(
+                    fontFamily: 'Newsreader',
+                    fontWeight: FontWeight.w500,
+                    fontSize: 28,
+                    color: tokens.ink,
+                  ),
+                ),
+                const SizedBox(height: 20),
+                _PinDots(
+                  entered: _entered.length,
+                  length: _pinLength,
+                  tokens: tokens,
+                  error: _showMismatch,
+                ),
+                if (_showMismatch) ...[
+                  const SizedBox(height: 8),
+                  Text(
+                    "PINs don't match",
+                    style: TextStyle(fontSize: 13, color: tokens.danger),
+                  ),
+                ],
+                const Spacer(),
+                _Keypad(tokens: tokens, onDigit: _onDigit, onDelete: _onDelete),
+                const Spacer(),
+              ],
             ),
-            const SizedBox(height: 40),
-            Text(
-              title,
-              style: TextStyle(
-                fontFamily: 'Newsreader',
-                fontWeight: FontWeight.w500,
-                fontSize: 28,
-                color: tokens.ink,
-              ),
-            ),
-            const SizedBox(height: 20),
-            _PinDots(
-              entered: _entered.length,
-              length: _pinLength,
-              tokens: tokens,
-              error: _showMismatch,
-            ),
-            if (_showMismatch) ...[
-              const SizedBox(height: 8),
-              Text(
-                "PINs don't match",
-                style: TextStyle(fontSize: 13, color: tokens.danger),
-              ),
-            ],
-            const Spacer(),
-            _Keypad(tokens: tokens, onDigit: _onDigit, onDelete: _onDelete),
-            const Spacer(),
-          ],
-        ),
+          ),
+        ],
       ),
     );
   }

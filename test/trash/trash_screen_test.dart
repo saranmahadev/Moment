@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:moment/data/database.dart';
 import 'package:moment/data/log_repository.dart';
+import 'package:moment/design/orb_field.dart';
 import 'package:moment/design/theme.dart';
 import 'package:moment/trash/trash_screen.dart';
 
@@ -39,6 +40,7 @@ void main() {
       ),
       findsOneWidget,
     );
+    expect(find.byType(OrbField), findsOneWidget);
 
     await tester.pumpWidget(const SizedBox());
     await tester.pumpAndSettle();

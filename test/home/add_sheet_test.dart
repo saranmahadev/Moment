@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:moment/design/theme.dart';
+import 'package:moment/design/tokens.dart';
 import 'package:moment/domain/log_type.dart';
 import 'package:moment/home/add_sheet.dart';
 
@@ -40,6 +41,15 @@ void main() {
     expect(find.text('Video'), findsNothing);
     expect(find.text('Audio'), findsNothing);
     expect(find.text('Location'), findsNothing);
+  });
+
+  testWidgets('type labels are set in the ink colour, not the default', (
+    tester,
+  ) async {
+    await pump(tester, onSelected: (_) {});
+
+    final text = tester.widget<Text>(find.text('Text'));
+    expect(text.style?.color, MomentTokens.standard.ink);
   });
 
   testWidgets('tapping a type reports it', (tester) async {

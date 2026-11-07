@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
 import '../design/glass_surface.dart';
+import '../design/tokens.dart';
 
 const _moods = [
   ('😊', 'happy'),
@@ -21,6 +22,9 @@ class MoodRow extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final tokens =
+        Theme.of(context).extension<MomentTokens>() ?? MomentTokens.standard;
+
     return GlassSurface(
       variant: GlassVariant.card,
       borderRadius: 28,
@@ -28,11 +32,15 @@ class MoodRow extends StatelessWidget {
         padding: const EdgeInsets.fromLTRB(18, 10, 12, 10),
         child: Row(
           children: [
-            const Flexible(
+            Flexible(
               child: Text(
                 'How are you?',
                 overflow: TextOverflow.ellipsis,
-                style: TextStyle(fontSize: 15, fontWeight: FontWeight.w600),
+                style: TextStyle(
+                  fontSize: 15,
+                  fontWeight: FontWeight.w600,
+                  color: tokens.ink,
+                ),
               ),
             ),
             const Spacer(),
