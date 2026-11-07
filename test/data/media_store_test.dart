@@ -8,7 +8,7 @@ import 'package:path/path.dart' as p;
 /// Builds a small JPEG with GPS and other EXIF metadata attached, as a
 /// stand-in for a photo straight off a phone's camera.
 File _samplePhotoWithExif(String path) {
-  final image = img.Image(width: 40, height: 30);
+  final image = img.Image(width: 800, height: 600);
   img.fill(image, color: img.ColorRgb8(200, 120, 60));
   image.exif.imageIfd['Software'] = 'TestCam 1.0';
   image.exif.gpsIfd['GPSLatitudeRef'] = 'N';
@@ -32,22 +32,32 @@ void main() {
     tempDir.deleteSync(recursive: true);
   });
 
-  test('copies the photo into media/YYYY/MM under the app-private root', () async {
-    final source = _samplePhotoWithExif(p.join(tempDir.path, 'source.jpg'));
-    final now = DateTime.utc(2026, 11, 7);
-    final store = MediaStore(root: root, clock: () => now, generateId: () => 'abc123');
+  test(
+    'copies the photo into media/YYYY/MM under the app-private root',
+    () async {
+      final source = _samplePhotoWithExif(p.join(tempDir.path, 'source.jpg'));
+      final now = DateTime.utc(2026, 11, 7);
+      final store = MediaStore(
+        root: root,
+        clock: () => now,
+        generateId: () => 'abc123',
+      );
 
-    final imported = await store.importPhoto(source);
+      final imported = await store.importPhoto(source);
 
-    final expectedDir = p.join(root.path, 'media', '2026', '11');
-    expect(p.dirname(imported.path), expectedDir);
-    expect(File(imported.path).existsSync(), isTrue);
-  });
+      final expectedDir = p.join(root.path, 'media', '2026', '11');
+      expect(p.dirname(imported.path), expectedDir);
+      expect(File(imported.path).existsSync(), isTrue);
+    },
+  );
 
   test('leaves the original source file untouched', () async {
     final source = _samplePhotoWithExif(p.join(tempDir.path, 'source.jpg'));
     final originalBytes = source.readAsBytesSync();
-    final store = MediaStore(root: root, clock: () => DateTime.utc(2026, 11, 7));
+    final store = MediaStore(
+      root: root,
+      clock: () => DateTime.utc(2026, 11, 7),
+    );
 
     await store.importPhoto(source);
 
@@ -57,7 +67,10 @@ void main() {
 
   test('strips GPS and other EXIF metadata from the stored photo', () async {
     final source = _samplePhotoWithExif(p.join(tempDir.path, 'source.jpg'));
-    final store = MediaStore(root: root, clock: () => DateTime.utc(2026, 11, 7));
+    final store = MediaStore(
+      root: root,
+      clock: () => DateTime.utc(2026, 11, 7),
+    );
 
     final imported = await store.importPhoto(source);
 
@@ -67,7 +80,10 @@ void main() {
 
   test('writes a smaller thumbnail alongside the stored photo', () async {
     final source = _samplePhotoWithExif(p.join(tempDir.path, 'source.jpg'));
-    final store = MediaStore(root: root, clock: () => DateTime.utc(2026, 11, 7));
+    final store = MediaStore(
+      root: root,
+      clock: () => DateTime.utc(2026, 11, 7),
+    );
 
     final imported = await store.importPhoto(source);
 
@@ -82,7 +98,10 @@ void main() {
   test('throws when the source file is not a decodable image', () async {
     final source = File(p.join(tempDir.path, 'not-a-photo.jpg'))
       ..writeAsStringSync('definitely not a jpeg');
-    final store = MediaStore(root: root, clock: () => DateTime.utc(2026, 11, 7));
+    final store = MediaStore(
+      root: root,
+      clock: () => DateTime.utc(2026, 11, 7),
+    );
 
     expect(() => store.importPhoto(source), throwsArgumentError);
   });
