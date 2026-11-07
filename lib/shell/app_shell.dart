@@ -10,6 +10,8 @@ import '../detail/text_detail_screen.dart';
 import '../emoji/create_emoji_screen.dart';
 import '../home/add_sheet.dart';
 import '../home/home_screen.dart';
+import '../library/library_screen.dart';
+import '../section/section_screen.dart';
 import '../text/create_text_screen.dart';
 
 enum _Tab { home, library, calendar, settings }
@@ -103,6 +105,19 @@ class _AppShellState extends State<AppShell> {
     Navigator.of(context).push(MaterialPageRoute<void>(builder: (_) => screen));
   }
 
+  void _openSection(LogType type) {
+    Navigator.of(context).push(
+      MaterialPageRoute<void>(
+        builder: (_) => SectionScreen(
+          type: type,
+          repository: widget.repository,
+          onBack: () => Navigator.of(context).pop(),
+          onOpenLog: _openDetail,
+        ),
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     final tokens =
@@ -120,7 +135,11 @@ class _AppShellState extends State<AppShell> {
                 now: widget.now,
                 onOpenLog: _openDetail,
               ),
-              const _Placeholder('Library'),
+              LibraryScreen(
+                repository: widget.repository,
+                now: widget.now,
+                onOpenType: _openSection,
+              ),
               const _Placeholder('Calendar'),
               const _Placeholder('Settings'),
             ],
