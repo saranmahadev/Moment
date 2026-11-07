@@ -1,11 +1,24 @@
+import 'dart:io';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:moment/design/theme.dart';
 import 'package:moment/design/tokens.dart';
 import 'package:moment/domain/log.dart';
 import 'package:moment/home/feed_card.dart';
+import 'package:path/path.dart' as p;
 
 void main() {
+  late Directory tempDir;
+
+  setUp(() {
+    tempDir = Directory.systemTemp.createTempSync('feed_card_test_');
+  });
+
+  tearDown(() {
+    tempDir.deleteSync(recursive: true);
+  });
+
   Future<void> pump(WidgetTester tester, Widget child) async {
     await tester.pumpWidget(
       MaterialApp(
@@ -119,6 +132,51 @@ void main() {
       );
       await pump(tester, FeedCard(log: unlabelled));
       expect(find.text('😊'), findsOneWidget);
+    });
+  });
+
+  group('PhotoLogCard', () {
+    testWidgets('shows the type label, time, thumbnail and caption', (
+      tester,
+    ) async {
+      final thumb = File(p.join(tempDir.path, 'a-thumb.jpg'))
+        ..writeAsStringSync('fake');
+      final log = PhotoLog(
+        id: '4',
+        createdAt: DateTime.utc(2026, 11, 6, 20, 12),
+        tzOffsetMinutes: 0,
+        editedAt: null,
+        deletedAt: null,
+        path: thumb.path,
+        thumbnailPath: thumb.path,
+        caption: 'By the lake',
+      );
+
+      await pump(tester, FeedCard(log: log));
+
+      expect(find.text('Photo'), findsOneWidget);
+      expect(find.text('20:12'), findsOneWidget);
+      expect(find.byType(Image), findsOneWidget);
+      expect(find.text('By the lake'), findsOneWidget);
+    });
+
+    testWidgets('shows no caption text when there is none', (tester) async {
+      final thumb = File(p.join(tempDir.path, 'a-thumb.jpg'))
+        ..writeAsStringSync('fake');
+      final log = PhotoLog(
+        id: '5',
+        createdAt: DateTime.utc(2026, 11, 6, 20, 12),
+        tzOffsetMinutes: 0,
+        editedAt: null,
+        deletedAt: null,
+        path: thumb.path,
+        thumbnailPath: thumb.path,
+        caption: null,
+      );
+
+      await pump(tester, FeedCard(log: log));
+
+      expect(find.byType(Image), findsOneWidget);
     });
   });
 }
