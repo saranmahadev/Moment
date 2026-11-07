@@ -1,0 +1,47 @@
+name: Release check
+
+# The release APK build is the expensive part of CI (several minutes), so
+# unlike ci.yml's `test` job, this does not run on every push. It only runs
+# automatically when something that could plausibly change the release
+# manifest or build changes (dependencies, the android/ project, or the
+# check script itself), or when triggered manually — e.g. to fetch a build,
+# or as a manual pre-tag check per docs/WORKFLOW.md.
+on:
+  push:
+    branches: [main]
+    paths:
+      - pubspec.yaml
+      - pubspec.lock
+      - android/**
+      - tool/check_manifest.dart
+      - .github/workflows/release-check.yml
+  workflow_dispatch:
+
+jobs:
+  no-internet-permission:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: "17"
+      - uses: subosito/flutter-action@v2
+        with:
+          channel: stable
+          cache: true
+      - name: Create platform folders if they are not committed yet
+        run: |
+          if [ ! -d android ]; then
+            flutter create . --platforms=android,ios --project-name moment --org app.moment
+          fi
+      - run: flutter pub get
+      - run: dart run build_runner build --delete-conflicting-outputs
+      - run: flutter build apk --release
+      - name: Fail if the release manifest asks for the internet
+        run: dart run tool/check_manifest.dart build/app/intermediates/merged_manifests/release
+      - uses: actions/upload-artifact@v4
+        with:
+          name: moment-release-apk
+          path: build/app/outputs/flutter-apk/app-release.apk
+          retention-days: 14

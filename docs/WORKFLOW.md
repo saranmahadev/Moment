@@ -33,7 +33,7 @@ Before a chunk merges into `main`:
 ## Releases
 
 - Each phase ends with a tag `v0.1.0`, `v0.2.0`, `v0.3.0`, `v0.4.0`, and `v1.0.0` after Phase 5.
-- A tag is created only after CI is green on the release commit and the phase exit gate in the roadmap is met.
+- A tag is created only after CI is green on the release commit and the phase exit gate in the roadmap is met. The release manifest/internet-permission check (`release-check.yml`) only runs automatically when dependencies or the `android/` project change, to avoid spending CI minutes on a release APK build on every merge; manually trigger it (`workflow_dispatch`) on the release commit and confirm it is green before tagging.
 - `CHANGELOG.md` gets one entry per release.
 
 ## Never in git
