@@ -5,6 +5,7 @@ import '../design/glass_surface.dart';
 import '../design/tokens.dart';
 import '../domain/log.dart';
 import '../domain/log_type.dart';
+import '../emoji/create_emoji_screen.dart';
 import '../home/add_sheet.dart';
 import '../home/home_screen.dart';
 import '../text/create_text_screen.dart';
@@ -20,13 +21,11 @@ class AppShell extends StatefulWidget {
     required this.repository,
     DateTime Function()? now,
     this.onOpenLog,
-    this.onAddType,
   }) : now = now ?? DateTime.now;
 
   final LogRepository repository;
   final DateTime Function() now;
   final ValueChanged<Log>? onOpenLog;
-  final ValueChanged<LogType>? onAddType;
 
   @override
   State<AppShell> createState() => _AppShellState();
@@ -67,11 +66,22 @@ class _AppShellState extends State<AppShell> {
           ),
         );
       case LogType.emoji:
+        Navigator.of(context).push(
+          MaterialPageRoute<void>(
+            builder: (_) => CreateEmojiScreen(
+              repository: widget.repository,
+              onSaved: (_) => Navigator.of(context).pop(),
+              onClose: () => Navigator.of(context).pop(),
+            ),
+          ),
+        );
+      // Not in builtLogTypes yet, so AddSheet never offers these: nothing
+      // to wire up until their own chunks add both the screen and the type.
       case LogType.photo:
       case LogType.video:
       case LogType.audio:
       case LogType.location:
-        widget.onAddType?.call(type);
+        break;
     }
   }
 
