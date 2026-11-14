@@ -124,6 +124,18 @@ void main() {
     return file;
   }
 
+  /// Backup and restore do real file and database work, so the tap that
+  /// starts them (and every tap on the way) has to run in the real zone:
+  /// a flow begun under flutter_test's fake clock never sees real I/O
+  /// complete. The delay lets that work finish before settling.
+  Future<void> tapForReal(WidgetTester tester, Finder finder) async {
+    await tester.runAsync(() async {
+      await tester.tap(finder);
+      await Future<void>.delayed(const Duration(milliseconds: 300));
+    });
+    await tester.pumpAndSettle();
+  }
+
   Future<void> enterPassphrases(
     WidgetTester tester,
     String first, [
@@ -136,11 +148,7 @@ void main() {
         confirm,
       );
     }
-    await tester.runAsync(() async {
-      await tester.tap(find.text('Continue'));
-      await Future<void>.delayed(const Duration(milliseconds: 200));
-    });
-    await tester.pumpAndSettle();
+    await tapForReal(tester, find.text('Continue'));
   }
 
   testWidgets('shows the title and the local-only banner', (tester) async {
@@ -275,8 +283,7 @@ void main() {
     ) async {
       await pump(tester, AppLockController(_FakePinStorage()));
 
-      await tester.tap(find.text('Back up now'));
-      await tester.pumpAndSettle();
+      await tapForReal(tester, find.text('Back up now'));
       expect(find.text('Choose a passphrase'), findsOneWidget);
       await enterPassphrases(tester, 'short', 'short');
 
@@ -289,8 +296,7 @@ void main() {
     ) async {
       await pump(tester, AppLockController(_FakePinStorage()));
 
-      await tester.tap(find.text('Back up now'));
-      await tester.pumpAndSettle();
+      await tapForReal(tester, find.text('Back up now'));
       await enterPassphrases(tester, 'correct horse', 'correct house');
 
       expect(find.text('Passphrases do not match.'), findsOneWidget);
@@ -303,8 +309,7 @@ void main() {
       await repo.createText(body: 'Keep me');
       await pump(tester, AppLockController(_FakePinStorage()));
 
-      await tester.tap(find.text('Back up now'));
-      await tester.pumpAndSettle();
+      await tapForReal(tester, find.text('Back up now'));
       await enterPassphrases(tester, 'correct horse', 'correct horse');
 
       expect(gateway.delivered, hasLength(1));
@@ -318,8 +323,7 @@ void main() {
     ) async {
       await pump(tester, AppLockController(_FakePinStorage()));
 
-      await tester.tap(find.text('Back up now'));
-      await tester.pumpAndSettle();
+      await tapForReal(tester, find.text('Back up now'));
       await tester.tap(find.text('Cancel'));
       await tester.pumpAndSettle();
 
@@ -330,14 +334,13 @@ void main() {
     testWidgets('Restore picks a file, asks for its passphrase and restores', (
       tester,
     ) async {
-      gateway.toPick = await backupFromElsewhere('pw-from-elsewhere');
+      // Real file I/O: it must run outside the fake-clock zone.
+      gateway.toPick = await tester.runAsync(
+        () => backupFromElsewhere('pw-from-elsewhere'),
+      );
       await pump(tester, AppLockController(_FakePinStorage()));
 
-      await tester.runAsync(() async {
-        await tester.tap(find.text('Restore from backup'));
-        await Future<void>.delayed(const Duration(milliseconds: 50));
-      });
-      await tester.pumpAndSettle();
+      await tapForReal(tester, find.text('Restore from backup'));
       expect(find.text('Enter the backup passphrase'), findsOneWidget);
       expect(find.byKey(const ValueKey('passphrase-confirm')), findsNothing);
       await enterPassphrases(tester, 'pw-from-elsewhere');
@@ -349,14 +352,12 @@ void main() {
     testWidgets('a wrong restore passphrase says so and restores nothing', (
       tester,
     ) async {
-      gateway.toPick = await backupFromElsewhere('right');
+      gateway.toPick = await tester.runAsync(
+        () => backupFromElsewhere('right'),
+      );
       await pump(tester, AppLockController(_FakePinStorage()));
 
-      await tester.runAsync(() async {
-        await tester.tap(find.text('Restore from backup'));
-        await Future<void>.delayed(const Duration(milliseconds: 50));
-      });
-      await tester.pumpAndSettle();
+      await tapForReal(tester, find.text('Restore from backup'));
       await enterPassphrases(tester, 'wrong');
 
       expect(
@@ -369,11 +370,7 @@ void main() {
     testWidgets('cancelling the file picker asks nothing more', (tester) async {
       await pump(tester, AppLockController(_FakePinStorage()));
 
-      await tester.runAsync(() async {
-        await tester.tap(find.text('Restore from backup'));
-        await Future<void>.delayed(const Duration(milliseconds: 50));
-      });
-      await tester.pumpAndSettle();
+      await tapForReal(tester, find.text('Restore from backup'));
 
       expect(find.text('Enter the backup passphrase'), findsNothing);
     });

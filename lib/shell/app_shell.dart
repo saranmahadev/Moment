@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
 import '../audio/audio_detail_screen.dart';
+import '../backup/backup_coordinator.dart';
 import '../audio/audio_playback_controller.dart';
 import '../audio/audio_recorder_controller.dart';
 import '../audio/create_audio_screen.dart';
@@ -42,6 +43,7 @@ class AppShell extends StatefulWidget {
     required this.picker,
     required this.createAudioRecorder,
     required this.createAudioPlayback,
+    required this.backups,
     DateTime Function()? now,
   }) : now = now ?? DateTime.now;
 
@@ -51,6 +53,7 @@ class AppShell extends StatefulWidget {
   final PhotoPicker picker;
   final AudioRecorderController Function() createAudioRecorder;
   final AudioPlaybackController Function() createAudioPlayback;
+  final BackupCoordinator backups;
   final DateTime Function() now;
 
   @override
@@ -186,6 +189,8 @@ class _AppShellState extends State<AppShell> {
       MaterialPageRoute<void>(
         builder: (_) => PrivacyScreen(
           controller: widget.lockController,
+          backups: widget.backups,
+          now: widget.now,
           onBack: () => Navigator.of(context).pop(),
         ),
       ),
