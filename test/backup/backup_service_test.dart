@@ -1,6 +1,5 @@
 import 'dart:io';
 import 'dart:math';
-import 'dart:typed_data';
 
 import 'package:crypto/crypto.dart';
 import 'package:drift/drift.dart' hide isNull;
@@ -38,13 +37,13 @@ class _Phone {
   late final MediaStore media;
   late final BackupService backup;
 
-  Future<Map<String, Map<String, dynamic>>> rows(TableInfo table) async {
+  Future<Map<String, Map<String, dynamic>>> rows<T extends DataClass>(
+    TableInfo<Table, T> table,
+  ) async {
     final all = await db.select(table).get();
     return {
       for (final row in all)
-        (row as DataClass).toJson()['id']?.toString() ??
-            row.toJson()['logId'].toString(): row
-            .toJson(),
+        (row.toJson()['id'] ?? row.toJson()['logId']).toString(): row.toJson(),
     };
   }
 
