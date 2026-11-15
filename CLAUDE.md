@@ -45,6 +45,14 @@ Screens in Phase 1: Lock, Home, Add, Library, New text, New emoji, Text section,
 - Tests: a real database file cannot be read by plain `sqlite3` without the key, a wrong key fails, the key survives a restart, generated keys are unique.
 - Do not mix `sqlite3_flutter_libs` or `sqlcipher_flutter_libs` with the SQLite3MultipleCiphers hook in `pubspec.yaml`.
 
+## Backup decisions (already made, Phase 2)
+
+- One `.moment` file holds every log of every type, Trash included, plus every media file. Format v1 (`lib/backup/backup_cipher.dart`): a 48-byte header (magic `MOMENT\0\x01`, 16-byte salt, PBKDF2 iteration count, 20-byte nonce prefix) then XChaCha20-Poly1305 chunks of 256 KiB with the header, chunk index and a final flag bound as associated data. Key: PBKDF2-HMAC-SHA256, 150 000 iterations (tests inject fewer). Pure Dart via `package:cryptography`; no native crypto dependency.
+- Inside: `BackupArchive`, the manifest (Drift row JSON per table, media paths relative to the app-support root) then each file in manifest order, SHA-256 checked while streaming. Export and restore stream in bounded memory.
+- Restore is all or nothing: files land in a staging directory first, then move into place and rows are written in one transaction. Logs whose id already exists are skipped, so restoring twice is safe. A wrong passphrase is reported from the first chunk; anything after that is corruption; neither touches existing data.
+- Device side behind `BackupFileGateway`: `share_plus` to hand the file over, `file_selector` to pick one. "Last backup" lives in `backup-state.json` in the support dir.
+- Bump `BackupManifest.currentFormatVersion` (and keep reading older ones) when the archive changes; the format version in the header is for the container only.
+
 ## Visual language (for the design system chunk)
 
 Minimal, frictionless glassmorphism. Newsreader for words, Inter for UI. Real blur only on floating surfaces (tab bar, sheets, header buttons). Feed cards use a translucent fill, gradient edge and soft shadow, because blur in scrolling lists janks on mid-range phones. Type colours: Text #1D4ED8, Emoji #B45309, Photo #BE185D, Video #6D28D9, Audio #0F766E, Location #15803D. Primary buttons ink #1B1F2A. Ground #EDF0F7. Tab bar: Home, Library, + (Add), Calendar, Settings. The mockups' source files are in the mockup artifact; goldens must match them.
