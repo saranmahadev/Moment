@@ -17,7 +17,9 @@ Releases: Phase 1 = 0.1.0 (Foundation, Text and Emoji), 2 = 0.2.0 (Photo, Audio,
 
 ## State
 
-Phases 1 and 2 are built and released (`v0.1.0`, `v0.2.0`): Text, Emoji, Photo and Audio logs, app lock, Trash, encrypted backup and restore, export, and storage by type. `CHANGELOG.md` has the detail per release. Next is Phase 3 (Video and Location) in `docs/ROADMAP.md`. CI pins Flutter 3.47.9; develop and verify on that version. First time setup is in `README.md` (`flutter create` for platform folders, then `build_runner`).
+Phases 1 and 2 are released (`v0.1.0`, `v0.2.0`) and Phase 3 is built on `main`, awaiting the owner's approval to tag `v0.3.0`: all six log types (Text, Emoji, Photo, Video, Audio, Location) can be created, viewed, edited, deleted, restored, exported and backed up. `CHANGELOG.md` has the detail per release. Next is Phase 4 (Calendar, Search, Settings, dark mode) in `docs/ROADMAP.md`. CI pins Flutter 3.47.9; develop and verify on that version. First time setup is in `README.md` (`flutter create` for platform folders, then `build_runner`).
+
+This session cannot push tags (HTTP 403): the owner publishes tags or GitHub Releases at the commits named in the hand-off.
 
 ## Phase 1 chunk order (each is a branch)
 
@@ -53,6 +55,17 @@ Screens in Phase 1: Lock, Home, Add, Library, New text, New emoji, Text section,
 - Device side behind `BackupFileGateway`: `share_plus` to hand the file over, `file_selector` to pick one. "Last backup" lives in `backup-state.json` in the support dir.
 - Bump `BackupManifest.currentFormatVersion` (and keep reading older ones) when the archive changes; the format version in the header is for the container only. Manifest version 1 is 0.2.0 (text, emoji, photo, audio); version 2 adds `videoLogs` and `locationLogs` (0.3.0). An older app refuses a newer manifest rather than dropping what it does not know.
 - Every new log type goes into backup before it is offered in the app (before it joins `builtLogTypes`).
+
+## Video and Location decisions (already made, Phase 3)
+
+- Schema version 4: `video_log` (log_id, path, poster_path, duration_ms, caption nullable) and `location_log` (log_id, latitude and longitude as REAL so they round-trip exactly, accuracy_m nullable, name nullable, note nullable). `LogRepository`: `createVideo`, `updateVideo`, `createLocation` (range-checked), `moveLocation`, `updateLocation`; `filesOf(log)` is the one list of files a log owns.
+- Every device-facing package sits behind an interface with a fake in `test/`: `VideoPicker` (image_picker), `VideoProbe` (video_player for duration, fc_native_video_thumbnail for the poster), `VideoPlaybackController` (video_player), `LocationProvider` (geolocator, Android's own location manager rather than Play services). Do not use `video_thumbnail`: its Android build file no longer builds.
+- Video files are copied by the operating system (`File.copy`) and streamed everywhere else; a 1 GB clip is imported and backed up with flat memory (`test/backup/backup_large_video_test.dart`, tagged `slow`; skip locally with `--exclude-tags slow`).
+- Location never names a place for you: `LocationProvider` has no geocoding, and tests forbid HTTP and scan `lib/` and `pubspec.yaml` for anything that could open a connection. The mockup's "Look up place names" toggle is therefore not built; it would need the internet permission the app refuses to have.
+- Access is explained before the system is asked. States: granted, denied (can ask again), deniedForever (also covers revoked in Settings), serviceOff. Coordinates can always be typed instead; typed coordinates carry no accuracy.
+- The map is `StylisedMap`, an offline tile; `projectPins` shows how places lie relative to each other, not where they are in the world.
+- Platform declarations are tested (`test/platform/`): iOS usage descriptions for Face ID, microphone, camera, photo library and when-in-use location; Android fine and coarse location, never background.
+- Golden baselines for the Phase 2 and 3 screens live in `test/goldens/`; `test/integration/shell_harness.dart` pumps the real `AppShell` with every seam faked.
 
 ## Visual language (for the design system chunk)
 
