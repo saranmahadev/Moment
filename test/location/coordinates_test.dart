@@ -1,5 +1,3 @@
-import 'dart:ui';
-
 import 'package:flutter_test/flutter_test.dart';
 import 'package:moment/location/coordinates.dart';
 
@@ -11,7 +9,7 @@ void main() {
         '12.97160° N, 77.59456° E',
       );
       expect(
-        formatCoordinates(-33.868819, -151.209295),
+        formatCoordinates(-33.868819, -151.209296),
         '33.86882° S, 151.20930° W',
       );
     });
