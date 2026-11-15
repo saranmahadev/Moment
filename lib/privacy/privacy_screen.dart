@@ -4,6 +4,10 @@ import 'package:intl/intl.dart';
 import '../backup/backup_coordinator.dart';
 import '../backup/backup_service.dart';
 import '../design/glass_surface.dart';
+import '../design/type_icons.dart';
+import '../domain/log_type.dart';
+import '../export/export_coordinator.dart';
+import '../storage/storage_service.dart';
 import '../design/orb_field.dart';
 import '../design/tokens.dart';
 import '../lock/app_lock_controller.dart';
@@ -12,21 +16,25 @@ import 'passphrase_sheet.dart';
 
 final _lastBackupFormat = DateFormat('d MMM yyyy, HH:mm');
 
-/// Privacy and backup: the Security section (App lock) and the Backup
-/// section (encrypted backup and restore), matching
-/// design/mockups/png/26-Privacy-and-backup.png. Export, Place names and
-/// Storage follow in their own chunks.
+/// Privacy and backup: Security (App lock), Backup (encrypted backup and
+/// restore), Export (readable copy of chosen types) and Storage by type,
+/// matching design/mockups/png/26-Privacy-and-backup.png. The Place names
+/// toggle arrives with Location in Phase 3.
 class PrivacyScreen extends StatefulWidget {
   const PrivacyScreen({
     super.key,
     required this.controller,
     required this.backups,
+    required this.exports,
+    required this.storage,
     DateTime Function()? now,
     this.onBack,
   }) : now = now ?? DateTime.now;
 
   final AppLockController controller;
   final BackupCoordinator backups;
+  final ExportCoordinator exports;
+  final StorageService storage;
   final DateTime Function() now;
   final VoidCallback? onBack;
 
@@ -38,12 +46,34 @@ class _PrivacyScreenState extends State<PrivacyScreen> {
   bool _appLockOn = false;
   DateTime? _lastBackup;
   bool _busy = false;
+  final Set<LogType> _exportTypes = {...builtLogTypes};
+  Map<LogType, int>? _usage;
 
   @override
   void initState() {
     super.initState();
     _loadAppLockState();
     _loadLastBackup();
+    _loadUsage();
+  }
+
+  Future<void> _loadUsage() async {
+    final usage = await widget.storage.measure();
+    if (!mounted) return;
+    setState(() => _usage = usage);
+  }
+
+  Future<void> _export() async {
+    if (_busy || _exportTypes.isEmpty) return;
+    setState(() => _busy = true);
+    try {
+      await widget.exports.export({..._exportTypes});
+      _notify('Export ready to save');
+    } on Object {
+      _notify('The export could not be made.');
+    } finally {
+      if (mounted) setState(() => _busy = false);
+    }
   }
 
   Future<void> _loadAppLockState() async {
@@ -424,10 +454,236 @@ class _PrivacyScreenState extends State<PrivacyScreen> {
                     ],
                   ),
                 ),
+                const SizedBox(height: 20),
+                _SectionLabel('EXPORT', tokens: tokens),
+                const SizedBox(height: 8),
+                GlassSurface(
+                  variant: GlassVariant.card,
+                  child: Padding(
+                    padding: const EdgeInsets.all(16),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          'Export',
+                          style: TextStyle(
+                            fontSize: 16,
+                            fontWeight: FontWeight.w600,
+                            color: tokens.ink,
+                          ),
+                        ),
+                        Text(
+                          'Markdown, JSON and original files. Choose types.',
+                          style: TextStyle(
+                            fontSize: 13.5,
+                            color: tokens.secondary,
+                          ),
+                        ),
+                        const SizedBox(height: 12),
+                        Wrap(
+                          spacing: 10,
+                          runSpacing: 10,
+                          children: [
+                            for (final type in builtLogTypes)
+                              _ExportChip(
+                                type: type,
+                                selected: _exportTypes.contains(type),
+                                tokens: tokens,
+                                onTap: () => setState(() {
+                                  if (!_exportTypes.remove(type)) {
+                                    _exportTypes.add(type);
+                                  }
+                                }),
+                              ),
+                          ],
+                        ),
+                        const SizedBox(height: 14),
+                        GestureDetector(
+                          onTap: _busy || _exportTypes.isEmpty ? null : _export,
+                          child: Opacity(
+                            opacity: _exportTypes.isEmpty ? 0.5 : 1,
+                            child: SizedBox(
+                              height: 48,
+                              width: double.infinity,
+                              child: GlassSurface(
+                                variant: GlassVariant.surface,
+                                borderRadius: 24,
+                                child: Row(
+                                  mainAxisAlignment: MainAxisAlignment.center,
+                                  children: [
+                                    Icon(
+                                      Icons.file_download_outlined,
+                                      size: 18,
+                                      color: tokens.ink,
+                                    ),
+                                    const SizedBox(width: 8),
+                                    Flexible(
+                                      child: Text(
+                                        'Export selected types',
+                                        overflow: TextOverflow.ellipsis,
+                                        style: TextStyle(
+                                          fontSize: 15,
+                                          fontWeight: FontWeight.w600,
+                                          color: tokens.ink,
+                                        ),
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              ),
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+                const SizedBox(height: 20),
+                _SectionLabel('STORAGE', tokens: tokens),
+                const SizedBox(height: 8),
+                GlassSurface(
+                  variant: GlassVariant.card,
+                  child: Padding(
+                    padding: const EdgeInsets.all(16),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          'Storage by type',
+                          style: TextStyle(
+                            fontSize: 16,
+                            fontWeight: FontWeight.w600,
+                            color: tokens.ink,
+                          ),
+                        ),
+                        const SizedBox(height: 10),
+                        ..._storageRows(tokens),
+                      ],
+                    ),
+                  ),
+                ),
               ],
             ),
           ),
         ],
+      ),
+    );
+  }
+
+  List<Widget> _storageRows(MomentTokens tokens) {
+    final usage = _usage;
+    if (usage == null) return const [];
+    final types = [...builtLogTypes]
+      ..sort((a, b) => usage[b]!.compareTo(usage[a]!));
+    final largest = usage.values.fold<int>(0, (a, b) => a > b ? a : b);
+    return [
+      for (final type in types)
+        Padding(
+          key: ValueKey('storage-row-${type.name}'),
+          padding: const EdgeInsets.symmetric(vertical: 6),
+          child: Row(
+            children: [
+              SizedBox(
+                width: 64,
+                child: Text(
+                  momentLabelFor(type),
+                  overflow: TextOverflow.ellipsis,
+                  style: TextStyle(fontSize: 14.5, color: tokens.secondary),
+                ),
+              ),
+              Expanded(
+                child: ClipRRect(
+                  borderRadius: BorderRadius.circular(4),
+                  child: Stack(
+                    children: [
+                      Container(
+                        height: 8,
+                        color: tokens.ink.withValues(alpha: 0.08),
+                      ),
+                      FractionallySizedBox(
+                        widthFactor: largest == 0
+                            ? 0
+                            : (usage[type]! / largest).clamp(0.02, 1.0),
+                        child: Container(
+                          height: 8,
+                          color: tokens.colorFor(type),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+              SizedBox(
+                width: 72,
+                child: Text(
+                  formatBytes(usage[type]!),
+                  textAlign: TextAlign.end,
+                  style: TextStyle(
+                    fontSize: 14.5,
+                    fontWeight: FontWeight.w500,
+                    color: tokens.ink,
+                  ),
+                ),
+              ),
+            ],
+          ),
+        ),
+    ];
+  }
+}
+
+class _ExportChip extends StatelessWidget {
+  const _ExportChip({
+    required this.type,
+    required this.selected,
+    required this.tokens,
+    required this.onTap,
+  });
+
+  final LogType type;
+  final bool selected;
+  final MomentTokens tokens;
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    final color = tokens.colorFor(type);
+    return Semantics(
+      key: ValueKey('export-chip-${type.name}'),
+      button: true,
+      selected: selected,
+      label: momentLabelFor(type),
+      excludeSemantics: true,
+      child: GestureDetector(
+        onTap: onTap,
+        child: Container(
+          height: 40,
+          padding: const EdgeInsets.symmetric(horizontal: 14),
+          decoration: BoxDecoration(
+            color: selected ? tokens.tintFor(type) : Colors.transparent,
+            border: Border.all(color: selected ? color : tokens.switchOff),
+            borderRadius: BorderRadius.circular(20),
+          ),
+          child: Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Icon(
+                selected ? Icons.check : momentIconFor(type),
+                size: 16,
+                color: selected ? color : tokens.secondary,
+              ),
+              const SizedBox(width: 6),
+              Text(
+                momentLabelFor(type),
+                style: TextStyle(
+                  fontSize: 14.5,
+                  fontWeight: FontWeight.w500,
+                  color: selected ? color : tokens.secondary,
+                ),
+              ),
+            ],
+          ),
+        ),
       ),
     );
   }

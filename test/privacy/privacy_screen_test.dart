@@ -150,6 +150,17 @@ void main() {
     await tester.pumpAndSettle();
   }
 
+  /// The Privacy list builds lazily, so lower sections only exist once
+  /// scrolled to.
+  Future<void> scrollTo(WidgetTester tester, Finder finder) async {
+    await tester.scrollUntilVisible(
+      finder,
+      300,
+      scrollable: find.byType(Scrollable).first,
+    );
+    await tester.pump();
+  }
+
   Future<void> enterPassphrases(
     WidgetTester tester,
     String first, [
@@ -395,6 +406,7 @@ void main() {
       tester,
     ) async {
       await pump(tester, AppLockController(_FakePinStorage()));
+      await scrollTo(tester, find.text('Export selected types'));
 
       expect(find.text('EXPORT'), findsOneWidget);
       expect(
@@ -422,12 +434,10 @@ void main() {
       await repo.createEmoji(emoji: '😌', strength: 3);
       await pump(tester, AppLockController(_FakePinStorage()));
 
-      await tester.ensureVisible(
-        find.byKey(const ValueKey('export-chip-emoji')),
-      );
+      await scrollTo(tester, find.byKey(const ValueKey('export-chip-emoji')));
       await tester.tap(find.byKey(const ValueKey('export-chip-emoji')));
       await tester.pump();
-      await tester.ensureVisible(find.text('Export selected types'));
+      await scrollTo(tester, find.text('Export selected types'));
       await tapForReal(tester, find.text('Export selected types'));
 
       expect(gateway.delivered, hasLength(1));
@@ -443,6 +453,7 @@ void main() {
       tester,
     ) async {
       await pump(tester, AppLockController(_FakePinStorage()));
+      await scrollTo(tester, find.text('Export selected types'));
 
       for (final key in ['text', 'emoji', 'photo', 'audio']) {
         await tester.ensureVisible(find.byKey(ValueKey('export-chip-$key')));

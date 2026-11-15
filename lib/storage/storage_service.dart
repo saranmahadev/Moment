@@ -16,11 +16,7 @@ class StorageService {
 
   Future<Map<LogType, int>> measure() async {
     final usage = {for (final type in builtLogTypes) type: 0};
-    final logs = [
-      ...await _repository.watchFeed().first,
-      ...await _repository.watchTrash().first,
-    ];
-    for (final log in logs) {
+    for (final log in await _repository.getAll()) {
       final bytes = switch (log) {
         TextLog() => utf8.encode(log.body).length,
         EmojiLog() =>

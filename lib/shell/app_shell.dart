@@ -11,6 +11,8 @@ import '../design/glass_surface.dart';
 import '../design/orb_field.dart';
 import '../design/tokens.dart';
 import '../domain/log.dart';
+import '../export/export_coordinator.dart';
+import '../storage/storage_service.dart';
 import '../domain/log_type.dart';
 import '../detail/emoji_detail_screen.dart';
 import '../detail/text_detail_screen.dart';
@@ -44,6 +46,8 @@ class AppShell extends StatefulWidget {
     required this.createAudioRecorder,
     required this.createAudioPlayback,
     required this.backups,
+    required this.exports,
+    required this.storage,
     DateTime Function()? now,
   }) : now = now ?? DateTime.now;
 
@@ -54,6 +58,8 @@ class AppShell extends StatefulWidget {
   final AudioRecorderController Function() createAudioRecorder;
   final AudioPlaybackController Function() createAudioPlayback;
   final BackupCoordinator backups;
+  final ExportCoordinator exports;
+  final StorageService storage;
   final DateTime Function() now;
 
   @override
@@ -190,6 +196,8 @@ class _AppShellState extends State<AppShell> {
         builder: (_) => PrivacyScreen(
           controller: widget.lockController,
           backups: widget.backups,
+          exports: widget.exports,
+          storage: widget.storage,
           now: widget.now,
           onBack: () => Navigator.of(context).pop(),
         ),

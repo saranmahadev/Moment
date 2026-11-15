@@ -115,8 +115,8 @@ class ExportService {
       out.writeln(switch (log) {
         TextLog() => log.body,
         EmojiLog() =>
-          '${log.emoji} ${log.label ?? ''}'.trim() +
-              '\n\nIntensity ${log.strength} of 5',
+          '${'${log.emoji} ${log.label ?? ''}'.trim()}\n\n'
+              'Intensity ${log.strength} of 5',
         PhotoLog() =>
           '![${log.caption ?? 'Photo'}](files/${p.basename(log.path)})'
               '${log.caption == null ? '' : '\n\n${log.caption}'}',
