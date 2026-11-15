@@ -20,6 +20,7 @@ import '../data/log_repository.dart';
 import '../data/media_store.dart';
 import '../data/secure_database.dart';
 import '../design/theme.dart';
+import '../location/location_provider.dart';
 import '../lock/app_lock_controller.dart';
 import '../lock/biometric_authenticator.dart';
 import '../lock/pin_storage.dart';
@@ -149,6 +150,7 @@ class _MomentAppState extends State<MomentApp> with WidgetsBindingObserver {
               videoPicker: DeviceVideoPicker(),
               videoProbe: DeviceVideoProbe(),
               createVideoPlayback: DeviceVideoPlaybackController.new,
+              locationProvider: DeviceLocationProvider(),
               backups: resources.backups,
               exports: resources.exports,
               storage: resources.storage,

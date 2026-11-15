@@ -20,6 +20,10 @@ import '../emoji/create_emoji_screen.dart';
 import '../home/add_sheet.dart';
 import '../home/home_screen.dart';
 import '../library/library_screen.dart';
+import '../location/create_location_screen.dart';
+import '../location/location_detail_screen.dart';
+import '../location/location_provider.dart';
+import '../location/location_section_screen.dart';
 import '../lock/app_lock_controller.dart';
 import '../photo/create_photo_screen.dart';
 import '../photo/photo_detail_screen.dart';
@@ -54,6 +58,7 @@ class AppShell extends StatefulWidget {
     required this.videoPicker,
     required this.videoProbe,
     required this.createVideoPlayback,
+    required this.locationProvider,
     required this.backups,
     required this.exports,
     required this.storage,
@@ -69,6 +74,7 @@ class AppShell extends StatefulWidget {
   final VideoPicker videoPicker;
   final VideoProbe videoProbe;
   final VideoPlaybackController Function() createVideoPlayback;
+  final LocationProvider locationProvider;
   final BackupCoordinator backups;
   final ExportCoordinator exports;
   final StorageService storage;
@@ -163,10 +169,18 @@ class _AppShellState extends State<AppShell> {
             ),
           ),
         );
-      // Not in builtLogTypes yet, so AddSheet never offers it: nothing to
-      // wire up until its own chunk adds both the screen and the type.
       case LogType.location:
-        break;
+        Navigator.of(context).push(
+          MaterialPageRoute<void>(
+            builder: (_) => CreateLocationScreen(
+              repository: widget.repository,
+              provider: widget.locationProvider,
+              now: widget.now,
+              onSaved: (_) => Navigator.of(context).pop(),
+              onClose: () => Navigator.of(context).pop(),
+            ),
+          ),
+        );
     }
   }
 
@@ -209,8 +223,12 @@ class _AppShellState extends State<AppShell> {
         now: widget.now,
         onBack: () => Navigator.of(context).pop(),
       ),
-      LocationLog() => throw UnimplementedError(
-        'Location detail is not built yet',
+      LocationLog() => LocationDetailScreen(
+        log: log,
+        repository: widget.repository,
+        provider: widget.locationProvider,
+        now: widget.now,
+        onBack: () => Navigator.of(context).pop(),
       ),
     };
     Navigator.of(context).push(MaterialPageRoute<void>(builder: (_) => screen));
@@ -254,6 +272,11 @@ class _AppShellState extends State<AppShell> {
             onOpenLog: _openDetail,
           ),
           LogType.video => VideoSectionScreen(
+            repository: widget.repository,
+            onBack: back,
+            onOpenLog: _openDetail,
+          ),
+          LogType.location => LocationSectionScreen(
             repository: widget.repository,
             onBack: back,
             onOpenLog: _openDetail,
