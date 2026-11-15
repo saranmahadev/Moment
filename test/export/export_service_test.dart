@@ -130,6 +130,30 @@ void main() {
     expect(textIn(archive, 'audio/audio.md'), contains('Voice note'));
   });
 
+  test('videos export with the clip, but not its poster', () async {
+    final clip = mediaFile('c.mp4', [7, 7, 7]);
+    final poster = mediaFile('c-poster.jpg', [1]);
+    await repo.createVideo(
+      path: clip.path,
+      posterPath: poster.path,
+      duration: const Duration(seconds: 48),
+      caption: 'Walk to the station',
+    );
+
+    final archive = await exportArchive({LogType.video});
+
+    expect(archive.findFile('video/files/c.mp4')!.content, [7, 7, 7]);
+    expect(archive.findFile('video/files/c-poster.jpg'), isNull);
+    final row = (jsonIn(archive, 'video/video.json')['rows'] as List).single;
+    expect(row['caption'], 'Walk to the station');
+    expect(row['durationMs'], 48000);
+    expect(row['file'], 'files/c.mp4');
+    final md = textIn(archive, 'video/video.md');
+    expect(md, contains('# Video'));
+    expect(md, contains('Walk to the station'));
+    expect(md, contains('(0:48)'));
+  });
+
   test('only the selected types are exported', () async {
     await repo.createText(body: 'Hello');
     await repo.createEmoji(emoji: '😌', strength: 3);
@@ -168,7 +192,7 @@ void main() {
     await expectLater(
       service.exportTo(
         Directory(p.join(tempDir.path, 'out')),
-        types: {LogType.video},
+        types: {LogType.location},
       ),
       throwsArgumentError,
     );

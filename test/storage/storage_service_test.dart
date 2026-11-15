@@ -66,6 +66,16 @@ void main() {
     expect((await service.measure())[LogType.audio], 2500);
   });
 
+  test('video counts the clip and its poster', () async {
+    await repo.createVideo(
+      path: mediaFile('a.mp4', 5000).path,
+      posterPath: mediaFile('a-poster.jpg', 300).path,
+      duration: const Duration(seconds: 3),
+    );
+
+    expect((await service.measure())[LogType.video], 5300);
+  });
+
   test('logs in Trash still take up space until they are purged', () async {
     final id = await repo.createAudio(
       path: mediaFile('a.m4a', 2500).path,

@@ -413,7 +413,7 @@ void main() {
         find.text('Markdown, JSON and original files. Choose types.'),
         findsOneWidget,
       );
-      for (final key in ['text', 'emoji', 'photo', 'audio']) {
+      for (final key in ['text', 'emoji', 'photo', 'audio', 'video']) {
         expect(find.byKey(ValueKey('export-chip-$key')), findsOneWidget);
         expect(
           tester
@@ -455,7 +455,7 @@ void main() {
       await pump(tester, AppLockController(_FakePinStorage()));
       await scrollTo(tester, find.text('Export selected types'));
 
-      for (final key in ['text', 'emoji', 'photo', 'audio']) {
+      for (final key in ['text', 'emoji', 'photo', 'audio', 'video']) {
         await tester.ensureVisible(find.byKey(ValueKey('export-chip-$key')));
         await tester.tap(find.byKey(ValueKey('export-chip-$key')));
         await tester.pump();
@@ -492,7 +492,7 @@ void main() {
       expect(find.text('Storage by type'), findsOneWidget);
       expect(find.byKey(const ValueKey('storage-row-audio')), findsOneWidget);
       expect(find.text('3 MB'), findsOneWidget);
-      expect(find.text('<1 MB'), findsNWidgets(3));
+      expect(find.text('<1 MB'), findsNWidgets(4));
     });
   });
 }

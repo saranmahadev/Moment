@@ -23,6 +23,8 @@ import 'package:moment/photo/photo_picker.dart';
 import 'package:moment/shell/app_shell.dart';
 import 'package:path/path.dart' as p;
 
+import '../video/video_fakes.dart';
+
 class _FakePinStorage implements PinStorage {
   String? stored;
 
@@ -143,6 +145,9 @@ void main() {
             picker: _FakePhotoPicker(),
             createAudioRecorder: _FakeAudioRecorderController.new,
             createAudioPlayback: _FakeAudioPlaybackController.new,
+            videoPicker: FakeVideoPicker(),
+            videoProbe: FakeVideoProbe(),
+            createVideoPlayback: FakeVideoPlaybackController.new,
             backups: BackupCoordinator(
               service: BackupService(
                 db: db,
