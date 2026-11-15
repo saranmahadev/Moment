@@ -62,7 +62,7 @@ final _number = RegExp(r'([+-]?\d+(?:\.\d+)?)\s*°?\s*([NSEWnsew])?');
 /// other, not where they are in the world.
 List<Offset> projectPins(List<(double, double)> places) {
   if (places.isEmpty) return const [];
-  const margin = 0.15;
+  const margin = 0.22;
 
   final latitudes = places.map((p) => p.$1);
   final longitudes = places.map((p) => p.$2);
