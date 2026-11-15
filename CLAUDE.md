@@ -17,7 +17,7 @@ Releases: Phase 1 = 0.1.0 (Foundation, Text and Emoji), 2 = 0.2.0 (Photo, Audio,
 
 ## State
 
-Phases 1 and 2 are released (`v0.1.0`, `v0.2.0`) and Phase 3 is built on `main`, awaiting the owner's approval to tag `v0.3.0`: all six log types (Text, Emoji, Photo, Video, Audio, Location) can be created, viewed, edited, deleted, restored, exported and backed up. `CHANGELOG.md` has the detail per release. Next is Phase 4 (Calendar, Search, Settings, dark mode) in `docs/ROADMAP.md`. CI pins Flutter 3.47.9; develop and verify on that version. First time setup is in `README.md` (`flutter create` for platform folders, then `build_runner`).
+Phases 1, 2 and 3 are released (`v0.1.0`, `v0.2.0`, `v0.3.0`): all six log types (Text, Emoji, Photo, Video, Audio, Location) can be created, viewed, edited, deleted, restored, exported and backed up. `CHANGELOG.md` has the detail per release. Next is Phase 4 (Calendar, Search, Settings, dark mode) in `docs/ROADMAP.md`. CI pins Flutter 3.47.9; develop and verify on that version. First time setup is in `README.md` (`flutter create` for platform folders, then `build_runner`).
 
 Tags are never pushed by hand: the **Release** workflow (`.github/workflows/release.yml`, run with a version and optionally a commit) checks, builds, tags and publishes the APK in one go. See `docs/WORKFLOW.md`, "Releases".
 

@@ -1,5 +1,38 @@
 # Changelog
 
+## 0.3.0 — Video and Location
+
+The last two log types: all six can now be created, viewed, edited,
+deleted, restored, exported and backed up.
+
+- **Video**: record with the camera or choose a clip, add a caption. The
+  clip is copied into app-private storage without being loaded into
+  memory (tested with a 1 GB file), and a poster frame is made off the
+  main thread. Grid section, and a player with scrubbing and 15-second
+  skips.
+- **Location**: pin where you are, or type coordinates; name the place and
+  add a note. Access is explained before the system asks, and refusing,
+  revoking or switching location off each say what to do instead.
+  Coordinates are stored exactly and can be copied; the pin can be moved.
+  The map is a stylised offline tile, not a real map.
+- **Look up place names** (Privacy and backup, off by default): when you
+  turn it on, a new pin's coordinates are sent to OpenStreetMap's
+  Nominatim service and the name that comes back is offered for you to
+  keep or replace. This is the only thing in the app that uses the
+  internet, and with the switch off nothing can.
+- **Backup, export, Trash and storage** cover all six types. Backups made
+  by 0.2.0 still restore; a backup from a newer version is refused rather
+  than half-read.
+- Upgrading from 0.2.0 keeps every existing log.
+- The Android build now declares the internet permission, for place names
+  only. CI keeps network code to one file and one HTTPS host, and fails
+  the release build on permissions a private journal never needs.
+- Releases are tagged and published, APK attached, by a Release workflow.
+
+Known limits: the new screens are simpler than the mockups (the system
+camera rather than a custom viewfinder, no month headings in the video
+grid); visual polish is Phase 5.
+
 ## 0.2.0 — Photo, Audio and Backup
 
 Two more log types, and a way to take the whole library with you.
