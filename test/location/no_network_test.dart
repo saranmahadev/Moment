@@ -28,13 +28,14 @@ void main() {
       r'\bHttpClient\b|\bSocket\.|\bRawSocket\b|\bWebSocket\b|'
       r"package:http/|Uri\.https?\(|'https?://",
     );
-    for (final file in Directory(
-      'lib',
-    ).listSync(recursive: true).whereType<File>()) {
-      if (!file.path.endsWith('.dart') || file.path.endsWith('.g.dart'))
-        continue;
-      if (networking.hasMatch(file.readAsStringSync()))
+    final sources = Directory('lib')
+        .listSync(recursive: true)
+        .whereType<File>()
+        .where((f) => f.path.endsWith('.dart') && !f.path.endsWith('.g.dart'));
+    for (final file in sources) {
+      if (networking.hasMatch(file.readAsStringSync())) {
         offenders.add(file.path);
+      }
     }
 
     expect(offenders, isEmpty);
