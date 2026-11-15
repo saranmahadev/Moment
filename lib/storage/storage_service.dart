@@ -24,6 +24,9 @@ class StorageService {
         PhotoLog() =>
           await _fileSize(log.path) + await _fileSize(log.thumbnailPath),
         AudioLog() => await _fileSize(log.path),
+        VideoLog() || LocationLog() => throw UnimplementedError(
+          'Storage for ${log.type.name} is not built yet',
+        ),
       };
       usage[log.type] = (usage[log.type] ?? 0) + bytes;
     }

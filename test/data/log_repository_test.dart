@@ -570,4 +570,295 @@ void main() {
       expect(log.editedAt, isNull);
     });
   });
+
+  group('video', () {
+    test('creates a video log and reads it back', () async {
+      final id = await repo.createVideo(
+        path: '/media/2026/01/a.mp4',
+        posterPath: '/media/2026/01/a-poster.jpg',
+        duration: const Duration(seconds: 48),
+        caption: 'Walk to the station',
+      );
+
+      final log = await repo.getById(id) as VideoLog;
+      expect(log.type, LogType.video);
+      expect(log.path, '/media/2026/01/a.mp4');
+      expect(log.posterPath, '/media/2026/01/a-poster.jpg');
+      expect(log.duration, const Duration(seconds: 48));
+      expect(log.caption, 'Walk to the station');
+      expect(log.createdAt, now);
+    });
+
+    test('a video without a caption reads back with a null caption', () async {
+      final id = await repo.createVideo(
+        path: '/a.mp4',
+        posterPath: '/a.jpg',
+        duration: const Duration(seconds: 1),
+      );
+      expect((await repo.getById(id) as VideoLog).caption, isNull);
+    });
+
+    test('updateVideo changes the caption and stamps editedAt', () async {
+      final id = await repo.createVideo(
+        path: '/a.mp4',
+        posterPath: '/a.jpg',
+        duration: const Duration(seconds: 1),
+        caption: 'Before',
+      );
+      now = now.add(const Duration(minutes: 5));
+
+      await repo.updateVideo(id, caption: 'After');
+
+      final log = await repo.getById(id) as VideoLog;
+      expect(log.caption, 'After');
+      expect(log.editedAt, now);
+    });
+
+    test('updateVideo can clear the caption', () async {
+      final id = await repo.createVideo(
+        path: '/a.mp4',
+        posterPath: '/a.jpg',
+        duration: const Duration(seconds: 1),
+        caption: 'Before',
+      );
+      await repo.updateVideo(id, caption: null);
+      expect((await repo.getById(id) as VideoLog).caption, isNull);
+    });
+
+    test('updateVideo on a text log throws', () async {
+      final id = await repo.createText(body: 'hi');
+      expect(() => repo.updateVideo(id, caption: 'x'), throwsArgumentError);
+    });
+
+    test('appears in the feed and in getAll', () async {
+      final id = await repo.createVideo(
+        path: '/a.mp4',
+        posterPath: '/a.jpg',
+        duration: const Duration(seconds: 1),
+      );
+      expect((await repo.watchFeed().first).single, isA<VideoLog>());
+      expect(
+        (await repo.watchFeed(types: {LogType.video}).first).single.id,
+        id,
+      );
+      expect((await repo.getAll()).single, isA<VideoLog>());
+    });
+
+    test('deletePermanently removes the video and its poster', () async {
+      final video = photoFile('a.mp4');
+      final poster = photoFile('a-poster.jpg');
+      final id = await repo.createVideo(
+        path: video.path,
+        posterPath: poster.path,
+        duration: const Duration(seconds: 1),
+      );
+
+      await repo.deletePermanently(id);
+
+      expect(video.existsSync(), isFalse);
+      expect(poster.existsSync(), isFalse);
+    });
+
+    test('emptyTrash and purgeExpired remove trashed video files', () async {
+      final video1 = photoFile('1.mp4');
+      final poster1 = photoFile('1.jpg');
+      final video2 = photoFile('2.mp4');
+      final poster2 = photoFile('2.jpg');
+      final first = await repo.createVideo(
+        path: video1.path,
+        posterPath: poster1.path,
+        duration: const Duration(seconds: 1),
+      );
+      await repo.softDelete(first);
+      await repo.purgeExpired(now.add(const Duration(days: 31)));
+      expect(video1.existsSync(), isFalse);
+      expect(poster1.existsSync(), isFalse);
+
+      final second = await repo.createVideo(
+        path: video2.path,
+        posterPath: poster2.path,
+        duration: const Duration(seconds: 1),
+      );
+      await repo.softDelete(second);
+      await repo.emptyTrash();
+      expect(video2.existsSync(), isFalse);
+      expect(poster2.existsSync(), isFalse);
+    });
+  });
+
+  group('location', () {
+    // Values that do not survive a round trip through float32 or a decimal
+    // string with too few digits.
+    const latitude = 12.971598765432101;
+    const longitude = -77.59456234567891;
+
+    test('creates a location log and reads it back', () async {
+      final id = await repo.createLocation(
+        latitude: latitude,
+        longitude: longitude,
+        accuracyMeters: 12,
+        name: 'Favourite bench',
+        note: 'Under the big tree',
+      );
+
+      final log = await repo.getById(id) as LocationLog;
+      expect(log.type, LogType.location);
+      expect(log.accuracyMeters, 12);
+      expect(log.name, 'Favourite bench');
+      expect(log.note, 'Under the big tree');
+      expect(log.createdAt, now);
+    });
+
+    test('coordinates round-trip exactly', () async {
+      final id = await repo.createLocation(
+        latitude: latitude,
+        longitude: longitude,
+      );
+
+      final log = await repo.getById(id) as LocationLog;
+      expect(log.latitude, latitude);
+      expect(log.longitude, longitude);
+    });
+
+    test('accuracy, name and note are optional', () async {
+      final id = await repo.createLocation(latitude: 0, longitude: 0);
+      final log = await repo.getById(id) as LocationLog;
+      expect(log.accuracyMeters, isNull);
+      expect(log.name, isNull);
+      expect(log.note, isNull);
+    });
+
+    test('rejects coordinates that are not on Earth', () {
+      expect(
+        () => repo.createLocation(latitude: 90.1, longitude: 0),
+        throwsArgumentError,
+      );
+      expect(
+        () => repo.createLocation(latitude: -90.1, longitude: 0),
+        throwsArgumentError,
+      );
+      expect(
+        () => repo.createLocation(latitude: 0, longitude: 180.1),
+        throwsArgumentError,
+      );
+      expect(
+        () => repo.createLocation(latitude: 0, longitude: -180.1),
+        throwsArgumentError,
+      );
+      expect(
+        () => repo.createLocation(latitude: double.nan, longitude: 0),
+        throwsArgumentError,
+      );
+    });
+
+    test('the poles and the antimeridian are accepted', () async {
+      await repo.createLocation(latitude: 90, longitude: 180);
+      await repo.createLocation(latitude: -90, longitude: -180);
+      expect(await repo.getAll(), hasLength(2));
+    });
+
+    test('moveLocation moves the pin and stamps editedAt', () async {
+      final id = await repo.createLocation(
+        latitude: 1,
+        longitude: 2,
+        accuracyMeters: 30,
+        name: 'Tea stall',
+      );
+      now = now.add(const Duration(minutes: 5));
+
+      await repo.moveLocation(
+        id,
+        latitude: latitude,
+        longitude: longitude,
+        accuracyMeters: 8,
+      );
+
+      final log = await repo.getById(id) as LocationLog;
+      expect(log.latitude, latitude);
+      expect(log.longitude, longitude);
+      expect(log.accuracyMeters, 8);
+      expect(log.name, 'Tea stall');
+      expect(log.editedAt, now);
+    });
+
+    test('moveLocation without an accuracy clears the old one', () async {
+      final id = await repo.createLocation(
+        latitude: 1,
+        longitude: 2,
+        accuracyMeters: 30,
+      );
+      await repo.moveLocation(id, latitude: 3, longitude: 4);
+      expect((await repo.getById(id) as LocationLog).accuracyMeters, isNull);
+    });
+
+    test('moveLocation rejects coordinates that are not on Earth', () async {
+      final id = await repo.createLocation(latitude: 1, longitude: 2);
+      expect(
+        () => repo.moveLocation(id, latitude: 91, longitude: 0),
+        throwsArgumentError,
+      );
+    });
+
+    test('updateLocation changes the name and note, leaving the pin', () async {
+      final id = await repo.createLocation(
+        latitude: latitude,
+        longitude: longitude,
+        name: 'Before',
+      );
+      now = now.add(const Duration(minutes: 5));
+
+      await repo.updateLocation(id, name: 'After', note: 'A note');
+
+      final log = await repo.getById(id) as LocationLog;
+      expect(log.name, 'After');
+      expect(log.note, 'A note');
+      expect(log.latitude, latitude);
+      expect(log.editedAt, now);
+    });
+
+    test('updateLocation can clear the name and note', () async {
+      final id = await repo.createLocation(
+        latitude: 1,
+        longitude: 2,
+        name: 'Before',
+        note: 'Note',
+      );
+      await repo.updateLocation(id, name: null, note: null);
+      final log = await repo.getById(id) as LocationLog;
+      expect(log.name, isNull);
+      expect(log.note, isNull);
+    });
+
+    test('updateLocation and moveLocation on a text log throw', () async {
+      final id = await repo.createText(body: 'hi');
+      expect(
+        () => repo.updateLocation(id, name: 'x', note: null),
+        throwsArgumentError,
+      );
+      expect(
+        () => repo.moveLocation(id, latitude: 1, longitude: 2),
+        throwsArgumentError,
+      );
+    });
+
+    test('appears in the feed and in getAll', () async {
+      final id = await repo.createLocation(latitude: 1, longitude: 2);
+      expect((await repo.watchFeed().first).single, isA<LocationLog>());
+      expect(
+        (await repo.watchFeed(types: {LogType.location}).first).single.id,
+        id,
+      );
+      expect((await repo.getAll()).single, isA<LocationLog>());
+    });
+
+    test('can be trashed, restored and deleted for good', () async {
+      final id = await repo.createLocation(latitude: 1, longitude: 2);
+      await repo.softDelete(id);
+      expect((await repo.watchTrash().first).single, isA<LocationLog>());
+      await repo.restore(id);
+      expect(await repo.watchTrash().first, isEmpty);
+      await repo.deletePermanently(id);
+      expect(await repo.getById(id), isNull);
+    });
+  });
 }

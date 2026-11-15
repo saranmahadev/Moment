@@ -174,6 +174,9 @@ class _AppShellState extends State<AppShell> {
         now: widget.now,
         onBack: () => Navigator.of(context).pop(),
       ),
+      VideoLog() || LocationLog() => throw UnimplementedError(
+        '${log.type.name} detail is not built yet',
+      ),
     };
     Navigator.of(context).push(MaterialPageRoute<void>(builder: (_) => screen));
   }

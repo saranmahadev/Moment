@@ -13,13 +13,15 @@ part 'database.g.dart';
     EmojiLogsTable,
     PhotoLogsTable,
     AudioLogsTable,
+    VideoLogsTable,
+    LocationLogsTable,
   ],
 )
 class AppDatabase extends _$AppDatabase {
   AppDatabase(super.executor);
 
   @override
-  int get schemaVersion => 3;
+  int get schemaVersion => 4;
 
   @override
   MigrationStrategy get migration => MigrationStrategy(
@@ -30,6 +32,10 @@ class AppDatabase extends _$AppDatabase {
       }
       if (from < 3) {
         await migrator.createTable(audioLogsTable);
+      }
+      if (from < 4) {
+        await migrator.createTable(videoLogsTable);
+        await migrator.createTable(locationLogsTable);
       }
     },
     beforeOpen: (details) async {
