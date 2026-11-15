@@ -7,6 +7,9 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:moment/audio/audio_playback_controller.dart';
 import 'package:moment/audio/audio_recorder_controller.dart';
 import 'package:moment/backup/backup_coordinator.dart';
+import 'package:moment/export/export_coordinator.dart';
+import 'package:moment/export/export_service.dart';
+import 'package:moment/storage/storage_service.dart';
 import 'package:moment/backup/backup_file_gateway.dart';
 import 'package:moment/backup/backup_service.dart';
 import 'package:moment/backup/last_backup_store.dart';
@@ -149,6 +152,14 @@ void main() {
               lastBackupStore: _MemoryLastBackupStore(),
               scratchDirectory: Directory(p.join(tempDir.path, 'scratch')),
             ),
+            exports: ExportCoordinator(
+              service: ExportService(repository: repo),
+              gateway: _FakeBackupFileGateway(),
+              scratchDirectory: Directory(
+                p.join(tempDir.path, 'export-scratch'),
+              ),
+            ),
+            storage: StorageService(repository: repo),
           ),
         ),
       );
