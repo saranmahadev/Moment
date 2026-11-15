@@ -5,6 +5,8 @@ import 'package:image/image.dart' as img;
 import 'package:path/path.dart' as p;
 import 'package:uuid/uuid.dart';
 
+import '../video/video_probe.dart';
+
 /// Returns a new unique id. Injected so tests can control identity.
 typedef IdGenerator = String Function();
 
@@ -25,6 +27,20 @@ class ImportedAudio {
   const ImportedAudio({required this.path});
 
   final String path;
+}
+
+/// The files for an imported video: the clip, its poster frame, and how
+/// long it runs.
+class ImportedVideo {
+  const ImportedVideo({
+    required this.path,
+    required this.posterPath,
+    required this.duration,
+  });
+
+  final String path;
+  final String posterPath;
+  final Duration duration;
 }
 
 class _ProcessedPhoto {
@@ -117,5 +133,48 @@ class MediaStore {
     await source.copy(audioPath);
 
     return ImportedAudio(path: audioPath);
+  }
+
+  /// Copies a video into this app's private storage with a poster frame
+  /// alongside. The copy is done by the operating system, so even a very
+  /// large file is never held in memory. Throws [ArgumentError], leaving
+  /// nothing behind, if [probe] cannot read the file as a video.
+  Future<ImportedVideo> importVideo(
+    File source, {
+    required VideoProbe probe,
+  }) async {
+    final monthDir = await _monthDir();
+    final id = _generateId();
+    final poster = File(p.join(monthDir.path, '$id-poster.jpg'));
+    final video = File(p.join(monthDir.path, '$id${p.extension(source.path)}'));
+
+    Future<void> cleanUp() async {
+      for (final file in [poster, video]) {
+        if (await file.exists()) await file.delete();
+      }
+    }
+
+    final Duration duration;
+    try {
+      duration = await probe.duration(source);
+      if (!await probe.writePoster(source, poster) || !await poster.exists()) {
+        throw const FormatException('no poster frame');
+      }
+    } catch (_) {
+      await cleanUp();
+      throw ArgumentError.value(source.path, 'source', 'not a readable video');
+    }
+
+    try {
+      await source.copy(video.path);
+    } catch (_) {
+      await cleanUp();
+      rethrow;
+    }
+    return ImportedVideo(
+      path: video.path,
+      posterPath: poster.path,
+      duration: duration,
+    );
   }
 }
