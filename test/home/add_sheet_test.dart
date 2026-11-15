@@ -41,7 +41,8 @@ void main() {
     expect(find.text('Take or choose a photo'), findsOneWidget);
     expect(find.text('Audio'), findsOneWidget);
     expect(find.text('Record a voice note'), findsOneWidget);
-    expect(find.text('Video'), findsNothing);
+    expect(find.text('Video'), findsOneWidget);
+    expect(find.text('Record or choose a video'), findsOneWidget);
     expect(find.text('Location'), findsNothing);
   });
 

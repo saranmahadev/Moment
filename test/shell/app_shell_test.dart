@@ -23,7 +23,11 @@ import 'package:moment/lock/pin_storage.dart';
 import 'package:image/image.dart' as img;
 import 'package:moment/photo/photo_picker.dart';
 import 'package:moment/shell/app_shell.dart';
+import 'package:moment/video/video_picker.dart';
+import 'package:moment/video/video_playback_controller.dart';
 import 'package:path/path.dart' as p;
+
+import '../video/video_fakes.dart';
 
 File _sampleSourcePhoto(String path) {
   final image = img.Image(width: 800, height: 600);
@@ -181,6 +185,8 @@ void main() {
     PhotoPicker? picker,
     AudioRecorderController Function()? createAudioRecorder,
     AudioPlaybackController Function()? createAudioPlayback,
+    VideoPicker? videoPicker,
+    VideoPlaybackController Function()? createVideoPlayback,
   }) async {
     await tester.binding.setSurfaceSize(const Size(390, 844));
     addTearDown(() => tester.binding.setSurfaceSize(null));
@@ -196,6 +202,10 @@ void main() {
               createAudioRecorder ?? _FakeAudioRecorderController.new,
           createAudioPlayback:
               createAudioPlayback ?? _FakeAudioPlaybackController.new,
+          videoPicker: videoPicker ?? FakeVideoPicker(),
+          videoProbe: FakeVideoProbe(),
+          createVideoPlayback:
+              createVideoPlayback ?? FakeVideoPlaybackController.new,
           backups: backupsFor(tester),
           exports: ExportCoordinator(
             service: ExportService(repository: repo),
@@ -622,6 +632,9 @@ void main() {
     await tester.pump();
     await tester.tap(find.bySemanticsLabel('Library'));
     await tester.pump();
+    // Trash is the last row, below the type tiles: scroll to the end.
+    await tester.drag(find.byType(Scrollable).first, const Offset(0, -600));
+    await tester.pump();
     await tester.tap(find.text('Trash'));
     await tester.pumpAndSettle();
 
@@ -852,6 +865,141 @@ void main() {
 
     expect(find.bySemanticsLabel('Edit'), findsOneWidget);
     expect(find.bySemanticsLabel('Delete'), findsOneWidget);
+
+    await tester.pumpWidget(const SizedBox());
+    await tester.pumpAndSettle();
+    await db.close();
+  });
+
+  testWidgets('picking Video from the Add sheet opens CreateVideoScreen', (
+    tester,
+  ) async {
+    final db = AppDatabase(NativeDatabase.memory());
+    final repo = LogRepository(db, clock: () => now);
+
+    await pump(tester, repo);
+    await tester.pump();
+
+    await tester.tap(find.bySemanticsLabel('Add a log'));
+    await tester.pumpAndSettle();
+    await tester.scrollUntilVisible(
+      find.byKey(const ValueKey('add-sheet-type-LogType.video')),
+      100,
+      scrollable: find.byType(Scrollable).last,
+    );
+    await tester.tap(
+      find.byKey(const ValueKey('add-sheet-type-LogType.video')),
+    );
+    await tester.pumpAndSettle();
+
+    expect(find.text('Add to your log'), findsNothing);
+    expect(find.text('Record Video'), findsOneWidget);
+
+    await tester.pumpWidget(const SizedBox());
+    await tester.pumpAndSettle();
+    await db.close();
+  });
+
+  testWidgets(
+    'saving a new video from the Add flow returns to Home with it visible',
+    (tester) async {
+      final db = AppDatabase(NativeDatabase.memory());
+      final repo = LogRepository(db, clock: () => now);
+      final clip = File(p.join(tempDir.path, 'clip.mp4'))
+        ..writeAsBytesSync([1, 2, 3]);
+
+      await pump(
+        tester,
+        repo,
+        videoPicker: FakeVideoPicker(galleryResult: clip),
+      );
+      await tester.pump();
+
+      await tester.tap(find.bySemanticsLabel('Add a log'));
+      await tester.pumpAndSettle();
+      await tester.scrollUntilVisible(
+        find.byKey(const ValueKey('add-sheet-type-LogType.video')),
+        100,
+        scrollable: find.byType(Scrollable).last,
+      );
+      await tester.tap(
+        find.byKey(const ValueKey('add-sheet-type-LogType.video')),
+      );
+      await tester.pumpAndSettle();
+      await tester.tap(find.text('Choose from Library'));
+      await tester.pumpAndSettle();
+      await tester.enterText(find.byType(TextField), 'From the shell');
+
+      // Importing copies a real file: the Save tap runs in the real zone.
+      await tester.runAsync(() async {
+        await tester.tap(find.text('Save'));
+        await Future<void>.delayed(const Duration(milliseconds: 200));
+      });
+      await tester.pump();
+      await tester.pumpAndSettle();
+
+      expect(find.text('Record Video'), findsNothing);
+      expect(find.text('From the shell'), findsOneWidget);
+      expect(find.text('0:48'), findsOneWidget);
+
+      await tester.pumpWidget(const SizedBox());
+      await tester.pumpAndSettle();
+      await db.close();
+    },
+  );
+
+  testWidgets('tapping the Video tile in Library opens VideoSectionScreen', (
+    tester,
+  ) async {
+    final db = AppDatabase(NativeDatabase.memory());
+    final repo = LogRepository(db, clock: () => now);
+    final id = await repo.createVideo(
+      path: p.join(tempDir.path, 'a.mp4'),
+      posterPath: p.join(tempDir.path, 'a.jpg'),
+      duration: const Duration(seconds: 48),
+    );
+
+    await pump(tester, repo);
+    await tester.pump();
+    await tester.tap(find.bySemanticsLabel('Library'));
+    await tester.pump();
+    await tester.scrollUntilVisible(
+      find.text('Video'),
+      200,
+      scrollable: find.byType(Scrollable).first,
+    );
+    await tester.tap(find.text('Video'));
+    await tester.pumpAndSettle();
+
+    expect(find.byKey(ValueKey('video-tile-$id')), findsOneWidget);
+    expect(find.text('1 log'), findsOneWidget);
+
+    await tester.pumpWidget(const SizedBox());
+    await tester.pumpAndSettle();
+    await db.close();
+  });
+
+  testWidgets('tapping a video card on Home opens VideoDetailScreen', (
+    tester,
+  ) async {
+    final db = AppDatabase(NativeDatabase.memory());
+    final repo = LogRepository(db, clock: () => now);
+    await repo.createVideo(
+      path: p.join(tempDir.path, 'a.mp4'),
+      posterPath: p.join(tempDir.path, 'a.jpg'),
+      duration: const Duration(seconds: 48),
+      caption: 'Tap me',
+    );
+    final playback = FakeVideoPlaybackController();
+
+    await pump(tester, repo, createVideoPlayback: () => playback);
+    await tester.pump();
+    await tester.tap(find.text('Tap me'));
+    await tester.pumpAndSettle();
+
+    expect(playback.loadedPath, p.join(tempDir.path, 'a.mp4'));
+    expect(find.text('Stored on this device'), findsOneWidget);
+    expect(find.bySemanticsLabel('Forward 15 seconds'), findsOneWidget);
 
     await tester.pumpWidget(const SizedBox());
     await tester.pumpAndSettle();

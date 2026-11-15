@@ -88,7 +88,8 @@ void main() {
     expect(find.text('1 log · Last: Today'), findsOneWidget);
     expect(find.text('Photo'), findsOneWidget);
     expect(find.text('Audio'), findsOneWidget);
-    expect(find.text('No logs yet'), findsNWidgets(2));
+    expect(find.text('Video'), findsOneWidget);
+    expect(find.text('No logs yet'), findsNWidgets(3));
 
     await tester.pumpWidget(const SizedBox());
     await tester.pumpAndSettle();
@@ -155,6 +156,9 @@ void main() {
     var opened = false;
 
     await pump(tester, repo, onOpenTrash: () => opened = true);
+    await tester.pump();
+    // Trash is the last row, below the type tiles: scroll to the end.
+    await tester.drag(find.byType(Scrollable).first, const Offset(0, -600));
     await tester.pump();
     await tester.tap(find.text('Trash'));
 

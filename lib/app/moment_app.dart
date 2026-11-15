@@ -13,6 +13,9 @@ import '../backup/last_backup_store.dart';
 import '../export/export_coordinator.dart';
 import '../export/export_service.dart';
 import '../storage/storage_service.dart';
+import '../video/video_picker.dart';
+import '../video/video_playback_controller.dart';
+import '../video/video_probe.dart';
 import '../data/log_repository.dart';
 import '../data/media_store.dart';
 import '../data/secure_database.dart';
@@ -143,6 +146,9 @@ class _MomentAppState extends State<MomentApp> with WidgetsBindingObserver {
               picker: DevicePhotoPicker(),
               createAudioRecorder: DeviceAudioRecorderController.new,
               createAudioPlayback: DeviceAudioPlaybackController.new,
+              videoPicker: DeviceVideoPicker(),
+              videoProbe: DeviceVideoProbe(),
+              createVideoPlayback: DeviceVideoPlaybackController.new,
               backups: resources.backups,
               exports: resources.exports,
               storage: resources.storage,

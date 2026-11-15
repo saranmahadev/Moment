@@ -9,5 +9,6 @@ const builtLogTypes = [
   LogType.text,
   LogType.emoji,
   LogType.photo,
+  LogType.video,
   LogType.audio,
 ];
