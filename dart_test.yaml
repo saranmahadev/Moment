@@ -1,0 +1,5 @@
+tags:
+  # Tests that move a lot of data (a 1 GB video). CI runs them; locally,
+  # skip with `flutter test --exclude-tags slow`.
+  slow:
+    timeout: 6x

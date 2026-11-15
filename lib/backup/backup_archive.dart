@@ -48,12 +48,16 @@ class BackupManifest {
     required this.emojiLogs,
     required this.photoLogs,
     required this.audioLogs,
+    required this.videoLogs,
+    required this.locationLogs,
     required this.files,
   });
 
   factory BackupManifest.fromJson(Map<String, dynamic> json) {
+    // Lists added in later format versions are absent from older backups.
     List<Map<String, dynamic>> rows(String key) => [
-      for (final row in json[key] as List) (row as Map).cast<String, dynamic>(),
+      for (final row in json[key] as List? ?? const [])
+        (row as Map).cast<String, dynamic>(),
     ];
     return BackupManifest(
       formatVersion: json['formatVersion'] as int,
@@ -64,6 +68,8 @@ class BackupManifest {
       emojiLogs: rows('emojiLogs'),
       photoLogs: rows('photoLogs'),
       audioLogs: rows('audioLogs'),
+      videoLogs: rows('videoLogs'),
+      locationLogs: rows('locationLogs'),
       files: [
         for (final f in json['files'] as List)
           BackupFileEntry.fromJson((f as Map).cast<String, dynamic>()),
@@ -72,8 +78,11 @@ class BackupManifest {
   }
 
   /// Bumped whenever the manifest or archive layout changes in a way an
-  /// older app could not read.
-  static const currentFormatVersion = 1;
+  /// older app could not read; older versions stay readable here.
+  ///
+  /// 1: text, emoji, photo and audio (0.2.0).
+  /// 2: adds video and location (0.3.0).
+  static const currentFormatVersion = 2;
 
   final int formatVersion;
   final int schemaVersion;
@@ -83,6 +92,8 @@ class BackupManifest {
   final List<Map<String, dynamic>> emojiLogs;
   final List<Map<String, dynamic>> photoLogs;
   final List<Map<String, dynamic>> audioLogs;
+  final List<Map<String, dynamic>> videoLogs;
+  final List<Map<String, dynamic>> locationLogs;
   final List<BackupFileEntry> files;
 
   Map<String, dynamic> toJson() => {
@@ -94,6 +105,8 @@ class BackupManifest {
     'emojiLogs': emojiLogs,
     'photoLogs': photoLogs,
     'audioLogs': audioLogs,
+    'videoLogs': videoLogs,
+    'locationLogs': locationLogs,
     'files': [for (final f in files) f.toJson()],
   };
 }

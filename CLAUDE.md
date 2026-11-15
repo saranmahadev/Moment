@@ -51,7 +51,8 @@ Screens in Phase 1: Lock, Home, Add, Library, New text, New emoji, Text section,
 - Inside: `BackupArchive`, the manifest (Drift row JSON per table, media paths relative to the app-support root) then each file in manifest order, SHA-256 checked while streaming. Export and restore stream in bounded memory.
 - Restore is all or nothing: files land in a staging directory first, then move into place and rows are written in one transaction. Logs whose id already exists are skipped, so restoring twice is safe. A wrong passphrase is reported from the first chunk; anything after that is corruption; neither touches existing data.
 - Device side behind `BackupFileGateway`: `share_plus` to hand the file over, `file_selector` to pick one. "Last backup" lives in `backup-state.json` in the support dir.
-- Bump `BackupManifest.currentFormatVersion` (and keep reading older ones) when the archive changes; the format version in the header is for the container only.
+- Bump `BackupManifest.currentFormatVersion` (and keep reading older ones) when the archive changes; the format version in the header is for the container only. Manifest version 1 is 0.2.0 (text, emoji, photo, audio); version 2 adds `videoLogs` and `locationLogs` (0.3.0). An older app refuses a newer manifest rather than dropping what it does not know.
+- Every new log type goes into backup before it is offered in the app (before it joins `builtLogTypes`).
 
 ## Visual language (for the design system chunk)
 

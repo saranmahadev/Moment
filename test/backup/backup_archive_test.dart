@@ -36,6 +36,8 @@ void main() {
       {'logId': 'a', 'path': 'media/2026/11/a.jpg', 'thumbnailPath': 'x'},
     ],
     audioLogs: const [],
+    videoLogs: const [],
+    locationLogs: const [],
     files: [
       entryFor('media/2026/11/a.jpg', photo),
       entryFor('media/2026/11/b.m4a', audio),
@@ -159,6 +161,29 @@ void main() {
           reason: bad,
         );
       }
+    },
+  );
+
+  test('the manifest carries video and location rows as format version 2', () {
+    expect(BackupManifest.currentFormatVersion, 2);
+    final json = manifest.toJson();
+    expect(json.keys, containsAll(['videoLogs', 'locationLogs']));
+  });
+
+  test(
+    'a version 1 manifest, without video or location lists, still reads',
+    () {
+      final json = manifest.toJson()
+        ..remove('videoLogs')
+        ..remove('locationLogs')
+        ..['formatVersion'] = 1;
+
+      final read = BackupManifest.fromJson(json);
+
+      expect(read.formatVersion, 1);
+      expect(read.videoLogs, isEmpty);
+      expect(read.locationLogs, isEmpty);
+      expect(read.photoLogs, hasLength(1));
     },
   );
 }
