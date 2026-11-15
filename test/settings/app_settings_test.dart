@@ -1,0 +1,72 @@
+import 'dart:io';
+
+import 'package:flutter_test/flutter_test.dart';
+import 'package:moment/settings/app_settings.dart';
+import 'package:path/path.dart' as p;
+
+void main() {
+  late Directory tempDir;
+  late File file;
+
+  setUp(() {
+    tempDir = Directory.systemTemp.createTempSync('app_settings_test_');
+    file = File(p.join(tempDir.path, 'nested', 'settings.json'));
+  });
+
+  tearDown(() => tempDir.deleteSync(recursive: true));
+
+  test('place names are not looked up unless turned on', () async {
+    final settings = await AppSettings.load(FileSettingsStore(file));
+
+    expect(settings.lookUpPlaceNames, isFalse);
+  });
+
+  test('a change takes effect at once and tells listeners', () async {
+    final settings = await AppSettings.load(MemorySettingsStore());
+    var notified = 0;
+    settings.addListener(() => notified++);
+
+    final saving = settings.setLookUpPlaceNames(true);
+
+    expect(settings.lookUpPlaceNames, isTrue);
+    expect(notified, 1);
+    await saving;
+  });
+
+  test('setting the value it already has tells nobody', () async {
+    final settings = await AppSettings.load(MemorySettingsStore());
+    var notified = 0;
+    settings.addListener(() => notified++);
+
+    await settings.setLookUpPlaceNames(false);
+
+    expect(notified, 0);
+  });
+
+  test('a change survives a restart', () async {
+    final first = await AppSettings.load(FileSettingsStore(file));
+    await first.setLookUpPlaceNames(true);
+
+    final second = await AppSettings.load(FileSettingsStore(file));
+
+    expect(second.lookUpPlaceNames, isTrue);
+  });
+
+  test('a damaged settings file falls back to the defaults', () async {
+    file.parent.createSync(recursive: true);
+    file.writeAsStringSync('{not json');
+
+    final settings = await AppSettings.load(FileSettingsStore(file));
+
+    expect(settings.lookUpPlaceNames, isFalse);
+  });
+
+  test('a value of the wrong kind falls back to its default', () async {
+    file.parent.createSync(recursive: true);
+    file.writeAsStringSync('{"lookUpPlaceNames": "yes"}');
+
+    final settings = await AppSettings.load(FileSettingsStore(file));
+
+    expect(settings.lookUpPlaceNames, isFalse);
+  });
+}
