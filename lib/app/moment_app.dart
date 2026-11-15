@@ -10,6 +10,9 @@ import '../backup/backup_coordinator.dart';
 import '../backup/backup_file_gateway.dart';
 import '../backup/backup_service.dart';
 import '../backup/last_backup_store.dart';
+import '../export/export_coordinator.dart';
+import '../export/export_service.dart';
+import '../storage/storage_service.dart';
 import '../data/log_repository.dart';
 import '../data/media_store.dart';
 import '../data/secure_database.dart';
@@ -29,6 +32,8 @@ class _Resources {
     required this.lockController,
     required this.mediaStore,
     required this.backups,
+    required this.exports,
+    required this.storage,
     required this.hasPin,
   });
 
@@ -36,6 +41,8 @@ class _Resources {
   final AppLockController lockController;
   final MediaStore mediaStore;
   final BackupCoordinator backups;
+  final ExportCoordinator exports;
+  final StorageService storage;
   final bool hasPin;
 }
 
@@ -54,18 +61,26 @@ Future<_Resources> _bootstrap() async {
   }
 
   final tempDir = await getTemporaryDirectory();
+  final repository = LogRepository(db);
+  final gateway = DeviceBackupFileGateway();
   return _Resources(
-    repository: LogRepository(db),
+    repository: repository,
     lockController: lockController,
     mediaStore: MediaStore(root: supportDir),
     backups: BackupCoordinator(
       service: BackupService(db: db, mediaRoot: supportDir),
-      gateway: DeviceBackupFileGateway(),
+      gateway: gateway,
       lastBackupStore: FileLastBackupStore(
         File(p.join(supportDir.path, 'backup-state.json')),
       ),
       scratchDirectory: Directory(p.join(tempDir.path, 'backups')),
     ),
+    exports: ExportCoordinator(
+      service: ExportService(repository: repository),
+      gateway: gateway,
+      scratchDirectory: Directory(p.join(tempDir.path, 'exports')),
+    ),
+    storage: StorageService(repository: repository),
     hasPin: hasPin,
   );
 }
@@ -129,6 +144,8 @@ class _MomentAppState extends State<MomentApp> with WidgetsBindingObserver {
               createAudioRecorder: DeviceAudioRecorderController.new,
               createAudioPlayback: DeviceAudioPlaybackController.new,
               backups: resources.backups,
+              exports: resources.exports,
+              storage: resources.storage,
             ),
           );
         },

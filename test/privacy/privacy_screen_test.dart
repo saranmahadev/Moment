@@ -1,5 +1,6 @@
 import 'dart:io';
 
+import 'package:archive/archive.dart';
 import 'package:drift/native.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -11,6 +12,9 @@ import 'package:moment/backup/last_backup_store.dart';
 import 'package:moment/data/database.dart';
 import 'package:moment/data/log_repository.dart';
 import 'package:moment/design/orb_field.dart';
+import 'package:moment/export/export_coordinator.dart';
+import 'package:moment/export/export_service.dart';
+import 'package:moment/storage/storage_service.dart';
 import 'package:moment/design/theme.dart';
 import 'package:moment/lock/app_lock_controller.dart';
 import 'package:moment/lock/pin_storage.dart';
@@ -59,6 +63,8 @@ void main() {
   late _FakeGateway gateway;
   late _MemoryStore store;
   late BackupCoordinator backups;
+  late ExportCoordinator exports;
+  late StorageService storage;
 
   setUp(() {
     tempDir = Directory.systemTemp.createTempSync('privacy_screen_test_');
@@ -78,6 +84,12 @@ void main() {
       scratchDirectory: Directory(p.join(tempDir.path, 'scratch')),
       clock: () => now,
     );
+    exports = ExportCoordinator(
+      service: ExportService(repository: repo, clock: () => now),
+      gateway: gateway,
+      scratchDirectory: Directory(p.join(tempDir.path, 'export-scratch')),
+    );
+    storage = StorageService(repository: repo);
   });
 
   tearDown(() async {
@@ -98,6 +110,8 @@ void main() {
         home: PrivacyScreen(
           controller: controller,
           backups: backups,
+          exports: exports,
+          storage: storage,
           now: () => now,
           onBack: onBack,
         ),
@@ -134,6 +148,17 @@ void main() {
       await Future<void>.delayed(const Duration(milliseconds: 300));
     });
     await tester.pumpAndSettle();
+  }
+
+  /// The Privacy list builds lazily, so lower sections only exist once
+  /// scrolled to.
+  Future<void> scrollTo(WidgetTester tester, Finder finder) async {
+    await tester.scrollUntilVisible(
+      finder,
+      300,
+      scrollable: find.byType(Scrollable).first,
+    );
+    await tester.pump();
   }
 
   Future<void> enterPassphrases(
@@ -373,6 +398,101 @@ void main() {
       await tapForReal(tester, find.text('Restore from backup'));
 
       expect(find.text('Enter the backup passphrase'), findsNothing);
+    });
+  });
+
+  group('Export section', () {
+    testWidgets('lists every built type, all selected, and the button', (
+      tester,
+    ) async {
+      await pump(tester, AppLockController(_FakePinStorage()));
+      await scrollTo(tester, find.text('Export selected types'));
+
+      expect(find.text('EXPORT'), findsOneWidget);
+      expect(
+        find.text('Markdown, JSON and original files. Choose types.'),
+        findsOneWidget,
+      );
+      for (final key in ['text', 'emoji', 'photo', 'audio']) {
+        expect(find.byKey(ValueKey('export-chip-$key')), findsOneWidget);
+        expect(
+          tester
+              .widget<Semantics>(find.byKey(ValueKey('export-chip-$key')))
+              .properties
+              .selected,
+          isTrue,
+          reason: key,
+        );
+      }
+      expect(find.text('Export selected types'), findsOneWidget);
+    });
+
+    testWidgets('exporting hands over a zip of just the selected types', (
+      tester,
+    ) async {
+      await repo.createText(body: 'In the export');
+      await repo.createEmoji(emoji: '😌', strength: 3);
+      await pump(tester, AppLockController(_FakePinStorage()));
+
+      await scrollTo(tester, find.byKey(const ValueKey('export-chip-emoji')));
+      await tester.tap(find.byKey(const ValueKey('export-chip-emoji')));
+      await tester.pump();
+      await scrollTo(tester, find.text('Export selected types'));
+      await tapForReal(tester, find.text('Export selected types'));
+
+      expect(gateway.delivered, hasLength(1));
+      final zip = ZipDecoder().decodeBytes(
+        gateway.delivered.single.readAsBytesSync(),
+      );
+      expect(zip.findFile('text/text.json'), isNotNull);
+      expect(zip.findFile('emoji/emoji.json'), isNull);
+      expect(find.text('Export ready to save'), findsOneWidget);
+    });
+
+    testWidgets('with nothing selected the export does nothing', (
+      tester,
+    ) async {
+      await pump(tester, AppLockController(_FakePinStorage()));
+      await scrollTo(tester, find.text('Export selected types'));
+
+      for (final key in ['text', 'emoji', 'photo', 'audio']) {
+        await tester.ensureVisible(find.byKey(ValueKey('export-chip-$key')));
+        await tester.tap(find.byKey(ValueKey('export-chip-$key')));
+        await tester.pump();
+      }
+      await tester.ensureVisible(find.text('Export selected types'));
+      await tapForReal(tester, find.text('Export selected types'));
+
+      expect(gateway.delivered, isEmpty);
+    });
+  });
+
+  group('Storage section', () {
+    testWidgets('shows each built type with what it takes up', (tester) async {
+      await repo.createText(body: 'hello');
+      final audio = File(p.join(tempDir.path, 'a.m4a'))
+        ..writeAsBytesSync(List.filled(3 * 1024 * 1024, 1));
+      await repo.createAudio(
+        path: audio.path,
+        duration: const Duration(seconds: 3),
+        peaks: [0.1],
+      );
+      await tester.runAsync(() async {
+        await pump(tester, AppLockController(_FakePinStorage()));
+        await Future<void>.delayed(const Duration(milliseconds: 100));
+      });
+      await tester.pumpAndSettle();
+      await tester.scrollUntilVisible(
+        find.text('Storage by type'),
+        300,
+        scrollable: find.byType(Scrollable).first,
+      );
+
+      expect(find.text('STORAGE'), findsOneWidget);
+      expect(find.text('Storage by type'), findsOneWidget);
+      expect(find.byKey(const ValueKey('storage-row-audio')), findsOneWidget);
+      expect(find.text('3 MB'), findsOneWidget);
+      expect(find.text('<1 MB'), findsNWidgets(3));
     });
   });
 }

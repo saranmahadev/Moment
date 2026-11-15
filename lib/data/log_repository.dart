@@ -246,6 +246,13 @@ class LogRepository {
     );
   }
 
+  /// Every log, Trash included, read once rather than watched. For work
+  /// that needs a snapshot (storage totals) instead of a live feed.
+  Future<List<Log>> getAll() async {
+    final rows = await _feedQuery().get();
+    return [for (final row in rows) _rowToLog(row)];
+  }
+
   /// Every log that is not in Trash, newest first (ties broken by id),
   /// optionally restricted to [types].
   Stream<List<Log>> watchFeed({Set<LogType>? types}) {
