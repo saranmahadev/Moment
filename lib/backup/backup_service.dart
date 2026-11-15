@@ -58,6 +58,8 @@ class BackupService {
     final emojis = await _db.select(_db.emojiLogsTable).get();
     final photos = await _db.select(_db.photoLogsTable).get();
     final audios = await _db.select(_db.audioLogsTable).get();
+    final videos = await _db.select(_db.videoLogsTable).get();
+    final locations = await _db.select(_db.locationLogsTable).get();
 
     final files = <BackupFileEntry>[];
     Future<String> relativize(String absolute) async {
@@ -97,6 +99,15 @@ class BackupService {
         for (final r in audios)
           {...r.toJson(), 'path': await relativize(r.path)},
       ],
+      videoLogs: [
+        for (final r in videos)
+          {
+            ...r.toJson(),
+            'path': await relativize(r.path),
+            'posterPath': await relativize(r.posterPath),
+          },
+      ],
+      locationLogs: [for (final r in locations) r.toJson()],
       files: files,
     );
   }
@@ -182,12 +193,17 @@ class BackupService {
 
     final photoRows = manifest.photoLogs.where(keep).toList();
     final audioRows = manifest.audioLogs.where(keep).toList();
+    final videoRows = manifest.videoLogs.where(keep).toList();
     final wantedFiles = {
       for (final r in photoRows) ...[
         r['path'] as String,
         r['thumbnailPath'] as String,
       ],
       for (final r in audioRows) r['path'] as String,
+      for (final r in videoRows) ...[
+        r['path'] as String,
+        r['posterPath'] as String,
+      ],
     };
 
     final moved = <File>[];
@@ -232,6 +248,22 @@ class BackupService {
                   'path': absolute(row['path'] as String),
                 }),
               );
+        }
+        for (final row in videoRows) {
+          await _db
+              .into(_db.videoLogsTable)
+              .insert(
+                VideoLogRow.fromJson({
+                  ...row,
+                  'path': absolute(row['path'] as String),
+                  'posterPath': absolute(row['posterPath'] as String),
+                }),
+              );
+        }
+        for (final row in manifest.locationLogs.where(keep)) {
+          await _db
+              .into(_db.locationLogsTable)
+              .insert(LocationLogRow.fromJson(row));
         }
       });
     } catch (_) {
