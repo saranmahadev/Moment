@@ -157,6 +157,9 @@ void main() {
 
     await pump(tester, repo, onOpenTrash: () => opened = true);
     await tester.pump();
+    // Trash is the last row, below the type tiles: scroll to the end.
+    await tester.drag(find.byType(Scrollable).first, const Offset(0, -600));
+    await tester.pump();
     await tester.tap(find.text('Trash'));
 
     expect(opened, isTrue);

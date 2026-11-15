@@ -30,6 +30,12 @@ import '../section/section_screen.dart';
 import '../settings/settings_screen.dart';
 import '../text/create_text_screen.dart';
 import '../trash/trash_screen.dart';
+import '../video/create_video_screen.dart';
+import '../video/video_detail_screen.dart';
+import '../video/video_picker.dart';
+import '../video/video_playback_controller.dart';
+import '../video/video_probe.dart';
+import '../video/video_section_screen.dart';
 
 enum _Tab { home, library, calendar, settings }
 
@@ -45,6 +51,9 @@ class AppShell extends StatefulWidget {
     required this.picker,
     required this.createAudioRecorder,
     required this.createAudioPlayback,
+    required this.videoPicker,
+    required this.videoProbe,
+    required this.createVideoPlayback,
     required this.backups,
     required this.exports,
     required this.storage,
@@ -57,6 +66,9 @@ class AppShell extends StatefulWidget {
   final PhotoPicker picker;
   final AudioRecorderController Function() createAudioRecorder;
   final AudioPlaybackController Function() createAudioPlayback;
+  final VideoPicker videoPicker;
+  final VideoProbe videoProbe;
+  final VideoPlaybackController Function() createVideoPlayback;
   final BackupCoordinator backups;
   final ExportCoordinator exports;
   final StorageService storage;
@@ -137,9 +149,22 @@ class _AppShellState extends State<AppShell> {
             ),
           ),
         );
-      // Not in builtLogTypes yet, so AddSheet never offers these: nothing
-      // to wire up until their own chunks add both the screen and the type.
       case LogType.video:
+        Navigator.of(context).push(
+          MaterialPageRoute<void>(
+            builder: (_) => CreateVideoScreen(
+              repository: widget.repository,
+              mediaStore: widget.mediaStore,
+              picker: widget.videoPicker,
+              probe: widget.videoProbe,
+              now: widget.now,
+              onSaved: (_) => Navigator.of(context).pop(),
+              onClose: () => Navigator.of(context).pop(),
+            ),
+          ),
+        );
+      // Not in builtLogTypes yet, so AddSheet never offers it: nothing to
+      // wire up until its own chunk adds both the screen and the type.
       case LogType.location:
         break;
     }
@@ -174,8 +199,18 @@ class _AppShellState extends State<AppShell> {
         now: widget.now,
         onBack: () => Navigator.of(context).pop(),
       ),
-      VideoLog() || LocationLog() => throw UnimplementedError(
-        '${log.type.name} detail is not built yet',
+      VideoLog() => VideoDetailScreen(
+        log: log,
+        repository: widget.repository,
+        mediaStore: widget.mediaStore,
+        picker: widget.videoPicker,
+        probe: widget.videoProbe,
+        playback: widget.createVideoPlayback(),
+        now: widget.now,
+        onBack: () => Navigator.of(context).pop(),
+      ),
+      LocationLog() => throw UnimplementedError(
+        'Location detail is not built yet',
       ),
     };
     Navigator.of(context).push(MaterialPageRoute<void>(builder: (_) => screen));
@@ -209,20 +244,27 @@ class _AppShellState extends State<AppShell> {
   }
 
   void _openSection(LogType type) {
+    void back() => Navigator.of(context).pop();
     Navigator.of(context).push(
       MaterialPageRoute<void>(
-        builder: (_) => type == LogType.photo
-            ? PhotoSectionScreen(
-                repository: widget.repository,
-                onBack: () => Navigator.of(context).pop(),
-                onOpenLog: _openDetail,
-              )
-            : SectionScreen(
-                type: type,
-                repository: widget.repository,
-                onBack: () => Navigator.of(context).pop(),
-                onOpenLog: _openDetail,
-              ),
+        builder: (_) => switch (type) {
+          LogType.photo => PhotoSectionScreen(
+            repository: widget.repository,
+            onBack: back,
+            onOpenLog: _openDetail,
+          ),
+          LogType.video => VideoSectionScreen(
+            repository: widget.repository,
+            onBack: back,
+            onOpenLog: _openDetail,
+          ),
+          _ => SectionScreen(
+            type: type,
+            repository: widget.repository,
+            onBack: back,
+            onOpenLog: _openDetail,
+          ),
+        },
       ),
     );
   }

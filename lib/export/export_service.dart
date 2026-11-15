@@ -74,7 +74,8 @@ class ExportService {
   String? _originalFile(Log log) => switch (log) {
     PhotoLog() => log.path,
     AudioLog() => log.path,
-    _ => null,
+    VideoLog() => log.path,
+    TextLog() || EmojiLog() || LocationLog() => null,
   };
 
   String _json(List<Log> logs) {
@@ -102,8 +103,13 @@ class ExportService {
               'durationMs': log.duration.inMilliseconds,
               'file': 'files/${p.basename(log.path)}',
             },
-            VideoLog() || LocationLog() => throw UnimplementedError(
-              'Export for ${log.type.name} is not built yet',
+            VideoLog() => {
+              'caption': log.caption,
+              'durationMs': log.duration.inMilliseconds,
+              'file': 'files/${p.basename(log.path)}',
+            },
+            LocationLog() => throw UnimplementedError(
+              'Export for location is not built yet',
             ),
           },
         },
@@ -128,8 +134,12 @@ class ExportService {
               '(${_duration(log.duration)})\n\n'
               '[Listen](files/${p.basename(log.path)})'
               '${log.note == null ? '' : '\n\n${log.note}'}',
-        VideoLog() || LocationLog() => throw UnimplementedError(
-          'Export for ${log.type.name} is not built yet',
+        VideoLog() =>
+          '**${log.caption ?? 'Video'}** '
+              '(${_duration(log.duration)})\n\n'
+              '[Watch](files/${p.basename(log.path)})',
+        LocationLog() => throw UnimplementedError(
+          'Export for location is not built yet',
         ),
       });
     }
