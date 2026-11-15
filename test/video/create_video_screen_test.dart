@@ -77,7 +77,9 @@ void main() {
       await tester.tap(finder);
       await Future<void>.delayed(const Duration(milliseconds: 200));
     });
-    await tester.pumpAndSettle();
+    // Not pumpAndSettle: Save shows a spinner until the screen is closed.
+    await tester.pump();
+    await tester.pump();
   }
 
   testWidgets('offers Record Video and Choose from Library to begin with', (
@@ -228,7 +230,8 @@ void main() {
 
       await tester.enterText(find.byType(TextField), 'Edited caption');
       await tester.tap(find.text('Save'));
-      await tester.pumpAndSettle();
+      await tester.pump();
+      await tester.pump();
 
       expect(savedId, log.id);
       expect(
@@ -246,7 +249,8 @@ void main() {
 
       await tester.enterText(find.byType(TextField), '  ');
       await tester.tap(find.text('Save'));
-      await tester.pumpAndSettle();
+      await tester.pump();
+      await tester.pump();
 
       expect((await repo.getById(log.id) as VideoLog).caption, isNull);
 

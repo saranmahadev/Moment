@@ -8,6 +8,7 @@ import '../design/tokens.dart';
 import '../design/type_icons.dart';
 import '../domain/log.dart';
 import '../domain/log_type.dart';
+import '../video/video_poster.dart';
 
 final _timeFormat = DateFormat('HH:mm');
 final _fullDateFormat = DateFormat('EEE d MMM');
@@ -131,8 +132,9 @@ class _Body extends StatelessWidget {
       EmojiLog() => _EmojiBody(log: log, tokens: tokens),
       PhotoLog() => _PhotoBody(log: log, tokens: tokens),
       AudioLog() => _AudioBody(log: log, tokens: tokens),
-      VideoLog() || LocationLog() => throw UnimplementedError(
-        '${log.type.name} cards are not built yet',
+      VideoLog() => _VideoBody(log: log, tokens: tokens),
+      LocationLog() => throw UnimplementedError(
+        'Location cards are not built yet',
       ),
     };
   }
@@ -361,6 +363,51 @@ class _MiniWaveform extends StatelessWidget {
             ),
         ],
       ),
+    );
+  }
+}
+
+class _VideoBody extends StatelessWidget {
+  const _VideoBody({required this.log, required this.tokens});
+
+  final VideoLog log;
+  final MomentTokens tokens;
+
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        ClipRRect(
+          borderRadius: BorderRadius.circular(16),
+          child: SizedBox(
+            height: 180,
+            width: double.infinity,
+            child: Stack(
+              fit: StackFit.expand,
+              children: [
+                VideoPoster(path: log.posterPath, tokens: tokens),
+                Center(child: PlayBadge(tokens: tokens)),
+                Positioned(
+                  right: 10,
+                  bottom: 10,
+                  child: ClipLengthPill(duration: log.duration, tokens: tokens),
+                ),
+              ],
+            ),
+          ),
+        ),
+        if (log.caption != null) ...[
+          const SizedBox(height: 8),
+          Text(
+            log.caption!,
+            maxLines: 2,
+            overflow: TextOverflow.ellipsis,
+            style: TextStyle(fontSize: 14, color: tokens.ink),
+          ),
+        ],
+      ],
     );
   }
 }
