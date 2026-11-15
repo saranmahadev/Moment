@@ -2,13 +2,7 @@
 /// each has its own table, create screen, section and detail page.
 enum LogType { text, emoji, photo, video, audio, location }
 
-/// The types with a working create/read/update/delete path so far. Grows
-/// by one line per phase; screens such as the Add sheet and the filter
-/// chips use it to show only what is actually built.
-const builtLogTypes = [
-  LogType.text,
-  LogType.emoji,
-  LogType.photo,
-  LogType.video,
-  LogType.audio,
-];
+/// The types offered in the app, in the order they appear in the Add
+/// sheet, Library and filter chips. All six are built; a future type would
+/// join here only once it is in backup, export, storage and Trash.
+const builtLogTypes = LogType.values;

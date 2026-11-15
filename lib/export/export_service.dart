@@ -8,6 +8,7 @@ import 'package:path/path.dart' as p;
 import '../data/log_repository.dart';
 import '../domain/log.dart';
 import '../domain/log_type.dart';
+import '../location/coordinates.dart';
 
 final _fileDate = DateFormat('yyyy-MM-dd');
 final _heading = DateFormat('EEE d MMM yyyy · HH:mm');
@@ -33,15 +34,6 @@ class ExportService {
     if (types.isEmpty) {
       throw ArgumentError.value(types, 'types', 'must not be empty');
     }
-    final unbuilt = types.where((t) => !builtLogTypes.contains(t));
-    if (unbuilt.isNotEmpty) {
-      throw ArgumentError.value(
-        types,
-        'types',
-        '${unbuilt.first} is not built',
-      );
-    }
-
     await directory.create(recursive: true);
     final file = File(
       p.join(directory.path, 'Moment export ${_fileDate.format(_clock())}.zip'),
@@ -108,9 +100,13 @@ class ExportService {
               'durationMs': log.duration.inMilliseconds,
               'file': 'files/${p.basename(log.path)}',
             },
-            LocationLog() => throw UnimplementedError(
-              'Export for location is not built yet',
-            ),
+            LocationLog() => {
+              'latitude': log.latitude,
+              'longitude': log.longitude,
+              'accuracyMeters': log.accuracyMeters,
+              'name': log.name,
+              'note': log.note,
+            },
           },
         },
     ];
@@ -138,9 +134,11 @@ class ExportService {
           '**${log.caption ?? 'Video'}** '
               '(${_duration(log.duration)})\n\n'
               '[Watch](files/${p.basename(log.path)})',
-        LocationLog() => throw UnimplementedError(
-          'Export for location is not built yet',
-        ),
+        LocationLog() =>
+          '**${log.name ?? 'Pinned place'}**\n\n'
+              '${coordinatesForCopying(log.latitude, log.longitude)}'
+              '${log.accuracyMeters == null ? '' : ' (${formatAccuracy(log.accuracyMeters!)})'}'
+              '${log.note == null ? '' : '\n\n${log.note}'}',
       });
     }
     return out.toString();

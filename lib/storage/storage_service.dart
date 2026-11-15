@@ -5,8 +5,9 @@ import '../data/log_repository.dart';
 import '../domain/log.dart';
 import '../domain/log_type.dart';
 
-/// How much space each built type takes up. Text and emoji count the bytes
-/// of what was written; photo and audio count their files on disk. Logs in
+/// How much space each type takes up. Text, emoji and location count the
+/// bytes of what was written; photo, audio and video count their files on
+/// disk. Logs in
 /// Trash are included, because their files stay until they are purged.
 class StorageService {
   StorageService({required LogRepository repository})
@@ -26,9 +27,11 @@ class StorageService {
         AudioLog() => await _fileSize(log.path),
         VideoLog() =>
           await _fileSize(log.path) + await _fileSize(log.posterPath),
-        LocationLog() => throw UnimplementedError(
-          'Storage for location is not built yet',
-        ),
+        // Two 8-byte coordinates, plus whatever was typed.
+        LocationLog() =>
+          16 +
+              utf8.encode(log.name ?? '').length +
+              utf8.encode(log.note ?? '').length,
       };
       usage[log.type] = (usage[log.type] ?? 0) + bytes;
     }

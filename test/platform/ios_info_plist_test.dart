@@ -20,6 +20,7 @@ void main() {
     'NSMicrophoneUsageDescription': 'audio logs and video sound',
     'NSCameraUsageDescription': 'photo and video logs',
     'NSPhotoLibraryUsageDescription': 'choosing photos and videos',
+    'NSLocationWhenInUseUsageDescription': 'location logs',
   };
 
   for (final entry in required.entries) {

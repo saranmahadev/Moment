@@ -32,6 +32,8 @@
 	<string>Moment records audio for your voice notes and videos. Recordings stay on this device.</string>
 	<key>NSCameraUsageDescription</key>
 	<string>Moment uses the camera for your photo and video logs. They stay on this device.</string>
+	<key>NSLocationWhenInUseUsageDescription</key>
+	<string>Moment reads your position only when you pin a place. Coordinates stay on this device.</string>
 	<key>NSPhotoLibraryUsageDescription</key>
 	<string>Moment copies the photos and videos you choose into your journal on this device.</string>
 	<key>UIApplicationSceneManifest</key>
