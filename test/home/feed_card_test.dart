@@ -264,4 +264,44 @@ void main() {
       expect(find.text('Walk to the station'), findsNothing);
     });
   });
+
+  group('LocationLogCard', () {
+    LocationLog place({String? name, double? accuracy}) => LocationLog(
+      id: '9',
+      createdAt: DateTime.utc(2026, 11, 6, 17, 30),
+      tzOffsetMinutes: 0,
+      editedAt: null,
+      deletedAt: null,
+      latitude: 12.9716,
+      longitude: 77.5946,
+      accuracyMeters: accuracy,
+      name: name,
+      note: null,
+    );
+
+    testWidgets('shows the type label, time, name, coordinates and accuracy', (
+      tester,
+    ) async {
+      await pump(
+        tester,
+        FeedCard(log: place(name: 'Favourite bench', accuracy: 12)),
+      );
+
+      expect(find.text('Location'), findsOneWidget);
+      expect(find.text('17:30'), findsOneWidget);
+      expect(find.text('Favourite bench'), findsOneWidget);
+      expect(find.text('12.97160° N, 77.59460° E'), findsOneWidget);
+      expect(find.text('±12 m'), findsOneWidget);
+    });
+
+    testWidgets('an unnamed place is a "Pinned place" with its coordinates', (
+      tester,
+    ) async {
+      await pump(tester, FeedCard(log: place()));
+
+      expect(find.text('Pinned place'), findsOneWidget);
+      expect(find.text('12.97160° N, 77.59460° E'), findsOneWidget);
+      expect(find.textContaining('±'), findsNothing);
+    });
+  });
 }
