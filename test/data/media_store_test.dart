@@ -3,6 +3,7 @@ import 'dart:io';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:image/image.dart' as img;
 import 'package:moment/data/media_store.dart';
+import 'package:moment/video/video_probe.dart';
 import 'package:path/path.dart' as p;
 
 /// Builds a small JPEG with GPS and other EXIF metadata attached, as a
@@ -17,6 +18,27 @@ File _samplePhotoWithExif(String path) {
   final file = File(path);
   file.writeAsBytesSync(img.encodeJpg(image));
   return file;
+}
+
+/// Stands in for the device's video tooling: reports a fixed duration and
+/// writes a small poster file, or none at all when the video is unreadable.
+class _FakeVideoProbe implements VideoProbe {
+  _FakeVideoProbe({this.readable = true});
+
+  final bool readable;
+
+  @override
+  Future<Duration> duration(File video) async {
+    if (!readable) throw const FormatException('not a video');
+    return const Duration(seconds: 48);
+  }
+
+  @override
+  Future<bool> writePoster(File video, File destination) async {
+    if (!readable) return false;
+    await destination.writeAsBytes([1, 2, 3]);
+    return true;
+  }
 }
 
 void main() {
@@ -141,5 +163,89 @@ void main() {
       expect(source.existsSync(), isTrue);
       expect(source.readAsBytesSync(), [5, 6, 7]);
     });
+  });
+
+  group('importVideo', () {
+    test(
+      'copies the video into media/YYYY/MM with a poster and its duration',
+      () async {
+        final source = File(p.join(tempDir.path, 'clip.mp4'))
+          ..writeAsBytesSync([1, 2, 3, 4, 5]);
+        final store = MediaStore(
+          root: root,
+          clock: () => DateTime.utc(2026, 11, 7),
+          generateId: () => 'video123',
+        );
+
+        final imported = await store.importVideo(
+          source,
+          probe: _FakeVideoProbe(),
+        );
+
+        final dir = p.join(root.path, 'media', '2026', '11');
+        expect(imported.path, p.join(dir, 'video123.mp4'));
+        expect(imported.posterPath, p.join(dir, 'video123-poster.jpg'));
+        expect(File(imported.path).readAsBytesSync(), [1, 2, 3, 4, 5]);
+        expect(File(imported.posterPath).existsSync(), isTrue);
+        expect(imported.duration, const Duration(seconds: 48));
+      },
+    );
+
+    test('leaves the original video untouched', () async {
+      final source = File(p.join(tempDir.path, 'clip.mov'))
+        ..writeAsBytesSync([9, 8, 7]);
+      final store = MediaStore(
+        root: root,
+        clock: () => DateTime.utc(2026, 11, 7),
+      );
+
+      await store.importVideo(source, probe: _FakeVideoProbe());
+
+      expect(source.readAsBytesSync(), [9, 8, 7]);
+    });
+
+    test('an unreadable video is rejected and leaves nothing behind', () async {
+      final source = File(p.join(tempDir.path, 'broken.mp4'))
+        ..writeAsStringSync('not a video');
+      final store = MediaStore(
+        root: root,
+        clock: () => DateTime.utc(2026, 11, 7),
+      );
+
+      await expectLater(
+        store.importVideo(source, probe: _FakeVideoProbe(readable: false)),
+        throwsArgumentError,
+      );
+
+      final media = Directory(p.join(root.path, 'media'));
+      final leftovers = media.existsSync()
+          ? media.listSync(recursive: true).whereType<File>().toList()
+          : const <File>[];
+      expect(leftovers, isEmpty);
+    });
+
+    test('a 1 GB video is copied without loading it into memory', () async {
+      const oneGigabyte = 1024 * 1024 * 1024;
+      final source = File(p.join(tempDir.path, 'big.mp4'));
+      // A sparse file: 1 GB long without writing 1 GB from the test.
+      final handle = source.openSync(mode: FileMode.write);
+      handle.truncateSync(oneGigabyte);
+      handle.closeSync();
+      final store = MediaStore(
+        root: root,
+        clock: () => DateTime.utc(2026, 11, 7),
+      );
+      final before = ProcessInfo.currentRss;
+
+      final imported = await store.importVideo(
+        source,
+        probe: _FakeVideoProbe(),
+      );
+
+      expect(File(imported.path).lengthSync(), oneGigabyte);
+      // Holding the file in memory would add about 1 GB; a streamed copy
+      // adds next to nothing. 64 MB leaves room for ordinary noise.
+      expect(ProcessInfo.currentRss - before, lessThan(64 * 1024 * 1024));
+    }, timeout: const Timeout(Duration(minutes: 3)));
   });
 }

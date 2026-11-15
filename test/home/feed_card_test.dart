@@ -225,4 +225,43 @@ void main() {
       expect(find.text('Audio'), findsNWidgets(2));
     });
   });
+
+  group('VideoLogCard', () {
+    VideoLog video({String? caption}) => VideoLog(
+      id: '8',
+      createdAt: DateTime.utc(2026, 11, 6, 12, 20),
+      tzOffsetMinutes: 0,
+      editedAt: null,
+      deletedAt: null,
+      path: p.join(tempDir.path, 'a.mp4'),
+      posterPath: (File(
+        p.join(tempDir.path, 'a-poster.jpg'),
+      )..writeAsStringSync('fake')).path,
+      duration: const Duration(seconds: 48),
+      caption: caption,
+    );
+
+    testWidgets(
+      'shows the type label, time, length, caption and a play badge',
+      (tester) async {
+        await pump(
+          tester,
+          FeedCard(log: video(caption: 'Walk to the station')),
+        );
+
+        expect(find.text('Video'), findsOneWidget);
+        expect(find.text('12:20'), findsOneWidget);
+        expect(find.text('0:48'), findsOneWidget);
+        expect(find.text('Walk to the station'), findsOneWidget);
+        expect(find.byIcon(Icons.play_arrow), findsOneWidget);
+      },
+    );
+
+    testWidgets('shows no caption text when there is none', (tester) async {
+      await pump(tester, FeedCard(log: video()));
+
+      expect(find.text('0:48'), findsOneWidget);
+      expect(find.text('Walk to the station'), findsNothing);
+    });
+  });
 }
