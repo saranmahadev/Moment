@@ -1,7 +1,7 @@
 name: moment
 description: A completely local life journal. Text, emoji, photo, video, audio and location logs. No cloud, no account.
 publish_to: none
-version: 0.1.0+1
+version: 0.2.0+2
 
 environment:
   sdk: ">=3.10.0 <4.0.0"

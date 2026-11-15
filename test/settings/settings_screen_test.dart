@@ -103,7 +103,7 @@ void main() {
     await tester.pump();
     expect(find.text('How Moment stays local'), findsOneWidget);
     expect(find.text('Version'), findsOneWidget);
-    expect(find.text('0.1.0'), findsOneWidget);
+    expect(find.text('0.2.0'), findsOneWidget);
 
     await tester.pumpWidget(const SizedBox());
     await tester.pumpAndSettle();

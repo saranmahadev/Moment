@@ -217,7 +217,7 @@ class SettingsScreen extends StatelessWidget {
                     tokens: tokens,
                     title: 'Version',
                     trailing: Text(
-                      '0.1.0',
+                      '0.2.0',
                       style: TextStyle(fontSize: 15, color: tokens.secondary),
                     ),
                   ),

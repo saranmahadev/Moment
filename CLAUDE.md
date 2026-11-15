@@ -17,7 +17,7 @@ Releases: Phase 1 = 0.1.0 (Foundation, Text and Emoji), 2 = 0.2.0 (Photo, Audio,
 
 ## State
 
-Only the scaffold is committed. Nothing has been run yet: Flutter was not available where this was written, so all code written after this point should be verified by running it. First time setup is in `README.md` (`flutter create` for platform folders, then `build_runner`).
+Phases 1 and 2 are built and released (`v0.1.0`, `v0.2.0`): Text, Emoji, Photo and Audio logs, app lock, Trash, encrypted backup and restore, export, and storage by type. `CHANGELOG.md` has the detail per release. Next is Phase 3 (Video and Location) in `docs/ROADMAP.md`. CI pins Flutter 3.47.9; develop and verify on that version. First time setup is in `README.md` (`flutter create` for platform folders, then `build_runner`).
 
 ## Phase 1 chunk order (each is a branch)
 
