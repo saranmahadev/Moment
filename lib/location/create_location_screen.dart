@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 
@@ -9,6 +11,7 @@ import '../domain/log_type.dart';
 import 'coordinates.dart';
 import 'location_provider.dart';
 import 'location_widgets.dart';
+import 'place_name_lookup.dart';
 import 'stylised_map.dart';
 
 final _whenFormat = DateFormat('EEE d MMM · HH:mm');
@@ -17,11 +20,16 @@ final _whenFormat = DateFormat('EEE d MMM · HH:mm');
 /// optionally name the place. Access is explained before the system is
 /// asked, and every refused state says what to do instead. Matches
 /// design/mockups/png/10-Create-Location.png.
+///
+/// [placeNames] is only given when "Look up place names" is on. Then each
+/// new pin is looked up once and the name offered, never forced: a name
+/// already typed is left alone. Without it nothing leaves the device.
 class CreateLocationScreen extends StatefulWidget {
   const CreateLocationScreen({
     super.key,
     required this.repository,
     required this.provider,
+    this.placeNames,
     DateTime Function()? now,
     required this.onSaved,
     required this.onClose,
@@ -29,6 +37,7 @@ class CreateLocationScreen extends StatefulWidget {
 
   final LogRepository repository;
   final LocationProvider provider;
+  final PlaceNameLookup? placeNames;
   final DateTime Function() now;
   final ValueChanged<String> onSaved;
   final VoidCallback onClose;
@@ -49,6 +58,9 @@ class _CreateLocationScreenState extends State<CreateLocationScreen> {
   bool _entering = false;
   bool _saving = false;
   final _nameController = TextEditingController();
+
+  /// Where the online lookup for the current pin stands.
+  _Lookup _lookup = _Lookup.none;
 
   @override
   void initState() {
@@ -86,20 +98,57 @@ class _CreateLocationScreenState extends State<CreateLocationScreen> {
         _typed = false;
         _entering = false;
       });
+      unawaited(_suggestName(fix));
     } finally {
       if (mounted) setState(() => _locating = false);
     }
   }
 
+  /// Offers a name for [pin] when place names are turned on. The answer is
+  /// dropped if the pin has moved on or a name has been typed meanwhile.
+  Future<void> _suggestName(LocationFix pin) async {
+    final placeNames = widget.placeNames;
+    if (placeNames == null) return;
+    setState(() => _lookup = _Lookup.asking);
+    final name = await placeNames.nameFor(
+      latitude: pin.latitude,
+      longitude: pin.longitude,
+    );
+    if (!mounted || !identical(_pin, pin)) return;
+    setState(() {
+      if (name == null) {
+        _lookup = _Lookup.nothingFound;
+      } else if (_nameController.text.trim().isEmpty) {
+        _nameController.text = name;
+        _lookup = _Lookup.suggested;
+      } else {
+        _lookup = _Lookup.none;
+      }
+    });
+  }
+
+  String get _nameFootnote => switch (_lookup) {
+    _Lookup.asking => 'Looking up a name for this place…',
+    _Lookup.suggested =>
+      'Name suggested by OpenStreetMap. Change it if you like.',
+    _Lookup.nothingFound => 'No name was found online. Type one if you like.',
+    _Lookup.none =>
+      widget.placeNames == null
+          ? 'Place names are typed by you. Nothing is looked up online.'
+          : 'Place names are on. This name is yours.',
+  };
+
   Future<void> _recentre() =>
       _access == LocationAccess.granted ? _locate() : _allow();
 
   void _useTyped(double latitude, double longitude) {
+    final pin = LocationFix(latitude: latitude, longitude: longitude);
     setState(() {
-      _pin = LocationFix(latitude: latitude, longitude: longitude);
+      _pin = pin;
       _typed = true;
       _entering = false;
     });
+    unawaited(_suggestName(pin));
   }
 
   Future<void> _save() async {
@@ -285,7 +334,7 @@ class _CreateLocationScreenState extends State<CreateLocationScreen> {
           ),
           const SizedBox(height: 10),
           Text(
-            'Place names are typed by you. Nothing is looked up online.',
+            _nameFootnote,
             style: TextStyle(fontSize: 13.5, color: tokens.secondary),
           ),
           const SizedBox(height: 14),
@@ -375,6 +424,8 @@ class _CreateLocationScreenState extends State<CreateLocationScreen> {
     );
   }
 }
+
+enum _Lookup { none, asking, suggested, nothingFound }
 
 class _RoundButton extends StatelessWidget {
   const _RoundButton({

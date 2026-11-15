@@ -3,3 +3,8 @@ tags:
   # skip with `flutter test --exclude-tags slow`.
   slow:
     timeout: 6x
+  # Tests that talk to the real place-name service. Skipped everywhere
+  # except the "Live check" workflow, which runs them with
+  # `flutter test --run-skipped --tags live`.
+  live:
+    skip: "Needs the real network; run by the Live check workflow."

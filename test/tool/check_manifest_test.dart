@@ -7,16 +7,50 @@ import '../../tool/check_manifest.dart';
 
 void main() {
   group('findForbiddenPermissions', () {
-    test('finds android.permission.INTERNET', () {
+    test('the internet is allowed: the place-name lookup needs it', () {
+      const manifest = '''
+<manifest>
+  <uses-permission android:name="android.permission.INTERNET"/>
+</manifest>
+''';
+      expect(findForbiddenPermissions(manifest), isEmpty);
+    });
+
+    test('forbids what a private journal never needs', () {
+      expect(forbiddenPermissions, {
+        'android.permission.ACCESS_BACKGROUND_LOCATION',
+        'com.google.android.gms.permission.AD_ID',
+        'android.permission.READ_CONTACTS',
+        'android.permission.READ_SMS',
+        'android.permission.READ_CALL_LOG',
+      });
+    });
+
+    test('lists every permission a manifest asks for, once each', () {
+      const manifest = '''
+<manifest>
+  <uses-permission android:name="android.permission.CAMERA"/>
+  <uses-permission
+      android:name="android.permission.INTERNET" />
+  <uses-permission android:name="android.permission.CAMERA"/>
+</manifest>
+''';
+      expect(listPermissions(manifest), [
+        'android.permission.CAMERA',
+        'android.permission.INTERNET',
+      ]);
+    });
+
+    test('finds android.permission.ACCESS_BACKGROUND_LOCATION', () {
       const manifest = '''
 <?xml version="1.0" encoding="utf-8"?>
 <manifest xmlns:android="http://schemas.android.com/apk/res/android" package="app.moment.moment">
-    <uses-permission android:name="android.permission.INTERNET"/>
+    <uses-permission android:name="android.permission.ACCESS_BACKGROUND_LOCATION"/>
     <application android:label="moment" />
 </manifest>
 ''';
       expect(findForbiddenPermissions(manifest), [
-        'android.permission.INTERNET',
+        'android.permission.ACCESS_BACKGROUND_LOCATION',
       ]);
     });
 
@@ -45,11 +79,11 @@ void main() {
       const manifest = '''
 <manifest>
   <uses-permission
-      android:name="android.permission.INTERNET" />
+      android:name="android.permission.ACCESS_BACKGROUND_LOCATION" />
 </manifest>
 ''';
       expect(findForbiddenPermissions(manifest), [
-        'android.permission.INTERNET',
+        'android.permission.ACCESS_BACKGROUND_LOCATION',
       ]);
     });
 
@@ -57,11 +91,11 @@ void main() {
       const manifest = '''
 <manifest>
   <uses-permission android:name="android.permission.CAMERA"/>
-  <uses-permission android:name="android.permission.INTERNET"/>
+  <uses-permission android:name="android.permission.ACCESS_BACKGROUND_LOCATION"/>
 </manifest>
 ''';
       expect(findForbiddenPermissions(manifest), [
-        'android.permission.INTERNET',
+        'android.permission.ACCESS_BACKGROUND_LOCATION',
       ]);
     });
   });
@@ -134,13 +168,15 @@ void main() {
     test('reports a violation with the offending file path', () {
       final manifest = File(p.join(tempDir.path, 'AndroidManifest.xml'))
         ..writeAsStringSync('''
-<manifest><uses-permission android:name="android.permission.INTERNET"/></manifest>
+<manifest><uses-permission android:name="android.permission.ACCESS_BACKGROUND_LOCATION"/></manifest>
 ''');
 
       final violations = checkManifests(tempDir.path);
       expect(violations, hasLength(1));
       expect(violations.single.file, manifest.path);
-      expect(violations.single.permissions, ['android.permission.INTERNET']);
+      expect(violations.single.permissions, [
+        'android.permission.ACCESS_BACKGROUND_LOCATION',
+      ]);
     });
   });
 
@@ -165,7 +201,7 @@ void main() {
 
     test('returns 1 when a manifest declares a forbidden permission', () {
       File(p.join(tempDir.path, 'AndroidManifest.xml')).writeAsStringSync('''
-<manifest><uses-permission android:name="android.permission.INTERNET"/></manifest>
+<manifest><uses-permission android:name="android.permission.ACCESS_BACKGROUND_LOCATION"/></manifest>
 ''');
 
       expect(run([tempDir.path]), 1);

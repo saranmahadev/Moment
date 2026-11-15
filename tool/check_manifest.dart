@@ -1,7 +1,18 @@
 import 'dart:io';
 
-/// Permissions Moment must never declare: it makes no network calls.
-const forbiddenPermissions = <String>{'android.permission.INTERNET'};
+/// Permissions Moment must never ask for, whichever plugin tries to add
+/// them: a private journal has no business with any of these.
+///
+/// The internet permission is not here: the opt-in "Look up place names"
+/// needs it. What keeps the app to that one use is
+/// `test/location/network_boundary_test.dart`.
+const forbiddenPermissions = <String>{
+  'android.permission.ACCESS_BACKGROUND_LOCATION',
+  'com.google.android.gms.permission.AD_ID',
+  'android.permission.READ_CONTACTS',
+  'android.permission.READ_SMS',
+  'android.permission.READ_CALL_LOG',
+};
 
 final _usesPermissionName = RegExp(
   r'<uses-permission\s+android:name="([^"]+)"\s*/?>',
@@ -15,6 +26,16 @@ List<String> findForbiddenPermissions(String manifestXml) {
       .allMatches(manifestXml)
       .map((match) => match.group(1)!)
       .where(forbiddenPermissions.contains)
+      .toList();
+}
+
+/// Every permission [manifestXml] asks for, once each, in order of first
+/// appearance.
+List<String> listPermissions(String manifestXml) {
+  return _usesPermissionName
+      .allMatches(manifestXml)
+      .map((match) => match.group(1)!)
+      .toSet()
       .toList();
 }
 
@@ -65,6 +86,14 @@ int run(List<String> args) {
       'Usage: dart run tool/check_manifest.dart <file-or-directory>',
     );
     return 2;
+  }
+
+  // Print what the build asks for, so every CI run records it.
+  for (final manifest in findAndroidManifests(args.first)) {
+    stdout.writeln('${manifest.path} asks for:');
+    for (final permission in listPermissions(manifest.readAsStringSync())) {
+      stdout.writeln('  $permission');
+    }
   }
 
   final violations = checkManifests(args.first);

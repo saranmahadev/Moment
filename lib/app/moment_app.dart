@@ -21,6 +21,8 @@ import '../data/media_store.dart';
 import '../data/secure_database.dart';
 import '../design/theme.dart';
 import '../location/location_provider.dart';
+import '../location/nominatim_place_names.dart';
+import '../settings/app_settings.dart';
 import '../lock/app_lock_controller.dart';
 import '../lock/biometric_authenticator.dart';
 import '../lock/pin_storage.dart';
@@ -38,6 +40,7 @@ class _Resources {
     required this.backups,
     required this.exports,
     required this.storage,
+    required this.settings,
     required this.hasPin,
   });
 
@@ -47,6 +50,7 @@ class _Resources {
   final BackupCoordinator backups;
   final ExportCoordinator exports;
   final StorageService storage;
+  final AppSettings settings;
   final bool hasPin;
 }
 
@@ -85,6 +89,9 @@ Future<_Resources> _bootstrap() async {
       scratchDirectory: Directory(p.join(tempDir.path, 'exports')),
     ),
     storage: StorageService(repository: repository),
+    settings: await AppSettings.load(
+      FileSettingsStore(File(p.join(supportDir.path, 'settings.json'))),
+    ),
     hasPin: hasPin,
   );
 }
@@ -100,6 +107,11 @@ class MomentApp extends StatefulWidget {
 
 class _MomentAppState extends State<MomentApp> with WidgetsBindingObserver {
   late final Future<_Resources> _resources = _bootstrap();
+
+  /// One lookup for the life of the app, so its one-request-a-second
+  /// spacing and its memory of spots already asked about hold. It is only
+  /// handed to a screen while "Look up place names" is on.
+  final _placeNames = NominatimPlaceNameLookup();
   AppLockController? _lockController;
 
   @override
@@ -151,6 +163,8 @@ class _MomentAppState extends State<MomentApp> with WidgetsBindingObserver {
               videoProbe: DeviceVideoProbe(),
               createVideoPlayback: DeviceVideoPlaybackController.new,
               locationProvider: DeviceLocationProvider(),
+              placeNames: _placeNames,
+              settings: resources.settings,
               backups: resources.backups,
               exports: resources.exports,
               storage: resources.storage,

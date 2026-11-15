@@ -1,5 +1,7 @@
 name: Release check
 
+# Builds the release APK and checks what its manifest asks for.
+#
 # The release APK build is the expensive part of CI (several minutes), so
 # unlike ci.yml's `test` job, this does not run on every push. It only runs
 # automatically when something that could plausibly change the release
@@ -18,7 +20,7 @@ on:
   workflow_dispatch:
 
 jobs:
-  no-internet-permission:
+  release-manifest:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -42,7 +44,7 @@ jobs:
       - run: flutter pub get
       - run: dart run build_runner build --delete-conflicting-outputs
       - run: flutter build apk --release
-      - name: Fail if the release manifest asks for the internet
+      - name: List the release manifest's permissions and fail on a forbidden one
         run: dart run tool/check_manifest.dart build/app/intermediates/merged_manifests/release
       - uses: actions/upload-artifact@v4
         with:

@@ -21,7 +21,7 @@ No production code until a failing test asks for it: red, green, refactor.
 - Widget tests cover every screen state shown in the mockups: empty, filled, error, locked.
 - Golden tests compare each screen to an approved image. A baseline is approved only after it matches its artboard.
 - Integration tests run one full flow per log type: create, view, edit, delete, restore.
-- Release checks confirm the Android release manifest has no internet permission, and that backup and restore round-trips every type.
+- Release checks confirm the Android release manifest asks for nothing a private journal should not have, that only the opt-in place-name lookup can reach the network, and that backup and restore round-trips every type.
 - Upgrade tests open a database from the previous release and check nothing is lost.
 
 **Definition of done for any feature**
@@ -61,7 +61,7 @@ No production code until a failing test asks for it: red, green, refactor.
 - Widget tests for every card and screen state in the mockups: empty, typing, emoji selected, strength set, locked.
 - Golden tests for Lock, Home, Add, New text, New emoji, Library and Trash, with baselines approved against the mockups.
 - One integration test: create a text log, see it on Home, edit it, delete it, restore it.
-- A script test that fails the build if the Android release manifest contains the internet permission.
+- A script test that fails the build if the Android release manifest contains a forbidden permission. (Until 0.3.0 that was the internet permission; since the owner approved the opt-in place-name lookup, the internet is allowed for that one use and guarded by `test/location/network_boundary_test.dart`.)
 
 **Exit gate**
 

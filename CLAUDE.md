@@ -1,6 +1,6 @@
 # Moment: project context for Claude Code
 
-Moment is a completely local life journal (Flutter + Drift on encrypted SQLite). Six SEPARATE log types, never merged: Text, Emoji, Photo, Video, Audio, Location. No cloud, no account, no analytics, no internet permission.
+Moment is a completely local life journal (Flutter + Drift on encrypted SQLite). Six SEPARATE log types, never merged: Text, Emoji, Photo, Video, Audio, Location. No cloud, no account, no analytics. One opt-in use of the internet: "Look up place names" (off by default; see the place-name decisions below).
 
 Read `docs/WORKFLOW.md` first. It is the working agreement: strict TDD (a `test:` commit that fails, then a `feat:` commit that passes), one short-lived branch per chunk, `--no-ff` merges into `main`, Conventional Commits. Run `flutter test` before every commit. Do not commit generated `*.g.dart` files.
 
@@ -19,11 +19,11 @@ Releases: Phase 1 = 0.1.0 (Foundation, Text and Emoji), 2 = 0.2.0 (Photo, Audio,
 
 Phases 1 and 2 are released (`v0.1.0`, `v0.2.0`) and Phase 3 is built on `main`, awaiting the owner's approval to tag `v0.3.0`: all six log types (Text, Emoji, Photo, Video, Audio, Location) can be created, viewed, edited, deleted, restored, exported and backed up. `CHANGELOG.md` has the detail per release. Next is Phase 4 (Calendar, Search, Settings, dark mode) in `docs/ROADMAP.md`. CI pins Flutter 3.47.9; develop and verify on that version. First time setup is in `README.md` (`flutter create` for platform folders, then `build_runner`).
 
-This session cannot push tags (HTTP 403): the owner publishes tags or GitHub Releases at the commits named in the hand-off.
+Tags are never pushed by hand: the **Release** workflow (`.github/workflows/release.yml`, run with a version and optionally a commit) checks, builds, tags and publishes the APK in one go. See `docs/WORKFLOW.md`, "Releases".
 
 ## Phase 1 chunk order (each is a branch)
 
-1. `feat/manifest-check`: `tool/check_manifest.dart` with a pure function `findForbiddenPermissions(String manifestXml)` (forbidden: `android.permission.INTERNET`), tests first in `test/tool/`. The script takes a file or directory and searches it recursively for `AndroidManifest.xml`. CI already calls it.
+1. `feat/manifest-check`: `tool/check_manifest.dart` with a pure function `findForbiddenPermissions(String manifestXml)` (originally forbidding `android.permission.INTERNET`; see the place-name decisions for the current list), tests first in `test/tool/`. The script takes a file or directory and searches it recursively for `AndroidManifest.xml`. CI already calls it.
 2. `feat/data-layer`: Drift schema and repositories, tests first (see decisions below).
 3. `feat/secure-database`: key store and encrypted opener, tests first.
 4. `feat/design-system`: tokens (ThemeExtension), bundled Inter and Newsreader fonts, `GlassSurface`, golden tests against the artboards.
@@ -61,11 +61,21 @@ Screens in Phase 1: Lock, Home, Add, Library, New text, New emoji, Text section,
 - Schema version 4: `video_log` (log_id, path, poster_path, duration_ms, caption nullable) and `location_log` (log_id, latitude and longitude as REAL so they round-trip exactly, accuracy_m nullable, name nullable, note nullable). `LogRepository`: `createVideo`, `updateVideo`, `createLocation` (range-checked), `moveLocation`, `updateLocation`; `filesOf(log)` is the one list of files a log owns.
 - Every device-facing package sits behind an interface with a fake in `test/`: `VideoPicker` (image_picker), `VideoProbe` (video_player for duration, fc_native_video_thumbnail for the poster), `VideoPlaybackController` (video_player), `LocationProvider` (geolocator, Android's own location manager rather than Play services). Do not use `video_thumbnail`: its Android build file no longer builds.
 - Video files are copied by the operating system (`File.copy`) and streamed everywhere else; a 1 GB clip is imported and backed up with flat memory (`test/backup/backup_large_video_test.dart`, tagged `slow`; skip locally with `--exclude-tags slow`).
-- Location never names a place for you: `LocationProvider` has no geocoding, and tests forbid HTTP and scan `lib/` and `pubspec.yaml` for anything that could open a connection. The mockup's "Look up place names" toggle is therefore not built; it would need the internet permission the app refuses to have.
+- Location never names a place by itself: `LocationProvider` has no geocoding. Naming is the separate, opt-in `PlaceNameLookup` (next section).
 - Access is explained before the system is asked. States: granted, denied (can ask again), deniedForever (also covers revoked in Settings), serviceOff. Coordinates can always be typed instead; typed coordinates carry no accuracy.
 - The map is `StylisedMap`, an offline tile; `projectPins` shows how places lie relative to each other, not where they are in the world.
 - Platform declarations are tested (`test/platform/`): iOS usage descriptions for Face ID, microphone, camera, photo library and when-in-use location; Android fine and coarse location, never background.
 - Golden baselines for the Phase 2 and 3 screens live in `test/goldens/`; `test/integration/shell_harness.dart` pumps the real `AppShell` with every seam faked.
+
+## Place-name decisions (owner-approved, 0.3.0)
+
+- The owner asked for the mockup's "Look up place names" toggle, knowing it needs the internet. So the rule is no longer "no internet permission" but "the internet for exactly one thing, off by default".
+- `AppSettings` (`lib/settings/app_settings.dart`, JSON in `settings.json`, `AppSettings.inMemory()` in tests) holds `lookUpPlaceNames`, default false. `AppShell` hands `CreateLocationScreen` the lookup only while it is on; with it off the screen has nothing to call.
+- `NominatimPlaceNameLookup` (`lib/location/nominatim_place_names.dart`) is the only file that may open a connection, and only to `https://nominatim.openstreetmap.org/reverse`. It sends coordinates rounded to five decimals, the language and `Moment/<version>`; no cookies or identifiers. It follows the service's usage policy: one request a second, never the same spot twice. Any failure is "no suggestion".
+- A suggestion fills the name only if nothing was typed, and can be replaced. The Privacy screen says what is sent and to whom, with the OpenStreetMap credit.
+- Guards: `test/location/network_boundary_test.dart` (one file, one host, HTTPS, no HTTP or geocoding packages, only `moment_app.dart` builds the real lookup), `test/integration/place_names_flow_test.dart` (off means never asked), `tool/check_manifest.dart` (prints every permission of the release manifest; forbids background location, advertising id, contacts, SMS, call log).
+- `test/live/` talks to the real service and is skipped everywhere (`dart_test.yaml`, tag `live`) except the hand-run **Live check** workflow.
+- `appVersion` in `lib/app/app_info.dart` must equal `pubspec.yaml` (tested); bump both at a release.
 
 ## Visual language (for the design system chunk)
 

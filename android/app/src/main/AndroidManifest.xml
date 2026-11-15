@@ -3,6 +3,10 @@
          background. No plugin declares these, so the app must. -->
     <uses-permission android:name="android.permission.ACCESS_FINE_LOCATION"/>
     <uses-permission android:name="android.permission.ACCESS_COARSE_LOCATION"/>
+    <!-- The one use of the internet: "Look up place names" in Privacy,
+         off unless the owner turns it on. Nothing else in the app can
+         open a connection (test/location/network_boundary_test.dart). -->
+    <uses-permission android:name="android.permission.INTERNET"/>
     <application
         android:label="moment"
         android:name="${applicationName}"

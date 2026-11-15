@@ -23,6 +23,8 @@ import '../library/library_screen.dart';
 import '../location/create_location_screen.dart';
 import '../location/location_detail_screen.dart';
 import '../location/location_provider.dart';
+import '../location/place_name_lookup.dart';
+import '../settings/app_settings.dart';
 import '../location/location_section_screen.dart';
 import '../lock/app_lock_controller.dart';
 import '../photo/create_photo_screen.dart';
@@ -59,6 +61,8 @@ class AppShell extends StatefulWidget {
     required this.videoProbe,
     required this.createVideoPlayback,
     required this.locationProvider,
+    required this.placeNames,
+    required this.settings,
     required this.backups,
     required this.exports,
     required this.storage,
@@ -75,6 +79,11 @@ class AppShell extends StatefulWidget {
   final VideoProbe videoProbe;
   final VideoPlaybackController Function() createVideoPlayback;
   final LocationProvider locationProvider;
+
+  /// Reaches the place-name service. Only handed to a screen while
+  /// [AppSettings.lookUpPlaceNames] is on.
+  final PlaceNameLookup placeNames;
+  final AppSettings settings;
   final BackupCoordinator backups;
   final ExportCoordinator exports;
   final StorageService storage;
@@ -175,6 +184,9 @@ class _AppShellState extends State<AppShell> {
             builder: (_) => CreateLocationScreen(
               repository: widget.repository,
               provider: widget.locationProvider,
+              placeNames: widget.settings.lookUpPlaceNames
+                  ? widget.placeNames
+                  : null,
               now: widget.now,
               onSaved: (_) => Navigator.of(context).pop(),
               onClose: () => Navigator.of(context).pop(),
@@ -254,6 +266,7 @@ class _AppShellState extends State<AppShell> {
           backups: widget.backups,
           exports: widget.exports,
           storage: widget.storage,
+          settings: widget.settings,
           now: widget.now,
           onBack: () => Navigator.of(context).pop(),
         ),

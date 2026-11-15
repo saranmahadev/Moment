@@ -32,7 +32,8 @@ class LocationFix {
 
 /// Reads the device's position. Wraps `geolocator` so tests can supply a
 /// fake. It deliberately has no way to turn coordinates into a place
-/// name: that would need the internet, and Moment never uses it.
+/// name: that needs the internet, and lives apart in `PlaceNameLookup`,
+/// which the app only reaches when the owner has turned it on.
 abstract interface class LocationProvider {
   /// The current access, without prompting.
   Future<LocationAccess> checkAccess();

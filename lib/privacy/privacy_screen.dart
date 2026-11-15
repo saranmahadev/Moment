@@ -7,6 +7,7 @@ import '../design/glass_surface.dart';
 import '../design/type_icons.dart';
 import '../domain/log_type.dart';
 import '../export/export_coordinator.dart';
+import '../settings/app_settings.dart';
 import '../storage/storage_service.dart';
 import '../design/orb_field.dart';
 import '../design/tokens.dart';
@@ -18,8 +19,8 @@ final _lastBackupFormat = DateFormat('d MMM yyyy, HH:mm');
 
 /// Privacy and backup: Security (App lock), Backup (encrypted backup and
 /// restore), Export (readable copy of chosen types) and Storage by type,
-/// matching design/mockups/png/26-Privacy-and-backup.png. The Place names
-/// toggle arrives with Location in Phase 3.
+/// matching design/mockups/png/26-Privacy-and-backup.png. Place names is
+/// the one switch that lets anything leave the device; it says so.
 class PrivacyScreen extends StatefulWidget {
   const PrivacyScreen({
     super.key,
@@ -27,6 +28,7 @@ class PrivacyScreen extends StatefulWidget {
     required this.backups,
     required this.exports,
     required this.storage,
+    required this.settings,
     DateTime Function()? now,
     this.onBack,
   }) : now = now ?? DateTime.now;
@@ -35,6 +37,7 @@ class PrivacyScreen extends StatefulWidget {
   final BackupCoordinator backups;
   final ExportCoordinator exports;
   final StorageService storage;
+  final AppSettings settings;
   final DateTime Function() now;
   final VoidCallback? onBack;
 
@@ -245,7 +248,8 @@ class _PrivacyScreenState extends State<PrivacyScreen> {
                                 ),
                               ),
                               Text(
-                                'No account, no servers, no internet permission.',
+                                'No account, no servers. Nothing leaves this device '
+                                'unless you turn on place names.',
                                 style: TextStyle(
                                   fontSize: 13.5,
                                   color: tokens.secondary,
@@ -532,6 +536,74 @@ class _PrivacyScreenState extends State<PrivacyScreen> {
                                 ),
                               ),
                             ),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+                const SizedBox(height: 20),
+                _SectionLabel('PLACE NAMES', tokens: tokens),
+                const SizedBox(height: 8),
+                GlassSurface(
+                  variant: GlassVariant.card,
+                  child: Padding(
+                    padding: const EdgeInsets.all(16),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Row(
+                          children: [
+                            Expanded(
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  Text(
+                                    'Look up place names',
+                                    style: TextStyle(
+                                      fontSize: 16,
+                                      fontWeight: FontWeight.w600,
+                                      color: tokens.ink,
+                                    ),
+                                  ),
+                                  Text(
+                                    'Uses the internet. Keep off to stay '
+                                    'fully offline.',
+                                    style: TextStyle(
+                                      fontSize: 13.5,
+                                      color: tokens.secondary,
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ),
+                            ListenableBuilder(
+                              listenable: widget.settings,
+                              builder: (context, _) => Semantics(
+                                label: 'Look up place names',
+                                child: Switch(
+                                  key: const ValueKey('place-names-switch'),
+                                  value: widget.settings.lookUpPlaceNames,
+                                  activeThumbColor: Colors.white,
+                                  activeTrackColor: tokens.ink,
+                                  inactiveTrackColor: tokens.switchOff,
+                                  onChanged:
+                                      widget.settings.setLookUpPlaceNames,
+                                ),
+                              ),
+                            ),
+                          ],
+                        ),
+                        const SizedBox(height: 10),
+                        Text(
+                          'When on, the coordinates of a new pin are sent to '
+                          'OpenStreetMap to suggest a name. Nothing else ever '
+                          'leaves this device. Names © OpenStreetMap '
+                          'contributors.',
+                          style: TextStyle(
+                            fontSize: 13,
+                            height: 1.35,
+                            color: tokens.secondary,
                           ),
                         ),
                       ],
