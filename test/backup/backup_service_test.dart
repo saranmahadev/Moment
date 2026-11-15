@@ -13,7 +13,10 @@ import 'package:moment/backup/backup_service.dart';
 import 'package:moment/data/database.dart';
 import 'package:moment/data/log_repository.dart';
 import 'package:moment/data/media_store.dart';
+import 'package:moment/domain/log.dart';
 import 'package:path/path.dart' as p;
+
+import '../video/video_fakes.dart';
 
 /// One side of a backup: a database plus the app-private directory its
 /// media lives under, standing in for one phone.
@@ -121,6 +124,25 @@ void main() {
       peaks: [0.1, 0.5, 0.9],
       title: 'Voice note',
     );
+
+    final clip = File(
+      p.join(tempDir.path, 'clip.mp4'),
+    )..writeAsBytesSync(List.generate(5000, (i) => Random(i + 7).nextInt(256)));
+    final video = await source.media.importVideo(clip, probe: FakeVideoProbe());
+    await source.repo.createVideo(
+      path: video.path,
+      posterPath: video.posterPath,
+      duration: video.duration,
+      caption: 'Walk to the station',
+    );
+
+    await source.repo.createLocation(
+      latitude: 12.971598765432101,
+      longitude: -77.59456234567891,
+      accuracyMeters: 12,
+      name: 'Favourite bench',
+      note: 'Under the big tree',
+    );
   }
 
   /// The source's rows with media paths rewritten to where they would land
@@ -132,6 +154,7 @@ void main() {
         p.join(root.path, p.relative(path, from: source.root.path));
     final photos = await source.rows(source.db.photoLogsTable);
     final audios = await source.rows(source.db.audioLogsTable);
+    final videos = await source.rows(source.db.videoLogsTable);
     return {
       'log': await source.rows(source.db.logsTable),
       'text': await source.rows(source.db.textLogsTable),
@@ -148,6 +171,15 @@ void main() {
         for (final e in audios.entries)
           e.key: {...e.value, 'path': rebase(e.value['path'] as String)},
       },
+      'video': {
+        for (final e in videos.entries)
+          e.key: {
+            ...e.value,
+            'path': rebase(e.value['path'] as String),
+            'posterPath': rebase(e.value['posterPath'] as String),
+          },
+      },
+      'location': await source.rows(source.db.locationLogsTable),
     };
   }
 
@@ -159,6 +191,8 @@ void main() {
     'emoji': await phone.rows(phone.db.emojiLogsTable),
     'photo': await phone.rows(phone.db.photoLogsTable),
     'audio': await phone.rows(phone.db.audioLogsTable),
+    'video': await phone.rows(phone.db.videoLogsTable),
+    'location': await phone.rows(phone.db.locationLogsTable),
   };
 
   test(
@@ -174,10 +208,10 @@ void main() {
 
       expect(await actualRows(target), await expectedRows(target.root));
       expect(target.mediaHashes(), source.mediaHashes());
-      expect(target.mediaHashes(), hasLength(5));
-      expect(summary.logsRestored, 7);
+      expect(target.mediaHashes(), hasLength(7));
+      expect(summary.logsRestored, 9);
       expect(summary.logsSkipped, 0);
-      expect(summary.filesRestored, 5);
+      expect(summary.filesRestored, 7);
     },
   );
 
@@ -264,7 +298,7 @@ void main() {
     );
 
     expect(second.logsRestored, 0);
-    expect(second.logsSkipped, 7);
+    expect(second.logsSkipped, 9);
     expect(await actualRows(target), await expectedRows(target.root));
     expect(target.mediaHashes(), source.mediaHashes());
   });
@@ -277,7 +311,7 @@ void main() {
     await target.backup.restoreFrom(backupFile, passphrase: 'pw');
 
     final logs = await target.rows(target.db.logsTable);
-    expect(logs, hasLength(8));
+    expect(logs, hasLength(10));
     expect(logs.keys, contains(own));
   });
 
@@ -312,5 +346,104 @@ void main() {
       Uint8List.fromList(backupFile.readAsBytesSync().sublist(0, 8)),
       BackupCipher.magic,
     );
+  });
+
+  test('one log of each of the six types survives backup and restore with '
+      'the same content and timestamps', () async {
+    await fillSource();
+    final edited = (await source.repo.getAll()).whereType<LocationLog>().single;
+    await source.repo.updateLocation(edited.id, name: 'Renamed', note: null);
+    final before = {for (final log in await source.repo.getAll()) log.id: log};
+    expect(before.values.map((l) => l.type).toSet(), hasLength(6));
+
+    await source.backup.exportTo(backupFile, passphrase: 'pw');
+    await target.backup.restoreFrom(backupFile, passphrase: 'pw');
+
+    final after = {for (final log in await target.repo.getAll()) log.id: log};
+    expect(after.keys.toSet(), before.keys.toSet());
+    String onTarget(String path) =>
+        p.join(target.root.path, p.relative(path, from: source.root.path));
+    for (final was in before.values) {
+      final now = after[was.id]!;
+      expect(now.runtimeType, was.runtimeType);
+      expect(now.createdAt, was.createdAt, reason: '${was.type}');
+      expect(now.tzOffsetMinutes, was.tzOffsetMinutes);
+      expect(now.editedAt, was.editedAt, reason: '${was.type}');
+      expect(now.deletedAt, was.deletedAt, reason: '${was.type}');
+      switch (was) {
+        case TextLog():
+          expect((now as TextLog).body, was.body);
+        case EmojiLog():
+          now as EmojiLog;
+          expect(
+            [now.emoji, now.label, now.strength],
+            [was.emoji, was.label, was.strength],
+          );
+        case PhotoLog():
+          now as PhotoLog;
+          expect(now.caption, was.caption);
+          expect(now.path, onTarget(was.path));
+          expect(
+            File(now.path).readAsBytesSync(),
+            File(was.path).readAsBytesSync(),
+          );
+        case AudioLog():
+          now as AudioLog;
+          expect(
+            [now.title, now.note, now.duration, now.peaks],
+            [was.title, was.note, was.duration, was.peaks],
+          );
+          expect(
+            File(now.path).readAsBytesSync(),
+            File(was.path).readAsBytesSync(),
+          );
+        case VideoLog():
+          now as VideoLog;
+          expect([now.caption, now.duration], [was.caption, was.duration]);
+          expect(now.path, onTarget(was.path));
+          expect(now.posterPath, onTarget(was.posterPath));
+          expect(
+            File(now.path).readAsBytesSync(),
+            File(was.path).readAsBytesSync(),
+          );
+          expect(File(now.posterPath).existsSync(), isTrue);
+        case LocationLog():
+          now as LocationLog;
+          expect(now.latitude, was.latitude);
+          expect(now.longitude, was.longitude);
+          expect(
+            [now.accuracyMeters, now.name, now.note],
+            [was.accuracyMeters, was.name, was.note],
+          );
+      }
+    }
+  });
+
+  test('a backup made by 0.2.0, before video and location existed, still '
+      'restores', () async {
+    await source.repo.createText(body: 'From 0.2.0');
+    final manifest = (await source.backup.buildManifest()).toJson()
+      ..remove('videoLogs')
+      ..remove('locationLogs')
+      ..['formatVersion'] = 1
+      ..['schemaVersion'] = 3;
+    final cipher = BackupCipher(kdfIterations: 10, chunkSize: 1024);
+    await backupFile.openWrite().addStream(
+      cipher.encrypt(
+        BackupArchive.write(
+          BackupManifest.fromJson(manifest),
+          (entry) => File(p.join(source.root.path, entry.name)).openRead(),
+        ),
+        passphrase: 'pw',
+      ),
+    );
+
+    final summary = await target.backup.restoreFrom(
+      backupFile,
+      passphrase: 'pw',
+    );
+
+    expect(summary.logsRestored, 1);
+    expect((await target.repo.getAll()).single, isA<TextLog>());
   });
 }
