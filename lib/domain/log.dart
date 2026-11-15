@@ -1,7 +1,7 @@
 import 'log_type.dart';
 
-/// A single moment recorded in the journal. One of [TextLog] or [EmojiLog]
-/// for now; the remaining four types are added in later phases.
+/// A single moment recorded in the journal: exactly one of the six types
+/// below. Types are never merged.
 sealed class Log {
   const Log({
     required this.id,
@@ -118,6 +118,66 @@ final class AudioLog extends Log {
 
   @override
   LogType get type => LogType.audio;
+}
+
+/// A video clip, stored with a poster frame, and an optional caption.
+final class VideoLog extends Log {
+  const VideoLog({
+    required super.id,
+    required super.createdAt,
+    required super.tzOffsetMinutes,
+    required super.editedAt,
+    required super.deletedAt,
+    required this.path,
+    required this.posterPath,
+    required this.duration,
+    required this.caption,
+  });
+
+  /// Path to the video file, under this app's private media directory.
+  final String path;
+
+  /// Path to the still image shown before the video plays.
+  final String posterPath;
+
+  final Duration duration;
+  final String? caption;
+
+  @override
+  LogType get type => LogType.video;
+}
+
+/// A pinned place: coordinates, how accurate the fix was, and an optional
+/// name and note typed by the user. Nothing is ever looked up online.
+final class LocationLog extends Log {
+  const LocationLog({
+    required super.id,
+    required super.createdAt,
+    required super.tzOffsetMinutes,
+    required super.editedAt,
+    required super.deletedAt,
+    required this.latitude,
+    required this.longitude,
+    required this.accuracyMeters,
+    required this.name,
+    required this.note,
+  });
+
+  /// Degrees, -90 to 90.
+  final double latitude;
+
+  /// Degrees, -180 to 180.
+  final double longitude;
+
+  /// Radius of the position fix in metres, or null when the coordinates
+  /// were typed in rather than measured.
+  final double? accuracyMeters;
+
+  final String? name;
+  final String? note;
+
+  @override
+  LogType get type => LogType.location;
 }
 
 /// A one-tap mood entry: an emoji, an optional label and a strength from 1

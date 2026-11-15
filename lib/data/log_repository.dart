@@ -220,6 +220,162 @@ class LogRepository {
     });
   }
 
+  /// Creates a video log from an already-imported video (see
+  /// `MediaStore.importVideo`) and returns its id.
+  ///
+  /// [createdAt] backdates the log; it defaults to now.
+  Future<String> createVideo({
+    required String path,
+    required String posterPath,
+    required Duration duration,
+    String? caption,
+    DateTime? createdAt,
+  }) async {
+    final id = _generateId();
+    final at = createdAt ?? _clock();
+    await _db.transaction(() async {
+      await _db
+          .into(_db.logsTable)
+          .insert(
+            LogsTableCompanion.insert(
+              id: id,
+              type: LogType.video.name,
+              createdAtMs: at.toUtc().millisecondsSinceEpoch,
+              tzOffsetMinutes: at.timeZoneOffset.inMinutes,
+            ),
+          );
+      await _db
+          .into(_db.videoLogsTable)
+          .insert(
+            VideoLogsTableCompanion.insert(
+              logId: id,
+              path: path,
+              posterPath: posterPath,
+              durationMs: duration.inMilliseconds,
+              caption: Value(caption),
+            ),
+          );
+    });
+    return id;
+  }
+
+  /// Sets a video log's [caption] (null clears it) and stamps `editedAt`.
+  /// Throws if [id] does not name a video log.
+  Future<void> updateVideo(String id, {required String? caption}) async {
+    if (await getById(id) is! VideoLog) {
+      throw ArgumentError.value(id, 'id', 'is not a video log');
+    }
+
+    await _db.transaction(() async {
+      await (_db.update(_db.videoLogsTable)..where((v) => v.logId.equals(id)))
+          .write(VideoLogsTableCompanion(caption: Value(caption)));
+      await _touch(id);
+    });
+  }
+
+  /// Creates a location log and returns its id. [latitude] must be within
+  /// -90 to 90 and [longitude] within -180 to 180. [accuracyMeters] is
+  /// left null when the coordinates were typed in rather than measured.
+  ///
+  /// [createdAt] backdates the log; it defaults to now.
+  Future<String> createLocation({
+    required double latitude,
+    required double longitude,
+    double? accuracyMeters,
+    String? name,
+    String? note,
+    DateTime? createdAt,
+  }) async {
+    _checkCoordinates(latitude, longitude);
+
+    final id = _generateId();
+    final at = createdAt ?? _clock();
+    await _db.transaction(() async {
+      await _db
+          .into(_db.logsTable)
+          .insert(
+            LogsTableCompanion.insert(
+              id: id,
+              type: LogType.location.name,
+              createdAtMs: at.toUtc().millisecondsSinceEpoch,
+              tzOffsetMinutes: at.timeZoneOffset.inMinutes,
+            ),
+          );
+      await _db
+          .into(_db.locationLogsTable)
+          .insert(
+            LocationLogsTableCompanion.insert(
+              logId: id,
+              latitude: latitude,
+              longitude: longitude,
+              accuracyM: Value(accuracyMeters),
+              name: Value(name),
+              note: Value(note),
+            ),
+          );
+    });
+    return id;
+  }
+
+  /// Moves a location log's pin, replacing its accuracy with
+  /// [accuracyMeters] (null when the new spot was typed in), and stamps
+  /// `editedAt`. Throws if [id] does not name a location log or the
+  /// coordinates are out of range.
+  Future<void> moveLocation(
+    String id, {
+    required double latitude,
+    required double longitude,
+    double? accuracyMeters,
+  }) async {
+    _checkCoordinates(latitude, longitude);
+    if (await getById(id) is! LocationLog) {
+      throw ArgumentError.value(id, 'id', 'is not a location log');
+    }
+
+    await _db.transaction(() async {
+      await (_db.update(
+        _db.locationLogsTable,
+      )..where((l) => l.logId.equals(id))).write(
+        LocationLogsTableCompanion(
+          latitude: Value(latitude),
+          longitude: Value(longitude),
+          accuracyM: Value(accuracyMeters),
+        ),
+      );
+      await _touch(id);
+    });
+  }
+
+  /// Sets a location log's [name] and [note] (null clears either) and
+  /// stamps `editedAt`. Throws if [id] does not name a location log.
+  Future<void> updateLocation(
+    String id, {
+    required String? name,
+    required String? note,
+  }) async {
+    if (await getById(id) is! LocationLog) {
+      throw ArgumentError.value(id, 'id', 'is not a location log');
+    }
+
+    await _db.transaction(() async {
+      await (_db.update(
+        _db.locationLogsTable,
+      )..where((l) => l.logId.equals(id))).write(
+        LocationLogsTableCompanion(name: Value(name), note: Value(note)),
+      );
+      await _touch(id);
+    });
+  }
+
+  static void _checkCoordinates(double latitude, double longitude) {
+    if (!(latitude >= -90 && latitude <= 90)) {
+      throw ArgumentError.value(latitude, 'latitude', 'must be -90 to 90');
+    }
+    if (!(longitude >= -180 && longitude <= 180)) {
+      throw ArgumentError.value(longitude, 'longitude', 'must be -180 to 180');
+    }
+  }
+
   /// Returns the log with [id], of whichever type it is, or `null` if no
   /// such log exists. Returns soft-deleted logs too.
   Future<Log?> getById(String id) async {
@@ -301,6 +457,14 @@ class LogRepository {
           _db.audioLogsTable,
           _db.audioLogsTable.logId.equalsExp(_db.logsTable.id),
         ),
+        leftOuterJoin(
+          _db.videoLogsTable,
+          _db.videoLogsTable.logId.equalsExp(_db.logsTable.id),
+        ),
+        leftOuterJoin(
+          _db.locationLogsTable,
+          _db.locationLogsTable.logId.equalsExp(_db.logsTable.id),
+        ),
       ]);
 
   Log _rowToLog(TypedResult row) {
@@ -315,8 +479,9 @@ class LogRepository {
       case LogType.audio:
         return _toAudioLog(log, row.readTable(_db.audioLogsTable));
       case LogType.video:
+        return _toVideoLog(log, row.readTable(_db.videoLogsTable));
       case LogType.location:
-        throw UnimplementedError('${log.type} logs are not built yet');
+        return _toLocationLog(log, row.readTable(_db.locationLogsTable));
     }
   }
 
@@ -324,11 +489,7 @@ class LogRepository {
   /// files from disk first if it has any.
   Future<void> deletePermanently(String id) async {
     final log = await getById(id);
-    if (log is PhotoLog) {
-      await _deletePhotoFiles(log);
-    } else if (log is AudioLog) {
-      await _deleteAudioFile(log);
-    }
+    if (log != null) await _deleteFiles(log);
     await (_db.delete(_db.logsTable)..where((l) => l.id.equals(id))).go();
   }
 
@@ -361,33 +522,24 @@ class LogRepository {
       _db.logsTable,
     )..where((l) => predicate)).get();
     for (final row in rows) {
-      if (row.type == LogType.photo.name) {
-        final log = await _hydrate(row);
-        if (log is PhotoLog) {
-          await _deletePhotoFiles(log);
-        }
-      } else if (row.type == LogType.audio.name) {
-        final log = await _hydrate(row);
-        if (log is AudioLog) {
-          await _deleteAudioFile(log);
-        }
-      }
+      await _deleteFiles(await _hydrate(row));
     }
   }
 
-  Future<void> _deletePhotoFiles(PhotoLog log) async {
-    for (final path in [log.path, log.thumbnailPath]) {
+  /// The files a log owns on disk; empty for types that are rows only.
+  static List<String> filesOf(Log log) => switch (log) {
+    PhotoLog() => [log.path, log.thumbnailPath],
+    AudioLog() => [log.path],
+    VideoLog() => [log.path, log.posterPath],
+    TextLog() || EmojiLog() || LocationLog() => const [],
+  };
+
+  Future<void> _deleteFiles(Log log) async {
+    for (final path in filesOf(log)) {
       final file = File(path);
       if (await file.exists()) {
         await file.delete();
       }
-    }
-  }
-
-  Future<void> _deleteAudioFile(AudioLog log) async {
-    final file = File(log.path);
-    if (await file.exists()) {
-      await file.delete();
     }
   }
 
@@ -485,8 +637,15 @@ class LogRepository {
         )..where((a) => a.logId.equals(row.id))).getSingle();
         return _toAudioLog(row, audio);
       case LogType.video:
+        final video = await (_db.select(
+          _db.videoLogsTable,
+        )..where((v) => v.logId.equals(row.id))).getSingle();
+        return _toVideoLog(row, video);
       case LogType.location:
-        throw UnimplementedError('${row.type} logs are not built yet');
+        final location = await (_db.select(
+          _db.locationLogsTable,
+        )..where((l) => l.logId.equals(row.id))).getSingle();
+        return _toLocationLog(row, location);
     }
   }
 
@@ -548,6 +707,38 @@ class LogRepository {
     title: audio.title,
     note: audio.note,
   );
+
+  VideoLog _toVideoLog(LogRow log, VideoLogRow video) => VideoLog(
+    id: log.id,
+    createdAt: DateTime.fromMillisecondsSinceEpoch(
+      log.createdAtMs,
+      isUtc: true,
+    ),
+    tzOffsetMinutes: log.tzOffsetMinutes,
+    editedAt: _msToUtc(log.editedAtMs),
+    deletedAt: _msToUtc(log.deletedAtMs),
+    path: video.path,
+    posterPath: video.posterPath,
+    duration: Duration(milliseconds: video.durationMs),
+    caption: video.caption,
+  );
+
+  LocationLog _toLocationLog(LogRow log, LocationLogRow location) =>
+      LocationLog(
+        id: log.id,
+        createdAt: DateTime.fromMillisecondsSinceEpoch(
+          log.createdAtMs,
+          isUtc: true,
+        ),
+        tzOffsetMinutes: log.tzOffsetMinutes,
+        editedAt: _msToUtc(log.editedAtMs),
+        deletedAt: _msToUtc(log.deletedAtMs),
+        latitude: location.latitude,
+        longitude: location.longitude,
+        accuracyMeters: location.accuracyM,
+        name: location.name,
+        note: location.note,
+      );
 
   static DateTime? _msToUtc(int? ms) =>
       ms == null ? null : DateTime.fromMillisecondsSinceEpoch(ms, isUtc: true);

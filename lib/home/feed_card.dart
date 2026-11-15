@@ -131,6 +131,9 @@ class _Body extends StatelessWidget {
       EmojiLog() => _EmojiBody(log: log, tokens: tokens),
       PhotoLog() => _PhotoBody(log: log, tokens: tokens),
       AudioLog() => _AudioBody(log: log, tokens: tokens),
+      VideoLog() || LocationLog() => throw UnimplementedError(
+        '${log.type.name} cards are not built yet',
+      ),
     };
   }
 }

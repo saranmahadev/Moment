@@ -102,6 +102,9 @@ class ExportService {
               'durationMs': log.duration.inMilliseconds,
               'file': 'files/${p.basename(log.path)}',
             },
+            VideoLog() || LocationLog() => throw UnimplementedError(
+              'Export for ${log.type.name} is not built yet',
+            ),
           },
         },
     ];
@@ -125,6 +128,9 @@ class ExportService {
               '(${_duration(log.duration)})\n\n'
               '[Listen](files/${p.basename(log.path)})'
               '${log.note == null ? '' : '\n\n${log.note}'}',
+        VideoLog() || LocationLog() => throw UnimplementedError(
+          'Export for ${log.type.name} is not built yet',
+        ),
       });
     }
     return out.toString();

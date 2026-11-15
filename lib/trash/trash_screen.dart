@@ -12,6 +12,8 @@ String _previewFor(Log log) => switch (log) {
   EmojiLog() => log.label ?? log.emoji,
   PhotoLog() => log.caption ?? 'Photo',
   AudioLog() => log.title ?? 'Audio',
+  VideoLog() => log.caption ?? 'Video',
+  LocationLog() => log.name ?? 'Pinned place',
 };
 
 String _deletedLabelFor(Log log, DateTime now) {

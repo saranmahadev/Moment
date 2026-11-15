@@ -115,3 +115,53 @@ class AudioLogsTable extends Table {
   @override
   Set<Column> get primaryKey => {logId};
 }
+
+/// The stored file, poster frame, duration and caption of a video log. One
+/// row per [LogsTable] row of type `video`. Added in schema version 4.
+@DataClassName('VideoLogRow')
+class VideoLogsTable extends Table {
+  @override
+  String get tableName => 'video_log';
+
+  TextColumn get logId => text()
+      .named('log_id')
+      .references(LogsTable, #id, onDelete: KeyAction.cascade)();
+
+  /// Path to the video file, under this app's private media directory.
+  TextColumn get path => text()();
+
+  /// Path to the poster frame generated alongside [path].
+  TextColumn get posterPath => text().named('poster_path')();
+
+  IntColumn get durationMs => integer().named('duration_ms')();
+
+  TextColumn get caption => text().nullable()();
+
+  @override
+  Set<Column> get primaryKey => {logId};
+}
+
+/// The coordinates, accuracy, name and note of a location log. One row per
+/// [LogsTable] row of type `location`. Added in schema version 4.
+@DataClassName('LocationLogRow')
+class LocationLogsTable extends Table {
+  @override
+  String get tableName => 'location_log';
+
+  TextColumn get logId => text()
+      .named('log_id')
+      .references(LogsTable, #id, onDelete: KeyAction.cascade)();
+
+  /// Degrees, stored as 8-byte floats so they round-trip exactly.
+  RealColumn get latitude => real()();
+  RealColumn get longitude => real()();
+
+  /// Radius of the fix in metres; null for typed-in coordinates.
+  RealColumn get accuracyM => real().named('accuracy_m').nullable()();
+
+  TextColumn get name => text().nullable()();
+  TextColumn get note => text().nullable()();
+
+  @override
+  Set<Column> get primaryKey => {logId};
+}
