@@ -116,9 +116,14 @@ jobs:
             echo
             echo "SHA-256: \`$(sha256sum "$APK" | cut -d' ' -f1)\`"
           } >> "$RUNNER_TEMP/notes.md"
-          git config user.name "github-actions[bot]"
-          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git tag -a "$TAG" -m "Moment $VERSION"
-          git push origin "$TAG"
+          # The tag is created through the API, not `git push`: a push of a
+          # tag whose commit has older workflow files is refused for the
+          # workflow's own token, while naming an existing commit is not.
+          commit=$(git rev-parse HEAD)
+          tag_object=$(gh api "repos/$GITHUB_REPOSITORY/git/tags" \
+            -f tag="$TAG" -f message="Moment $VERSION" \
+            -f object="$commit" -f type=commit --jq .sha)
+          gh api "repos/$GITHUB_REPOSITORY/git/refs" \
+            -f ref="refs/tags/$TAG" -f sha="$tag_object" --silent
           gh release create "$TAG" "$APK" --verify-tag \
             --title "Moment $VERSION" --notes-file "$RUNNER_TEMP/notes.md"
