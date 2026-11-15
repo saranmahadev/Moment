@@ -28,4 +28,8 @@ void main() {
     // that one use is test/location/network_boundary_test.dart.
     expect(declares('INTERNET'), isTrue);
   });
+
+  test('the launcher shows the app as "Moment"', () {
+    expect(manifest, contains('android:label="Moment"'));
+  });
 }

@@ -8,7 +8,7 @@
          open a connection (test/location/network_boundary_test.dart). -->
     <uses-permission android:name="android.permission.INTERNET"/>
     <application
-        android:label="moment"
+        android:label="Moment"
         android:name="${applicationName}"
         android:icon="@mipmap/ic_launcher">
         <activity
