@@ -6,6 +6,10 @@ import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:moment/audio/audio_playback_controller.dart';
 import 'package:moment/audio/audio_recorder_controller.dart';
+import 'package:moment/backup/backup_coordinator.dart';
+import 'package:moment/backup/backup_file_gateway.dart';
+import 'package:moment/backup/backup_service.dart';
+import 'package:moment/backup/last_backup_store.dart';
 import 'package:moment/data/database.dart';
 import 'package:moment/data/log_repository.dart';
 import 'package:moment/data/media_store.dart';
@@ -89,6 +93,24 @@ class _FakeAudioPlaybackController implements AudioPlaybackController {
   Future<void> dispose() async {}
 }
 
+class _FakeBackupFileGateway implements BackupFileGateway {
+  @override
+  Future<void> deliver(File backup) async {}
+
+  @override
+  Future<File?> pick() async => null;
+}
+
+class _MemoryLastBackupStore implements LastBackupStore {
+  DateTime? value;
+
+  @override
+  Future<DateTime?> read() async => value;
+
+  @override
+  Future<void> write(DateTime at) async => value = at;
+}
+
 void main() {
   // End-to-end through the real app shell, matching docs/ROADMAP.md's
   // Phase 1 exit gate: "create a text log, see it on Home, edit it,
@@ -118,6 +140,15 @@ void main() {
             picker: _FakePhotoPicker(),
             createAudioRecorder: _FakeAudioRecorderController.new,
             createAudioPlayback: _FakeAudioPlaybackController.new,
+            backups: BackupCoordinator(
+              service: BackupService(
+                db: db,
+                mediaRoot: Directory(p.join(tempDir.path, 'app_support')),
+              ),
+              gateway: _FakeBackupFileGateway(),
+              lastBackupStore: _MemoryLastBackupStore(),
+              scratchDirectory: Directory(p.join(tempDir.path, 'scratch')),
+            ),
           ),
         ),
       );

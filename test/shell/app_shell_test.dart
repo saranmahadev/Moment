@@ -6,6 +6,10 @@ import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:moment/audio/audio_playback_controller.dart';
 import 'package:moment/audio/audio_recorder_controller.dart';
+import 'package:moment/backup/backup_coordinator.dart';
+import 'package:moment/backup/backup_file_gateway.dart';
+import 'package:moment/backup/backup_service.dart';
+import 'package:moment/backup/last_backup_store.dart';
 import 'package:moment/data/database.dart';
 import 'package:moment/data/log_repository.dart';
 import 'package:moment/data/media_store.dart';
@@ -117,6 +121,24 @@ class _FakeAudioPlaybackController implements AudioPlaybackController {
   }
 }
 
+class _FakeBackupFileGateway implements BackupFileGateway {
+  @override
+  Future<void> deliver(File backup) async {}
+
+  @override
+  Future<File?> pick() async => null;
+}
+
+class _MemoryLastBackupStore implements LastBackupStore {
+  DateTime? value;
+
+  @override
+  Future<DateTime?> read() async => value;
+
+  @override
+  Future<void> write(DateTime at) async => value = at;
+}
+
 void main() {
   final now = DateTime.utc(2026, 11, 6, 21, 50);
   late Directory tempDir;
@@ -133,6 +155,22 @@ void main() {
   tearDown(() {
     tempDir.deleteSync(recursive: true);
   });
+
+  /// The shell only needs something to hand the Privacy screen; backup
+  /// flows themselves are covered in test/privacy and test/backup.
+  BackupCoordinator backupsFor(WidgetTester tester) {
+    final db = AppDatabase(NativeDatabase.memory());
+    addTearDown(db.close);
+    return BackupCoordinator(
+      service: BackupService(
+        db: db,
+        mediaRoot: Directory(p.join(tempDir.path, 'app_support')),
+      ),
+      gateway: _FakeBackupFileGateway(),
+      lastBackupStore: _MemoryLastBackupStore(),
+      scratchDirectory: Directory(p.join(tempDir.path, 'scratch')),
+    );
+  }
 
   Future<void> pump(
     WidgetTester tester,
@@ -155,6 +193,7 @@ void main() {
               createAudioRecorder ?? _FakeAudioRecorderController.new,
           createAudioPlayback:
               createAudioPlayback ?? _FakeAudioPlaybackController.new,
+          backups: backupsFor(tester),
           now: () => now,
         ),
       ),

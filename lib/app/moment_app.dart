@@ -2,8 +2,14 @@ import 'package:flutter/material.dart';
 import 'package:path/path.dart' as p;
 import 'package:path_provider/path_provider.dart';
 
+import 'dart:io';
+
 import '../audio/audio_playback_controller.dart';
 import '../audio/audio_recorder_controller.dart';
+import '../backup/backup_coordinator.dart';
+import '../backup/backup_file_gateway.dart';
+import '../backup/backup_service.dart';
+import '../backup/last_backup_store.dart';
 import '../data/log_repository.dart';
 import '../data/media_store.dart';
 import '../data/secure_database.dart';
@@ -22,12 +28,14 @@ class _Resources {
     required this.repository,
     required this.lockController,
     required this.mediaStore,
+    required this.backups,
     required this.hasPin,
   });
 
   final LogRepository repository;
   final AppLockController lockController;
   final MediaStore mediaStore;
+  final BackupCoordinator backups;
   final bool hasPin;
 }
 
@@ -45,10 +53,19 @@ Future<_Resources> _bootstrap() async {
     lockController.unlock();
   }
 
+  final tempDir = await getTemporaryDirectory();
   return _Resources(
     repository: LogRepository(db),
     lockController: lockController,
     mediaStore: MediaStore(root: supportDir),
+    backups: BackupCoordinator(
+      service: BackupService(db: db, mediaRoot: supportDir),
+      gateway: DeviceBackupFileGateway(),
+      lastBackupStore: FileLastBackupStore(
+        File(p.join(supportDir.path, 'backup-state.json')),
+      ),
+      scratchDirectory: Directory(p.join(tempDir.path, 'backups')),
+    ),
     hasPin: hasPin,
   );
 }
@@ -111,6 +128,7 @@ class _MomentAppState extends State<MomentApp> with WidgetsBindingObserver {
               picker: DevicePhotoPicker(),
               createAudioRecorder: DeviceAudioRecorderController.new,
               createAudioPlayback: DeviceAudioPlaybackController.new,
+              backups: resources.backups,
             ),
           );
         },
