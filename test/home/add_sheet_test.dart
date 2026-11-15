@@ -28,9 +28,7 @@ void main() {
     expect(find.text('Each type is its own log. Pick one.'), findsOneWidget);
   });
 
-  testWidgets('shows only the types built so far, with their blurb', (
-    tester,
-  ) async {
+  testWidgets('shows all six types, each with its blurb', (tester) async {
     await pump(tester, onSelected: (_) {});
 
     expect(find.text('Text'), findsOneWidget);
@@ -43,7 +41,8 @@ void main() {
     expect(find.text('Record a voice note'), findsOneWidget);
     expect(find.text('Video'), findsOneWidget);
     expect(find.text('Record or choose a video'), findsOneWidget);
-    expect(find.text('Location'), findsNothing);
+    expect(find.text('Location'), findsOneWidget);
+    expect(find.text('Pin where you are'), findsOneWidget);
   });
 
   testWidgets('type labels are set in the ink colour, not the default', (

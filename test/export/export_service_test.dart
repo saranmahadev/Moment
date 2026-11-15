@@ -188,14 +188,42 @@ void main() {
     );
   });
 
-  test('types that are not built yet are rejected', () async {
-    await expectLater(
-      service.exportTo(
-        Directory(p.join(tempDir.path, 'out')),
-        types: {LogType.location},
-      ),
-      throwsArgumentError,
+  test('locations export with exact coordinates, name and note', () async {
+    await repo.createLocation(
+      latitude: 12.971598765432101,
+      longitude: -77.59456234567891,
+      accuracyMeters: 12,
+      name: 'Favourite bench',
+      note: 'Under the big tree',
     );
+
+    final archive = await exportArchive({LogType.location});
+
+    final row =
+        (jsonIn(archive, 'location/location.json')['rows'] as List).single;
+    expect(row['latitude'], 12.971598765432101);
+    expect(row['longitude'], -77.59456234567891);
+    expect(row['accuracyMeters'], 12);
+    expect(row['name'], 'Favourite bench');
+    expect(row['note'], 'Under the big tree');
+    final md = textIn(archive, 'location/location.md');
+    expect(md, contains('# Location'));
+    expect(md, contains('**Favourite bench**'));
+    expect(md, contains('12.971599, -77.594562 (±12 m)'));
+    expect(md, contains('Under the big tree'));
+    expect(archive.files.where((f) => f.name.contains('/files/')), isEmpty);
+  });
+
+  test('every one of the six types can be exported together', () async {
+    final archive = await exportArchive(LogType.values.toSet());
+
+    for (final type in LogType.values) {
+      expect(
+        archive.findFile('${type.name}/${type.name}.json'),
+        isNotNull,
+        reason: type.name,
+      );
+    }
   });
 
   test('a missing media file is skipped without failing the export', () async {

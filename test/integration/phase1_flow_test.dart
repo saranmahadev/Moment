@@ -23,6 +23,7 @@ import 'package:moment/photo/photo_picker.dart';
 import 'package:moment/shell/app_shell.dart';
 import 'package:path/path.dart' as p;
 
+import '../location/location_fakes.dart';
 import '../video/video_fakes.dart';
 
 class _FakePinStorage implements PinStorage {
@@ -148,6 +149,7 @@ void main() {
             videoPicker: FakeVideoPicker(),
             videoProbe: FakeVideoProbe(),
             createVideoPlayback: FakeVideoPlaybackController.new,
+            locationProvider: FakeLocationProvider(),
             backups: BackupCoordinator(
               service: BackupService(
                 db: db,

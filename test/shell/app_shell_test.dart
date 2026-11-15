@@ -19,6 +19,7 @@ import 'package:moment/data/media_store.dart';
 import 'package:moment/design/theme.dart';
 import 'package:moment/design/orb_field.dart';
 import 'package:moment/lock/app_lock_controller.dart';
+import 'package:moment/location/location_provider.dart';
 import 'package:moment/lock/pin_storage.dart';
 import 'package:image/image.dart' as img;
 import 'package:moment/photo/photo_picker.dart';
@@ -27,6 +28,7 @@ import 'package:moment/video/video_picker.dart';
 import 'package:moment/video/video_playback_controller.dart';
 import 'package:path/path.dart' as p;
 
+import '../location/location_fakes.dart';
 import '../video/video_fakes.dart';
 
 File _sampleSourcePhoto(String path) {
@@ -187,6 +189,7 @@ void main() {
     AudioPlaybackController Function()? createAudioPlayback,
     VideoPicker? videoPicker,
     VideoPlaybackController Function()? createVideoPlayback,
+    LocationProvider? locationProvider,
   }) async {
     await tester.binding.setSurfaceSize(const Size(390, 844));
     addTearDown(() => tester.binding.setSurfaceSize(null));
@@ -206,6 +209,7 @@ void main() {
           videoProbe: FakeVideoProbe(),
           createVideoPlayback:
               createVideoPlayback ?? FakeVideoPlaybackController.new,
+          locationProvider: locationProvider ?? FakeLocationProvider(),
           backups: backupsFor(tester),
           exports: ExportCoordinator(
             service: ExportService(repository: repo),
@@ -1000,6 +1004,118 @@ void main() {
     expect(playback.loadedPath, p.join(tempDir.path, 'a.mp4'));
     expect(find.text('Stored on this device'), findsOneWidget);
     expect(find.bySemanticsLabel('Forward 15 seconds'), findsOneWidget);
+
+    await tester.pumpWidget(const SizedBox());
+    await tester.pumpAndSettle();
+    await db.close();
+  });
+
+  Future<void> openAddAndPick(WidgetTester tester, String type) async {
+    await tester.tap(find.bySemanticsLabel('Add a log'));
+    await tester.pumpAndSettle();
+    final card = find.byKey(ValueKey('add-sheet-type-LogType.$type'));
+    await tester.scrollUntilVisible(
+      card,
+      100,
+      scrollable: find.byType(Scrollable).last,
+    );
+    await tester.tap(card);
+    await tester.pumpAndSettle();
+  }
+
+  testWidgets(
+    'picking Location from the Add sheet opens CreateLocationScreen',
+    (tester) async {
+      final db = AppDatabase(NativeDatabase.memory());
+      final repo = LogRepository(db, clock: () => now);
+
+      await pump(tester, repo);
+      await tester.pump();
+      await openAddAndPick(tester, 'location');
+
+      expect(find.text('Add to your log'), findsNothing);
+      expect(find.text('Pin this spot'), findsOneWidget);
+      expect(find.text('Locked on'), findsOneWidget);
+
+      await tester.pumpWidget(const SizedBox());
+      await tester.pumpAndSettle();
+      await db.close();
+    },
+  );
+
+  testWidgets(
+    'saving a new location from the Add flow returns to Home with it visible',
+    (tester) async {
+      final db = AppDatabase(NativeDatabase.memory());
+      final repo = LogRepository(db, clock: () => now);
+
+      await pump(tester, repo);
+      await tester.pump();
+      await openAddAndPick(tester, 'location');
+
+      await tester.enterText(
+        find.byKey(const ValueKey('place-name')),
+        'From the shell',
+      );
+      await tester.tap(find.text('Save location'));
+      await tester.pumpAndSettle();
+
+      expect(find.text('Pin this spot'), findsNothing);
+      expect(find.text('From the shell'), findsOneWidget);
+      expect(find.text('±12 m'), findsOneWidget);
+
+      await tester.pumpWidget(const SizedBox());
+      await tester.pumpAndSettle();
+      await db.close();
+    },
+  );
+
+  testWidgets(
+    'tapping the Location tile in Library opens LocationSectionScreen',
+    (tester) async {
+      final db = AppDatabase(NativeDatabase.memory());
+      final repo = LogRepository(db, clock: () => now);
+      final id = await repo.createLocation(
+        latitude: 1,
+        longitude: 2,
+        name: 'In the section',
+      );
+
+      await pump(tester, repo);
+      await tester.pump();
+      await tester.tap(find.bySemanticsLabel('Library'));
+      await tester.pump();
+      await tester.scrollUntilVisible(
+        find.text('Location'),
+        200,
+        scrollable: find.byType(Scrollable).first,
+      );
+      await tester.tap(find.text('Location'));
+      await tester.pumpAndSettle();
+
+      expect(find.byKey(ValueKey('location-row-$id')), findsOneWidget);
+      expect(find.text('1 log'), findsOneWidget);
+
+      await tester.pumpWidget(const SizedBox());
+      await tester.pumpAndSettle();
+      await db.close();
+    },
+  );
+
+  testWidgets('tapping a location card on Home opens LocationDetailScreen', (
+    tester,
+  ) async {
+    final db = AppDatabase(NativeDatabase.memory());
+    final repo = LogRepository(db, clock: () => now);
+    await repo.createLocation(latitude: 1, longitude: 2, name: 'Tap me');
+
+    await pump(tester, repo);
+    await tester.pump();
+    await tester.tap(find.text('Tap me'));
+    await tester.pumpAndSettle();
+
+    expect(find.text('Copy coordinates'), findsOneWidget);
+    expect(find.text('Move pin'), findsOneWidget);
 
     await tester.pumpWidget(const SizedBox());
     await tester.pumpAndSettle();

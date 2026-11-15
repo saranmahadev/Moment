@@ -76,6 +76,19 @@ void main() {
     expect((await service.measure())[LogType.video], 5300);
   });
 
+  test('location counts its coordinates and what was typed', () async {
+    await repo.createLocation(
+      latitude: 1,
+      longitude: 2,
+      name: 'Bench', // 5 bytes
+      note: 'héllo', // 6 bytes
+    );
+    await repo.createLocation(latitude: 3, longitude: 4);
+
+    // Two 8-byte coordinates per place.
+    expect((await service.measure())[LogType.location], 16 + 5 + 6 + 16);
+  });
+
   test('logs in Trash still take up space until they are purged', () async {
     final id = await repo.createAudio(
       path: mediaFile('a.m4a', 2500).path,
