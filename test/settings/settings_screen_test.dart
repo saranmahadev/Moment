@@ -1,6 +1,7 @@
 import 'package:drift/native.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:moment/app/app_info.dart';
 import 'package:moment/data/database.dart';
 import 'package:moment/data/log_repository.dart';
 import 'package:moment/design/theme.dart';
@@ -103,7 +104,7 @@ void main() {
     await tester.pump();
     expect(find.text('How Moment stays local'), findsOneWidget);
     expect(find.text('Version'), findsOneWidget);
-    expect(find.text('0.2.0'), findsOneWidget);
+    expect(find.text(appVersion), findsOneWidget);
 
     await tester.pumpWidget(const SizedBox());
     await tester.pumpAndSettle();

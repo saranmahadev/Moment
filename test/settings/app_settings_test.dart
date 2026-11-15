@@ -52,6 +52,14 @@ void main() {
     expect(second.lookUpPlaceNames, isTrue);
   });
 
+  test('in-memory settings start from the values given', () {
+    expect(AppSettings.inMemory().lookUpPlaceNames, isFalse);
+    expect(
+      AppSettings.inMemory({'lookUpPlaceNames': true}).lookUpPlaceNames,
+      isTrue,
+    );
+  });
+
   test('a damaged settings file falls back to the defaults', () async {
     file.parent.createSync(recursive: true);
     file.writeAsStringSync('{not json');

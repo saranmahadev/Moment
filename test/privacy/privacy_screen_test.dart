@@ -19,6 +19,7 @@ import 'package:moment/design/theme.dart';
 import 'package:moment/lock/app_lock_controller.dart';
 import 'package:moment/lock/pin_storage.dart';
 import 'package:moment/privacy/privacy_screen.dart';
+import 'package:moment/settings/app_settings.dart';
 import 'package:path/path.dart' as p;
 
 class _FakePinStorage implements PinStorage {
@@ -101,6 +102,7 @@ void main() {
     WidgetTester tester,
     AppLockController controller, {
     VoidCallback? onBack,
+    AppSettings? settings,
   }) async {
     await tester.binding.setSurfaceSize(const Size(390, 844));
     addTearDown(() => tester.binding.setSurfaceSize(null));
@@ -112,6 +114,7 @@ void main() {
           backups: backups,
           exports: exports,
           storage: storage,
+          settings: settings ?? AppSettings.inMemory(),
           now: () => now,
           onBack: onBack,
         ),
@@ -187,6 +190,86 @@ void main() {
       findsOneWidget,
     );
     expect(find.byType(OrbField), findsOneWidget);
+  });
+
+  group('place names', () {
+    final toggle = find.byKey(const ValueKey('place-names-switch'));
+
+    testWidgets('the promise at the top names the one exception', (
+      tester,
+    ) async {
+      await pump(tester, AppLockController(_FakePinStorage()));
+
+      expect(find.text('Local only'), findsOneWidget);
+      expect(
+        find.text(
+          'No account, no servers. Nothing leaves this device unless you '
+          'turn on place names.',
+        ),
+        findsOneWidget,
+      );
+      expect(find.textContaining('no internet permission'), findsNothing);
+    });
+
+    testWidgets('is off until turned on, and says what turning it on means', (
+      tester,
+    ) async {
+      final settings = AppSettings.inMemory();
+      await pump(
+        tester,
+        AppLockController(_FakePinStorage()),
+        settings: settings,
+      );
+      await scrollTo(tester, toggle);
+
+      expect(find.text('PLACE NAMES'), findsOneWidget);
+      expect(find.text('Look up place names'), findsOneWidget);
+      expect(
+        find.text('Uses the internet. Keep off to stay fully offline.'),
+        findsOneWidget,
+      );
+      expect(
+        find.text(
+          'When on, the coordinates of a new pin are sent to OpenStreetMap '
+          'to suggest a name. Nothing else ever leaves this device. '
+          'Names © OpenStreetMap contributors.',
+        ),
+        findsOneWidget,
+      );
+      expect(tester.widget<Switch>(toggle).value, isFalse);
+      expect(settings.lookUpPlaceNames, isFalse);
+    });
+
+    testWidgets('turning it on and off changes the setting', (tester) async {
+      final settings = AppSettings.inMemory();
+      await pump(
+        tester,
+        AppLockController(_FakePinStorage()),
+        settings: settings,
+      );
+      await scrollTo(tester, toggle);
+
+      await tester.tap(toggle);
+      await tester.pumpAndSettle();
+      expect(settings.lookUpPlaceNames, isTrue);
+      expect(tester.widget<Switch>(toggle).value, isTrue);
+
+      await tester.tap(toggle);
+      await tester.pumpAndSettle();
+      expect(settings.lookUpPlaceNames, isFalse);
+      expect(tester.widget<Switch>(toggle).value, isFalse);
+    });
+
+    testWidgets('shows a setting that is already on', (tester) async {
+      await pump(
+        tester,
+        AppLockController(_FakePinStorage()),
+        settings: AppSettings.inMemory({'lookUpPlaceNames': true}),
+      );
+      await scrollTo(tester, toggle);
+
+      expect(tester.widget<Switch>(toggle).value, isTrue);
+    });
   });
 
   testWidgets('shows the Security section with App lock and Lock after', (

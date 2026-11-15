@@ -27,6 +27,7 @@ void main() {
     FakeLocationProvider provider, {
     ValueChanged<String>? onSaved,
     VoidCallback? onClose,
+    FakePlaceNameLookup? placeNames,
   }) async {
     await tester.binding.setSurfaceSize(const Size(390, 844));
     addTearDown(() => tester.binding.setSurfaceSize(null));
@@ -36,6 +37,7 @@ void main() {
         home: CreateLocationScreen(
           repository: repo,
           provider: provider,
+          placeNames: placeNames,
           now: () => now,
           onSaved: onSaved ?? (_) {},
           onClose: onClose ?? () {},
@@ -313,6 +315,133 @@ void main() {
       final log = await savedLog(savedId!);
       expect(log.latitude, -33.8688);
       expect(log.longitude, 151.2093);
+
+      await close(tester);
+    });
+  });
+
+  group('with place names turned on', () {
+    const typedByYou =
+        'Place names are typed by you. Nothing is looked up online.';
+
+    testWidgets('suggests a name for the spot it locked on to', (tester) async {
+      final names = FakePlaceNameLookup(name: 'Cubbon Park');
+      String? savedId;
+      await pump(
+        tester,
+        FakeLocationProvider(),
+        placeNames: names,
+        onSaved: (id) => savedId = id,
+      );
+      await tester.pump();
+
+      expect(names.asked, [(12.971598765432101, 77.59456234567891)]);
+      expect(find.text('Cubbon Park'), findsOneWidget);
+      expect(
+        find.text('Name suggested by OpenStreetMap. Change it if you like.'),
+        findsOneWidget,
+      );
+      expect(find.text(typedByYou), findsNothing);
+
+      await tester.tap(find.text('Save location'));
+      await tester.pump();
+      await tester.pump();
+      expect((await savedLog(savedId!)).name, 'Cubbon Park');
+
+      await close(tester);
+    });
+
+    testWidgets('the suggestion can be replaced before saving', (tester) async {
+      String? savedId;
+      await pump(
+        tester,
+        FakeLocationProvider(),
+        placeNames: FakePlaceNameLookup(),
+        onSaved: (id) => savedId = id,
+      );
+      await tester.pump();
+
+      await tester.enterText(
+        find.byKey(const ValueKey('place-name')),
+        'Favourite bench',
+      );
+      await tester.tap(find.text('Save location'));
+      await tester.pump();
+      await tester.pump();
+
+      expect((await savedLog(savedId!)).name, 'Favourite bench');
+
+      await close(tester);
+    });
+
+    testWidgets('says so when no name was found, and still saves', (
+      tester,
+    ) async {
+      String? savedId;
+      await pump(
+        tester,
+        FakeLocationProvider(),
+        placeNames: FakePlaceNameLookup(name: null),
+        onSaved: (id) => savedId = id,
+      );
+      await tester.pump();
+
+      expect(
+        find.text('No name was found online. Type one if you like.'),
+        findsOneWidget,
+      );
+
+      await tester.tap(find.text('Save location'));
+      await tester.pump();
+      await tester.pump();
+      expect((await savedLog(savedId!)).name, isNull);
+
+      await close(tester);
+    });
+
+    testWidgets('typed coordinates are looked up too', (tester) async {
+      final names = FakePlaceNameLookup(name: 'Hampi');
+      await pump(
+        tester,
+        FakeLocationProvider(access: LocationAccess.deniedForever),
+        placeNames: names,
+      );
+
+      await tester.tap(find.text('Enter coordinates'));
+      await tester.pump();
+      await tester.enterText(
+        find.byKey(const ValueKey('coordinates-field')),
+        '15.335, 76.46',
+      );
+      await tester.tap(find.text('Use these coordinates'));
+      await tester.pump();
+      await tester.pump();
+
+      expect(names.asked, [(15.335, 76.46)]);
+      expect(find.text('Hampi'), findsOneWidget);
+
+      await close(tester);
+    });
+
+    testWidgets('a name already typed is never overwritten', (tester) async {
+      final names = FakePlaceNameLookup(name: 'First');
+      final provider = FakeLocationProvider();
+      await pump(tester, provider, placeNames: names);
+      await tester.pump();
+      await tester.enterText(
+        find.byKey(const ValueKey('place-name')),
+        'My own name',
+      );
+
+      names.name = 'Second';
+      provider.fix = const LocationFix(latitude: 1, longitude: 2);
+      await tester.tap(find.bySemanticsLabel('Use current position'));
+      await tester.pump();
+      await tester.pump();
+
+      expect(names.asked, hasLength(2));
+      expect(find.text('My own name'), findsOneWidget);
+      expect(find.text('Second'), findsNothing);
 
       await close(tester);
     });

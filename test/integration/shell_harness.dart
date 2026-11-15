@@ -20,6 +20,7 @@ import 'package:moment/export/export_service.dart';
 import 'package:moment/lock/app_lock_controller.dart';
 import 'package:moment/lock/pin_storage.dart';
 import 'package:moment/photo/photo_picker.dart';
+import 'package:moment/settings/app_settings.dart';
 import 'package:moment/shell/app_shell.dart';
 import 'package:moment/storage/storage_service.dart';
 import 'package:path/path.dart' as p;
@@ -135,6 +136,8 @@ class ShellHarness {
     WidgetTester tester, {
     FakeVideoPicker? videoPicker,
     FakeLocationProvider? locationProvider,
+    FakePlaceNameLookup? placeNames,
+    AppSettings? settings,
     DateTime Function()? now,
   }) async {
     await tester.binding.setSurfaceSize(const Size(390, 844));
@@ -162,6 +165,8 @@ class ShellHarness {
           videoProbe: FakeVideoProbe(),
           createVideoPlayback: FakeVideoPlaybackController.new,
           locationProvider: locationProvider ?? FakeLocationProvider(),
+          placeNames: placeNames ?? FakePlaceNameLookup(),
+          settings: settings ?? AppSettings.inMemory(),
           backups: BackupCoordinator(
             service: BackupService(
               db: db,
