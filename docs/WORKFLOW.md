@@ -33,8 +33,29 @@ Before a chunk merges into `main`:
 ## Releases
 
 - Each phase ends with a tag `v0.1.0`, `v0.2.0`, `v0.3.0`, `v0.4.0`, and `v1.0.0` after Phase 5.
-- A tag is created only after CI is green on the release commit and the phase exit gate in the roadmap is met. The release manifest/internet-permission check (`release-check.yml`) only runs automatically when dependencies or the `android/` project change, to avoid spending CI minutes on a release APK build on every merge; manually trigger it (`workflow_dispatch`) on the release commit and confirm it is green before tagging.
+- A tag is created only after CI is green on the release commit and the phase exit gate in the roadmap is met.
 - `CHANGELOG.md` gets one entry per release.
+- Tags are made by the **Release** workflow (`.github/workflows/release.yml`), never by hand: Actions → Release → Run workflow, with the version (and the commit, when it is not the head of `main`). In one run it checks the version against `pubspec.yaml` and the changelog, analyses, tests, builds the release APK, checks the permissions of the release manifest, creates the annotated tag and publishes a GitHub Release with the APK attached. If any step fails, nothing is tagged.
+- `release-check.yml` builds the same APK without releasing it; it runs automatically when dependencies or the `android/` project change.
+
+### Signing the APK
+
+Android only installs an update over an app signed with the same key. Until a release key is configured, the Release workflow signs with a throwaway debug key that is different on every run, so a new release will not install over the old one (back up in the app, uninstall, install, restore).
+
+To fix that once, create a key and give it to the repository as secrets (Settings → Secrets and variables → Actions). The key itself never goes in git; keep a copy somewhere safe, because losing it means no more in-place updates.
+
+```
+keytool -genkeypair -v -keystore moment-release.jks -alias moment \
+  -keyalg RSA -keysize 4096 -validity 10000
+base64 -w0 moment-release.jks   # macOS: base64 -i moment-release.jks
+```
+
+| Secret | Value |
+|---|---|
+| `ANDROID_KEYSTORE_BASE64` | the base64 text printed above |
+| `ANDROID_KEYSTORE_PASSWORD` | the keystore password you chose |
+| `ANDROID_KEY_ALIAS` | `moment` |
+| `ANDROID_KEY_PASSWORD` | the key password (leave unset if it is the same as the keystore's) |
 
 ## Never in git
 
