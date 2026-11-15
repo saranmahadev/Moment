@@ -1,0 +1,24 @@
+name: Live check
+
+# Asks the real place-name service (OpenStreetMap Nominatim) two questions,
+# to confirm that the request the app sends is still accepted and answered
+# in the shape the app reads. Everything else in the test suite is offline
+# and uses a loopback server, so this is the only run that needs the real
+# network. Run it by hand: before a release, or when a lookup stops working.
+on:
+  workflow_dispatch:
+
+jobs:
+  place-names:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: subosito/flutter-action@v2
+        with:
+          channel: stable
+          # The same pin as ci.yml.
+          flutter-version: 3.47.9
+          cache: true
+      - run: flutter pub get
+      - run: dart run build_runner build --delete-conflicting-outputs
+      - run: flutter test --run-skipped --tags live test/live

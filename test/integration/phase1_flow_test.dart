@@ -20,6 +20,7 @@ import 'package:moment/design/theme.dart';
 import 'package:moment/lock/app_lock_controller.dart';
 import 'package:moment/lock/pin_storage.dart';
 import 'package:moment/photo/photo_picker.dart';
+import 'package:moment/settings/app_settings.dart';
 import 'package:moment/shell/app_shell.dart';
 import 'package:path/path.dart' as p;
 
@@ -150,6 +151,8 @@ void main() {
             videoProbe: FakeVideoProbe(),
             createVideoPlayback: FakeVideoPlaybackController.new,
             locationProvider: FakeLocationProvider(),
+            placeNames: FakePlaceNameLookup(),
+            settings: AppSettings.inMemory(),
             backups: BackupCoordinator(
               service: BackupService(
                 db: db,

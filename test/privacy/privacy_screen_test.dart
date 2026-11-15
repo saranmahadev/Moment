@@ -154,13 +154,15 @@ void main() {
   }
 
   /// The Privacy list builds lazily, so lower sections only exist once
-  /// scrolled to.
+  /// scrolled to. Brings [finder] to the middle of the screen, where what
+  /// sits around it is built and a tap lands.
   Future<void> scrollTo(WidgetTester tester, Finder finder) async {
     await tester.scrollUntilVisible(
       finder,
-      300,
+      100,
       scrollable: find.byType(Scrollable).first,
     );
+    await Scrollable.ensureVisible(tester.element(finder), alignment: 0.5);
     await tester.pump();
   }
 
@@ -185,10 +187,7 @@ void main() {
 
     expect(find.text('Privacy and backup'), findsOneWidget);
     expect(find.text('Local only'), findsOneWidget);
-    expect(
-      find.text('No account, no servers, no internet permission.'),
-      findsOneWidget,
-    );
+    expect(find.textContaining('No account, no servers.'), findsOneWidget);
     expect(find.byType(OrbField), findsOneWidget);
   });
 
@@ -553,11 +552,11 @@ void main() {
         'video',
         'location',
       ]) {
-        await tester.ensureVisible(find.byKey(ValueKey('export-chip-$key')));
+        await scrollTo(tester, find.byKey(ValueKey('export-chip-$key')));
         await tester.tap(find.byKey(ValueKey('export-chip-$key')));
         await tester.pump();
       }
-      await tester.ensureVisible(find.text('Export selected types'));
+      await scrollTo(tester, find.text('Export selected types'));
       await tapForReal(tester, find.text('Export selected types'));
 
       expect(gateway.delivered, isEmpty);

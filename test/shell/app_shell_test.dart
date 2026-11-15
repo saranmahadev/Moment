@@ -23,6 +23,7 @@ import 'package:moment/location/location_provider.dart';
 import 'package:moment/lock/pin_storage.dart';
 import 'package:image/image.dart' as img;
 import 'package:moment/photo/photo_picker.dart';
+import 'package:moment/settings/app_settings.dart';
 import 'package:moment/shell/app_shell.dart';
 import 'package:moment/video/video_picker.dart';
 import 'package:moment/video/video_playback_controller.dart';
@@ -210,6 +211,8 @@ void main() {
           createVideoPlayback:
               createVideoPlayback ?? FakeVideoPlaybackController.new,
           locationProvider: locationProvider ?? FakeLocationProvider(),
+          placeNames: FakePlaceNameLookup(),
+          settings: AppSettings.inMemory(),
           backups: backupsFor(tester),
           exports: ExportCoordinator(
             service: ExportService(repository: repo),

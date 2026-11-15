@@ -58,6 +58,10 @@ class AppSettings extends ChangeNotifier {
   static Future<AppSettings> load(SettingsStore store) async =>
       AppSettings._(store, await store.read());
 
+  /// Settings that are not kept anywhere: for tests and previews.
+  factory AppSettings.inMemory([Map<String, Object?>? values]) =>
+      AppSettings._(MemorySettingsStore(values), {...?values});
+
   final SettingsStore _store;
   final Map<String, Object?> _values;
 

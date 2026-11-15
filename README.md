@@ -1,6 +1,6 @@
 # Moment
 
-A completely local life journal. Six separate log types: Text, Emoji, Photo, Video, Audio and Location. No cloud, no account, no analytics, and no internet permission.
+A completely local life journal. Six separate log types: Text, Emoji, Photo, Video, Audio and Location. No cloud, no account, no analytics. The app uses the internet for one thing only, and only if you turn it on: "Look up place names" (off by default) sends a new pin's coordinates to OpenStreetMap to suggest a name.
 
 Built in five phases, one release each: 0.1.0, 0.2.0, 0.3.0, 0.4.0, then 1.0.0. Every phase is built test-first. See `docs/WORKFLOW.md` for the git and TDD rules.
 
@@ -25,5 +25,7 @@ dart format .
 
 ## Privacy checks
 
-- `tool/check_manifest.dart` fails if a built Android manifest contains the internet permission. CI runs it on the release build.
+- `test/location/network_boundary_test.dart` keeps network code to one file (the opt-in place-name lookup, one host, HTTPS) and keeps HTTP and geocoding packages out of the dependencies. With the setting off, the app is never even handed the lookup.
+- `tool/check_manifest.dart` lists every permission the built Android manifest asks for and fails on ones a private journal never needs (background location, advertising id, contacts, SMS, call log). CI runs it on the release build.
+- The **Live check** workflow (run by hand) asks the real place-name service two questions, to confirm the request the app sends still works.
 - The database is encrypted with SQLite3MultipleCiphers. The key is random, created on first launch, and kept in the Keychain or Keystore.

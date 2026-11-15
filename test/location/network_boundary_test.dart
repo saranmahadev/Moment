@@ -31,7 +31,7 @@ void main() {
   test('only the place-name lookup can open a network connection', () {
     final networking = RegExp(
       r'\bHttpClient\b|\bSocket\.|\bRawSocket\b|\bWebSocket\b|'
-      r"package:http/|Uri\.https?\(|https?://",
+      r'package:http/|Uri\.https?\(|https?://',
     );
     final offenders = [
       for (final file in sources())

@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 
+import '../app/app_info.dart';
+
 import '../data/log_repository.dart';
 import '../design/glass_surface.dart';
 import '../design/tokens.dart';
@@ -217,7 +219,7 @@ class SettingsScreen extends StatelessWidget {
                     tokens: tokens,
                     title: 'Version',
                     trailing: Text(
-                      '0.2.0',
+                      appVersion,
                       style: TextStyle(fontSize: 15, color: tokens.secondary),
                     ),
                   ),
