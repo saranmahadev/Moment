@@ -342,6 +342,23 @@ void main() {
     });
   });
 
+  group('getAll', () {
+    test('returns every log once, Trash included, without a stream', () async {
+      final kept = await repo.createText(body: 'kept');
+      final trashed = await repo.createEmoji(emoji: '😌', strength: 3);
+      await repo.softDelete(trashed);
+
+      final all = await repo.getAll();
+
+      expect(all.map((l) => l.id), unorderedEquals([kept, trashed]));
+      expect(all.firstWhere((l) => l.id == trashed).deletedAt, isNotNull);
+    });
+
+    test('is empty for an empty library', () async {
+      expect(await repo.getAll(), isEmpty);
+    });
+  });
+
   group('watchFeed', () {
     test('orders newest-created first', () async {
       final first = await repo.createText(body: 'first');
