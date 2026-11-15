@@ -8,6 +8,8 @@ import '../design/tokens.dart';
 import '../design/type_icons.dart';
 import '../domain/log.dart';
 import '../domain/log_type.dart';
+import '../location/coordinates.dart';
+import '../location/location_widgets.dart';
 import '../video/video_poster.dart';
 
 final _timeFormat = DateFormat('HH:mm');
@@ -133,9 +135,7 @@ class _Body extends StatelessWidget {
       PhotoLog() => _PhotoBody(log: log, tokens: tokens),
       AudioLog() => _AudioBody(log: log, tokens: tokens),
       VideoLog() => _VideoBody(log: log, tokens: tokens),
-      LocationLog() => throw UnimplementedError(
-        'Location cards are not built yet',
-      ),
+      LocationLog() => _LocationBody(log: log, tokens: tokens),
     };
   }
 }
@@ -406,6 +406,51 @@ class _VideoBody extends StatelessWidget {
             overflow: TextOverflow.ellipsis,
             style: TextStyle(fontSize: 14, color: tokens.ink),
           ),
+        ],
+      ],
+    );
+  }
+}
+
+class _LocationBody extends StatelessWidget {
+  const _LocationBody({required this.log, required this.tokens});
+
+  final LocationLog log;
+  final MomentTokens tokens;
+
+  @override
+  Widget build(BuildContext context) {
+    final accuracy = log.accuracyMeters;
+    return Row(
+      children: [
+        Expanded(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Text(
+                log.name ?? 'Pinned place',
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+                style: TextStyle(
+                  fontFamily: 'Newsreader',
+                  fontSize: 20,
+                  color: tokens.ink,
+                ),
+              ),
+              const SizedBox(height: 2),
+              Text(
+                formatCoordinates(log.latitude, log.longitude),
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+                style: TextStyle(fontSize: 13.5, color: tokens.secondary),
+              ),
+            ],
+          ),
+        ),
+        if (accuracy != null) ...[
+          const SizedBox(width: 8),
+          LocationPill(label: formatAccuracy(accuracy), tokens: tokens),
         ],
       ],
     );
