@@ -80,5 +80,36 @@ void main() {
       );
       expect(log.type, LogType.emoji);
     });
+
+    test('a VideoLog reports LogType.video', () {
+      final log = VideoLog(
+        id: '1',
+        createdAt: DateTime.utc(2026),
+        tzOffsetMinutes: 0,
+        editedAt: null,
+        deletedAt: null,
+        path: '/a.mp4',
+        posterPath: '/a.jpg',
+        duration: const Duration(seconds: 1),
+        caption: null,
+      );
+      expect(log.type, LogType.video);
+    });
+
+    test('a LocationLog reports LogType.location', () {
+      final log = LocationLog(
+        id: '1',
+        createdAt: DateTime.utc(2026),
+        tzOffsetMinutes: 0,
+        editedAt: null,
+        deletedAt: null,
+        latitude: 1,
+        longitude: 2,
+        accuracyMeters: null,
+        name: null,
+        note: null,
+      );
+      expect(log.type, LogType.location);
+    });
   });
 }
