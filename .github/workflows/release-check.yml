@@ -29,6 +29,10 @@ jobs:
       - uses: subosito/flutter-action@v2
         with:
           channel: stable
+          # Pinned to the version the code is developed and verified on: a
+          # newer stable deprecates material.dart (fails analyze) and raises
+          # the minimum Android Gradle Plugin. Move it deliberately.
+          flutter-version: 3.47.9
           cache: true
       - name: Create platform folders if they are not committed yet
         run: |
