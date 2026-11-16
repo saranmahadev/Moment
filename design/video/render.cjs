@@ -1,12 +1,14 @@
-// Renders design/video/moment.html to site/media/: the film as MP4 and
-// WebM, a poster frame, and a short silent loop for the README.
+// Renders design/video/moment.html to site/media/: the narrated film as
+// MP4 and WebM, a poster frame, and a short silent loop for the README.
 //
-//     node design/video/render.cjs            # the whole film
-//     node design/video/render.cjs 12.5       # one frame, to check a moment
+//     python3 design/video/voice.py           # first: narration and timing
+//     node design/video/render.cjs            # then: the whole film
+//     node design/video/render.cjs 12.5       # or one frame, to check it
 //
 // Needs Playwright with Chromium, and ffmpeg. Each frame is drawn by
 // setting every CSS animation's clock to that frame's time, so the result
-// is exact however long a frame takes to draw.
+// is exact however long a frame takes to draw. The film's length and the
+// soundtrack (build/film/soundtrack.wav) come from voice.py.
 
 const fs = require('fs');
 const os = require('os');
@@ -15,7 +17,7 @@ const { execFileSync } = require('child_process');
 const { chromium } = require('playwright');
 
 const FPS = 30;
-const SECONDS = 44;
+const soundtrack = path.resolve('build/film/soundtrack.wav');
 const page_url = 'file://' + path.resolve('design/video/moment.html');
 const out = path.resolve('site/media');
 
@@ -31,7 +33,9 @@ async function open() {
     await Promise.all([...document.images].map((image) => image.decode()));
     for (const animation of document.getAnimations()) animation.pause();
   });
-  return { browser, page };
+  const timeline = await page.evaluate(() => window.MOMENT_TIMELINE);
+  if (!timeline) throw new Error('No timeline: run design/video/voice.py first.');
+  return { browser, page, timeline };
 }
 
 async function seek(page, seconds) {
@@ -42,7 +46,7 @@ async function seek(page, seconds) {
 
 (async () => {
   fs.mkdirSync(out, { recursive: true });
-  const { browser, page } = await open();
+  const { browser, page, timeline } = await open();
   const stage = page.locator('.stage');
 
   const only = process.argv[2];
@@ -55,8 +59,9 @@ async function seek(page, seconds) {
     return;
   }
 
+  if (!fs.existsSync(soundtrack)) throw new Error('No soundtrack: run design/video/voice.py first.');
   const frames = fs.mkdtempSync(path.join(os.tmpdir(), 'moment-film-'));
-  const total = FPS * SECONDS;
+  const total = Math.ceil(FPS * timeline.total);
   for (let frame = 0; frame < total; frame++) {
     await seek(page, frame / FPS);
     await stage.screenshot({
@@ -71,21 +76,26 @@ async function seek(page, seconds) {
   await browser.close();
 
   const input = ['-y', '-framerate', String(FPS), '-i', path.join(frames, '%05d.jpg')];
+  const sound = ['-i', soundtrack, '-shortest'];
   const quiet = ['-loglevel', 'error'];
   execFileSync('ffmpeg', [
-    ...quiet, ...input,
+    ...quiet, ...input, ...sound,
     '-c:v', 'libx264', '-preset', 'slow', '-crf', '20', '-pix_fmt', 'yuv420p',
+    '-c:a', 'aac', '-b:a', '160k',
     '-movflags', '+faststart', path.join(out, 'moment.mp4'),
   ]);
   execFileSync('ffmpeg', [
-    ...quiet, ...input,
+    ...quiet, ...input, ...sound,
     '-c:v', 'libvpx-vp9', '-crf', '34', '-b:v', '0', '-row-mt', '1',
+    '-c:a', 'libopus', '-b:a', '96k',
     path.join(out, 'moment.webm'),
   ]);
-  // The first eleven seconds, small, as a loop a README can show inline.
+  // The opening, up to the end of the six kinds, small and silent, as a
+  // loop a README can show inline.
+  const opening = timeline.scenes.find((scene) => scene.id === 'kinds').end;
   execFileSync('ffmpeg', [
-    ...quiet, ...input, '-t', '11.2',
-    '-vf', 'fps=15,scale=720:-1:flags=lanczos,split[a][b];[a]palettegen=max_colors=128[p];[b][p]paletteuse=dither=bayer:bayer_scale=4',
+    ...quiet, ...input, '-t', String(opening),
+    '-vf', 'fps=12,scale=640:-1:flags=lanczos,split[a][b];[a]palettegen=max_colors=128[p];[b][p]paletteuse=dither=bayer:bayer_scale=4',
     path.join(out, 'moment-preview.gif'),
   ]);
   fs.rmSync(frames, { recursive: true });

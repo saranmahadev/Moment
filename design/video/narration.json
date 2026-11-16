@@ -1,0 +1,77 @@
+{
+  "voice": "af_heart",
+  "speed": 0.94,
+  "scenes": [
+    {
+      "id": "logo",
+      "least": 5.0,
+      "lead": 1.9,
+      "lines": [
+        { "say": "This is Moment. A private journal of your days." }
+      ]
+    },
+    {
+      "id": "kinds",
+      "least": 6.5,
+      "lines": [
+        { "say": "Log six kinds of moment: words, moods, photos, videos, voice notes, and places." },
+        { "say": "Each one is kept in its own place." }
+      ]
+    },
+    {
+      "id": "home",
+      "least": 4.5,
+      "lines": [
+        { "say": "Home shows today in one calm feed. Logging a mood takes a single tap." }
+      ]
+    },
+    {
+      "id": "calendar",
+      "least": 4.5,
+      "lines": [
+        { "say": "The calendar gives you the month at a glance, with a dot for everything you logged." }
+      ]
+    },
+    {
+      "id": "search",
+      "least": 4.5,
+      "lines": [
+        { "say": "And search finds anything as you type, right on your phone." }
+      ]
+    },
+    {
+      "id": "dark",
+      "least": 5.0,
+      "lines": [
+        { "say": "Use it in light or dark, with glass or solid surfaces." }
+      ]
+    },
+    {
+      "id": "privacy",
+      "least": 8.0,
+      "lines": [
+        { "say": "Moment is yours alone." },
+        { "say": "No account.", "cue": "no-account" },
+        { "say": "No cloud.", "cue": "no-cloud" },
+        { "say": "No tracking.", "cue": "no-tracking" },
+        { "say": "Everything is encrypted on your phone.", "cue": "encrypted" },
+        { "say": "One optional switch can look up place names online. It stays off unless you turn it on.", "cue": "place-names", "gap": 0.6 }
+      ]
+    },
+    {
+      "id": "backup",
+      "least": 5.0,
+      "lines": [
+        { "say": "Keep a backup in a single encrypted file, locked with a passphrase only you know." }
+      ]
+    },
+    {
+      "id": "end",
+      "least": 5.5,
+      "tail": 2.6,
+      "lines": [
+        { "say": "Moment. Free, and open source." }
+      ]
+    }
+  ]
+}

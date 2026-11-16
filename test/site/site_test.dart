@@ -79,4 +79,49 @@ void main() {
     expect(workflow, contains('actions/deploy-pages'));
     expect(workflow, contains('path: site'));
   });
+
+  group('the film', () {
+    final timeline = File('design/video/timeline.js').readAsStringSync();
+    final script = File('design/video/narration.json').readAsStringSync();
+    final film = File('design/video/moment.html').readAsStringSync();
+    final captions = File('site/media/moment.vtt').readAsStringSync();
+
+    test('has captions, offered by the site', () {
+      expect(captions, startsWith('WEBVTT'));
+      expect(html, contains('kind="captions"'));
+      expect(html, contains('media/moment.vtt'));
+    });
+
+    test('every line of the script is in the captions, word for word', () {
+      final lines = RegExp(
+        r'"say":\s*"([^"]+)"',
+      ).allMatches(script).map((match) => match.group(1)!).toList();
+
+      expect(lines, isNotEmpty);
+      for (final line in lines) {
+        expect(captions, contains(line));
+      }
+    });
+
+    test('every scene of the script exists in the film and the timeline', () {
+      final scenes = RegExp(
+        r'"id":\s*"(\w+)"',
+      ).allMatches(script).map((match) => match.group(1)!).toList();
+
+      expect(scenes, hasLength(9));
+      for (final scene in scenes) {
+        expect(film, contains('<section id="$scene"'), reason: scene);
+        expect(timeline, contains('"id": "$scene"'), reason: scene);
+      }
+    });
+
+    test('says plainly that the narration is a synthetic voice', () {
+      expect(html, contains('synthetic voice'));
+    });
+
+    test('keeps the promise it shows: the one exception is spoken too', () {
+      expect(script, contains('place names online'));
+      expect(script, contains('stays off unless you turn it on'));
+    });
+  });
 }
