@@ -4,8 +4,8 @@ name: Release
 #
 # Run it by hand (Actions → Release → Run workflow) once CI is green on the
 # release commit and the phase exit gate in docs/ROADMAP.md is met. It
-# refuses to run if the version does not match pubspec.yaml, if the tag
-# already exists, or if CHANGELOG.md has no entry for the version; then it
+# refuses to run if the version does not match pubspec.yaml, if the version
+# is already released, or if CHANGELOG.md has no entry for it; then it
 # analyses, tests, builds and checks the release manifest before anything
 # is tagged. See docs/WORKFLOW.md, "Releases".
 on:
@@ -39,6 +39,9 @@ jobs:
           ref: ${{ inputs.commit || github.sha }}
           fetch-depth: 0
       - name: Check the version, the changelog and that the tag is free
+        id: check
+        env:
+          GH_TOKEN: ${{ github.token }}
         run: |
           if ! [[ "$VERSION" =~ ^[0-9]+\.[0-9]+\.[0-9]+$ ]]; then
             echo "::error::'$VERSION' is not a version like 0.3.0"; exit 1
@@ -47,8 +50,18 @@ jobs:
           if [ "$declared" != "$VERSION" ]; then
             echo "::error::pubspec.yaml at this commit is $declared, not $VERSION"; exit 1
           fi
+          # A tag that already exists is fine if it is this very commit and
+          # has no release yet: the run then only builds and publishes.
+          # (That is how a tag pushed by hand gets its release and APK.)
           if git ls-remote --exit-code --tags origin "refs/tags/$TAG" >/dev/null; then
-            echo "::error::$TAG already exists"; exit 1
+            git fetch --quiet origin "refs/tags/$TAG:refs/tags/$TAG"
+            if [ "$(git rev-parse "$TAG^{commit}")" != "$(git rev-parse HEAD)" ]; then
+              echo "::error::$TAG already exists and points at another commit"; exit 1
+            fi
+            if gh release view "$TAG" >/dev/null 2>&1; then
+              echo "::error::$TAG is already released"; exit 1
+            fi
+            echo "tag_exists=true" >> "$GITHUB_OUTPUT"
           fi
           awk -v v="$VERSION" '
             $0 ~ "^## " v "( |$)" { on = 1; next }
@@ -108,6 +121,7 @@ jobs:
           GH_TOKEN: ${{ github.token }}
           APK: ${{ steps.sign.outputs.apk }}
           SIGNING_NOTE: ${{ steps.sign.outputs.note }}
+          TAG_EXISTS: ${{ steps.check.outputs.tag_exists }}
         run: |
           {
             echo
@@ -116,14 +130,21 @@ jobs:
             echo
             echo "SHA-256: \`$(sha256sum "$APK" | cut -d' ' -f1)\`"
           } >> "$RUNNER_TEMP/notes.md"
-          # The tag is created through the API, not `git push`: a push of a
-          # tag whose commit has older workflow files is refused for the
-          # workflow's own token, while naming an existing commit is not.
-          commit=$(git rev-parse HEAD)
-          tag_object=$(gh api "repos/$GITHUB_REPOSITORY/git/tags" \
-            -f tag="$TAG" -f message="Moment $VERSION" \
-            -f object="$commit" -f type=commit --jq .sha)
-          gh api "repos/$GITHUB_REPOSITORY/git/refs" \
-            -f ref="refs/tags/$TAG" -f sha="$tag_object" --silent
+          # The tag is created through the API (an annotated tag, then its
+          # ref). GitHub refuses to let a workflow tag a commit whose
+          # workflow files differ from main's, which only happens when
+          # releasing an older commit: then the tag has to be pushed by
+          # hand, and this workflow run again to publish it.
+          if [ "$TAG_EXISTS" != "true" ]; then
+            commit=$(git rev-parse HEAD)
+            if ! tag_object=$(gh api "repos/$GITHUB_REPOSITORY/git/tags" \
+                  -f tag="$TAG" -f message="Moment $VERSION" \
+                  -f object="$commit" -f type=commit --jq .sha) ||
+               ! gh api "repos/$GITHUB_REPOSITORY/git/refs" \
+                  -f ref="refs/tags/$TAG" -f sha="$tag_object" --silent; then
+              echo "::error::GitHub would not let this workflow tag $commit (its workflow files differ from main's). Push the tag yourself: git tag -a $TAG $commit -m \"Moment $VERSION\" && git push origin $TAG. Then run this workflow again: it will publish the release for the tag."
+              exit 1
+            fi
+          fi
           gh release create "$TAG" "$APK" --verify-tag \
             --title "Moment $VERSION" --notes-file "$RUNNER_TEMP/notes.md"
