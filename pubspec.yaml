@@ -31,6 +31,9 @@ dependencies:
   video_player: ^2.14.1
   fc_native_video_thumbnail: ^4.0.0
   geolocator: ^14.0.2
+  flutter_local_notifications: ^23.0.2
+  timezone: ^0.11.2
+  flutter_timezone: ^5.1.1
 dev_dependencies:
   flutter_test:
     sdk: flutter
