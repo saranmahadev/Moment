@@ -170,4 +170,57 @@ void main() {
       expect(settings.mediaQuality, MediaQuality.original);
     });
   });
+
+  group('recent searches', () {
+    test('start empty, and keep the newest first', () async {
+      final settings = AppSettings.inMemory();
+      expect(settings.recentSearches, isEmpty);
+
+      await settings.addRecentSearch('balcony');
+      await settings.addRecentSearch('  train ');
+
+      expect(settings.recentSearches, ['train', 'balcony']);
+    });
+
+    test('searching again moves it to the front, whatever its case', () async {
+      final settings = AppSettings.inMemory();
+      await settings.addRecentSearch('balcony');
+      await settings.addRecentSearch('train');
+
+      await settings.addRecentSearch('Balcony');
+
+      expect(settings.recentSearches, ['Balcony', 'train']);
+    });
+
+    test('blank searches are not remembered', () async {
+      final settings = AppSettings.inMemory();
+
+      await settings.addRecentSearch('   ');
+
+      expect(settings.recentSearches, isEmpty);
+    });
+
+    test('only the last eight are kept', () async {
+      final settings = AppSettings.inMemory();
+      for (var i = 1; i <= 10; i++) {
+        await settings.addRecentSearch('search $i');
+      }
+
+      expect(settings.recentSearches, hasLength(8));
+      expect(settings.recentSearches.first, 'search 10');
+      expect(settings.recentSearches.last, 'search 3');
+    });
+
+    test('survive a restart, and can be cleared', () async {
+      final first = await AppSettings.load(FileSettingsStore(file));
+      await first.addRecentSearch('balcony');
+
+      final second = await AppSettings.load(FileSettingsStore(file));
+      expect(second.recentSearches, ['balcony']);
+
+      await second.clearRecentSearches();
+      final third = await AppSettings.load(FileSettingsStore(file));
+      expect(third.recentSearches, isEmpty);
+    });
+  });
 }
