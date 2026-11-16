@@ -5,6 +5,7 @@ import 'package:image/image.dart' as img;
 import 'package:path/path.dart' as p;
 import 'package:uuid/uuid.dart';
 
+import '../settings/media_quality.dart';
 import '../video/video_probe.dart';
 
 /// Returns a new unique id. Injected so tests can control identity.
@@ -50,7 +51,17 @@ class _ProcessedPhoto {
   final Uint8List thumbnailBytes;
 }
 
-_ProcessedPhoto _processPhoto(Uint8List bytes) {
+/// What the photo isolate is given: the picked bytes and how much to keep.
+class _PhotoJob {
+  const _PhotoJob(this.bytes, this.maxEdge, this.jpegQuality);
+
+  final Uint8List bytes;
+  final int? maxEdge;
+  final int jpegQuality;
+}
+
+_ProcessedPhoto _processPhoto(_PhotoJob job) {
+  final bytes = job.bytes;
   img.Image? decoded;
   try {
     decoded = img.decodeImage(bytes);
@@ -65,7 +76,16 @@ _ProcessedPhoto _processPhoto(Uint8List bytes) {
   // design/generators/lib.py and docs/ROADMAP.md both call for photos to
   // carry no location data once imported.
   decoded.exif.clear();
-  final strippedBytes = img.encodeJpg(decoded);
+
+  // The quality setting: scale the long edge down to the limit, never up.
+  final maxEdge = job.maxEdge;
+  if (maxEdge != null &&
+      (decoded.width > maxEdge || decoded.height > maxEdge)) {
+    decoded = decoded.width >= decoded.height
+        ? img.copyResize(decoded, width: maxEdge)
+        : img.copyResize(decoded, height: maxEdge);
+  }
+  final strippedBytes = img.encodeJpg(decoded, quality: job.jpegQuality);
 
   final thumbnail = img.copyResize(decoded, width: MediaStore.thumbnailWidth);
   final thumbnailBytes = img.encodeJpg(thumbnail, quality: 80);
@@ -82,13 +102,18 @@ class MediaStore {
     required Directory root,
     DateTime Function() clock = DateTime.now,
     IdGenerator generateId = _defaultId,
-  }) : _root = root,
+    MediaQuality Function()? photoQuality,
+  }) : _photoQuality = photoQuality ?? (() => MediaQuality.original),
+       _root = root,
        _clock = clock,
        _generateId = generateId;
 
   static const thumbnailWidth = 320;
 
   final Directory _root;
+
+  /// Read at each import, so a change in Settings applies to the next photo.
+  final MediaQuality Function() _photoQuality;
   final DateTime Function() _clock;
   final IdGenerator _generateId;
 
@@ -108,7 +133,11 @@ class MediaStore {
 
   Future<ImportedPhoto> importPhoto(File source) async {
     final originalBytes = await source.readAsBytes();
-    final processed = await compute(_processPhoto, originalBytes);
+    final quality = _photoQuality();
+    final processed = await compute(
+      _processPhoto,
+      _PhotoJob(originalBytes, quality.maxEdge, quality.jpegQuality),
+    );
 
     final monthDir = await _monthDir();
     final id = _generateId();

@@ -1,7 +1,11 @@
 import 'dart:convert';
 import 'dart:io';
 
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
+
+import '../emoji/moods.dart';
+import 'media_quality.dart';
 
 /// Where the app's settings are kept between launches.
 abstract interface class SettingsStore {
@@ -89,9 +93,69 @@ class AppSettings extends ChangeNotifier {
   Future<void> setReduceTransparency(bool value) =>
       _set('reduceTransparency', value, false);
 
+  /// The five emoji on Home's quick row.
+  List<String> get quickEmoji {
+    final stored = _values['quickEmoji'];
+    if (stored is List &&
+        stored.length == 5 &&
+        stored.every((e) => e is String && e.isNotEmpty)) {
+      return List<String>.from(stored);
+    }
+    return List<String>.of(defaultQuickEmoji);
+  }
+
+  Future<void> setQuickEmoji(List<String> emoji) {
+    if (emoji.length != 5 || emoji.any((e) => e.isEmpty)) {
+      throw ArgumentError.value(emoji, 'emoji', 'must be five emoji');
+    }
+    return _setList('quickEmoji', List<String>.of(emoji), quickEmoji);
+  }
+
+  /// Whether the daily reminder is on, and when it rings.
+  bool get reminderOn => _read('reminderOn', false);
+
+  Future<void> setReminderOn(bool value) => _set('reminderOn', value, false);
+
+  TimeOfDay get reminderTime {
+    final minutes = _read('reminderMinutes', _defaultReminderMinutes);
+    final valid = minutes >= 0 && minutes < 24 * 60
+        ? minutes
+        : _defaultReminderMinutes;
+    return TimeOfDay(hour: valid ~/ 60, minute: valid % 60);
+  }
+
+  Future<void> setReminderTime(TimeOfDay time) => _set(
+    'reminderMinutes',
+    time.hour * 60 + time.minute,
+    reminderTime.hour * 60 + reminderTime.minute,
+  );
+
+  static const _defaultReminderMinutes = 21 * 60;
+
+  /// How much of a new photo is kept.
+  MediaQuality get mediaQuality {
+    final name = _read<String?>('mediaQuality', null);
+    return MediaQuality.values.where((q) => q.name == name).firstOrNull ??
+        MediaQuality.original;
+  }
+
+  Future<void> setMediaQuality(MediaQuality quality) =>
+      _set('mediaQuality', quality.name, mediaQuality.name);
+
   T _read<T>(String key, T fallback) {
     final value = _values[key];
     return value is T ? value : fallback;
+  }
+
+  Future<void> _setList(
+    String key,
+    List<String> value,
+    List<String> current,
+  ) async {
+    if (listEquals(value, current)) return;
+    _values[key] = value;
+    notifyListeners();
+    await _store.write(_values);
   }
 
   Future<void> _set<T>(String key, T value, T fallback) async {

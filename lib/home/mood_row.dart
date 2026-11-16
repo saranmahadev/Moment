@@ -2,20 +2,20 @@ import 'package:flutter/material.dart';
 
 import '../design/glass_surface.dart';
 import '../design/tokens.dart';
-
-const _moods = [
-  ('😊', 'happy'),
-  ('😌', 'calm'),
-  ('😐', 'neutral'),
-  ('😔', 'sad'),
-  ('😤', 'frustrated'),
-];
+import '../emoji/moods.dart';
 
 /// The one-tap mood row on Home: "How are you?" and five emoji buttons,
 /// each of which logs an emoji entry immediately. Matches the mood card in
 /// design/mockups/Main.dc.html.
 class MoodRow extends StatelessWidget {
-  const MoodRow({super.key, required this.onMoodTapped});
+  const MoodRow({
+    super.key,
+    required this.onMoodTapped,
+    this.emoji = defaultQuickEmoji,
+  });
+
+  /// The five emoji offered, as chosen in Settings.
+  final List<String> emoji;
 
   /// Called with the tapped emoji, e.g. `'😌'`.
   final ValueChanged<String> onMoodTapped;
@@ -44,10 +44,10 @@ class MoodRow extends StatelessWidget {
               ),
             ),
             const Spacer(),
-            for (final (emoji, name) in _moods)
+            for (final emoji in emoji)
               Semantics(
                 button: true,
-                label: 'Log mood $name',
+                label: 'Log mood ${(moodLabel(emoji) ?? emoji).toLowerCase()}',
                 excludeSemantics: true,
                 child: GestureDetector(
                   onTap: () => onMoodTapped(emoji),

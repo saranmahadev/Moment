@@ -3,6 +3,7 @@ import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:moment/settings/app_settings.dart';
+import 'package:moment/settings/media_quality.dart';
 import 'package:path/path.dart' as p;
 
 void main() {
@@ -115,6 +116,58 @@ void main() {
       await settings.setReduceTransparency(true);
 
       expect(notified, 2);
+    });
+  });
+
+  group('logging', () {
+    test(
+      'defaults: the five moods, no reminder at 21:00, original quality',
+      () {
+        final settings = AppSettings.inMemory();
+
+        expect(settings.quickEmoji, ['😊', '😌', '😐', '😔', '😤']);
+        expect(settings.reminderOn, isFalse);
+        expect(settings.reminderTime, const TimeOfDay(hour: 21, minute: 0));
+        expect(settings.mediaQuality, MediaQuality.original);
+      },
+    );
+
+    test('each one survives a restart', () async {
+      final first = await AppSettings.load(FileSettingsStore(file));
+      await first.setQuickEmoji(['🥰', '😴', '😊', '😢', '🤒']);
+      await first.setReminderOn(true);
+      await first.setReminderTime(const TimeOfDay(hour: 7, minute: 45));
+      await first.setMediaQuality(MediaQuality.smaller);
+
+      final second = await AppSettings.load(FileSettingsStore(file));
+
+      expect(second.quickEmoji, ['🥰', '😴', '😊', '😢', '🤒']);
+      expect(second.reminderOn, isTrue);
+      expect(second.reminderTime, const TimeOfDay(hour: 7, minute: 45));
+      expect(second.mediaQuality, MediaQuality.smaller);
+    });
+
+    test('the quick row is always exactly five emoji', () async {
+      final settings = AppSettings.inMemory();
+
+      expect(() => settings.setQuickEmoji(['😊']), throwsArgumentError);
+      expect(
+        () => settings.setQuickEmoji(['😊', '😌', '😐', '😔', '']),
+        throwsArgumentError,
+      );
+      expect(settings.quickEmoji, hasLength(5));
+    });
+
+    test('damaged values fall back to the defaults', () {
+      final settings = AppSettings.inMemory({
+        'quickEmoji': ['😊', 7],
+        'reminderMinutes': 5000,
+        'mediaQuality': 'ultra',
+      });
+
+      expect(settings.quickEmoji, ['😊', '😌', '😐', '😔', '😤']);
+      expect(settings.reminderTime, const TimeOfDay(hour: 21, minute: 0));
+      expect(settings.mediaQuality, MediaQuality.original);
     });
   });
 }
