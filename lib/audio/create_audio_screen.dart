@@ -378,7 +378,7 @@ class _PauseResumeButton extends StatelessWidget {
               ),
               child: Icon(
                 paused ? Icons.play_arrow : Icons.pause,
-                color: Colors.white,
+                color: tokens.onInk,
                 size: 28,
               ),
             ),

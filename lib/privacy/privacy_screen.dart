@@ -297,7 +297,7 @@ class _PrivacyScreenState extends State<PrivacyScreen> {
                             ),
                             Switch(
                               value: _appLockOn,
-                              activeThumbColor: Colors.white,
+                              activeThumbColor: tokens.onInk,
                               activeTrackColor: tokens.ink,
                               inactiveTrackColor: tokens.switchOff,
                               onChanged: _onAppLockChanged,
@@ -392,18 +392,18 @@ class _PrivacyScreenState extends State<PrivacyScreen> {
                                 ),
                                 alignment: Alignment.center,
                                 child: _busy
-                                    ? const SizedBox(
+                                    ? SizedBox(
                                         width: 18,
                                         height: 18,
                                         child: CircularProgressIndicator(
                                           strokeWidth: 2,
-                                          color: Colors.white,
+                                          color: tokens.onInk,
                                         ),
                                       )
-                                    : const Text(
+                                    : Text(
                                         'Back up now',
                                         style: TextStyle(
-                                          color: Colors.white,
+                                          color: tokens.onInk,
                                           fontSize: 15,
                                           fontWeight: FontWeight.w600,
                                         ),
@@ -584,7 +584,7 @@ class _PrivacyScreenState extends State<PrivacyScreen> {
                                 child: Switch(
                                   key: const ValueKey('place-names-switch'),
                                   value: widget.settings.lookUpPlaceNames,
-                                  activeThumbColor: Colors.white,
+                                  activeThumbColor: tokens.onInk,
                                   activeTrackColor: tokens.ink,
                                   inactiveTrackColor: tokens.switchOff,
                                   onChanged:

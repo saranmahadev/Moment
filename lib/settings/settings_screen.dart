@@ -325,7 +325,7 @@ class _StaticToggle extends StatelessWidget {
       child: Switch(
         value: value,
         onChanged: (_) {},
-        activeThumbColor: Colors.white,
+        activeThumbColor: tokens.onInk,
         activeTrackColor: tokens.ink,
         inactiveTrackColor: tokens.switchOff,
       ),

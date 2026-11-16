@@ -429,7 +429,7 @@ class _RoundControl extends StatelessWidget {
           width: size,
           height: size,
           decoration: BoxDecoration(
-            color: Colors.white.withValues(alpha: 0.85),
+            color: tokens.scrim.withValues(alpha: 0.85),
             shape: BoxShape.circle,
           ),
           child: Icon(icon, size: size * 0.45, color: tokens.ink),

@@ -38,7 +38,7 @@ class LocationPillButton extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final foreground = primary ? Colors.white : tokens.ink;
+    final foreground = primary ? tokens.onInk : tokens.ink;
     final content = Padding(
       padding: const EdgeInsets.symmetric(horizontal: 14),
       child: Row(
@@ -202,7 +202,7 @@ class LocationPill extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 7),
       decoration: BoxDecoration(
-        color: Colors.white.withValues(alpha: 0.6),
+        color: tokens.scrim.withValues(alpha: 0.6),
         borderRadius: BorderRadius.circular(18),
       ),
       child: Row(

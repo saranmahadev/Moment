@@ -35,18 +35,22 @@ class StylisedMap extends StatelessWidget {
         return Stack(
           clipBehavior: Clip.hardEdge,
           children: [
-            const Positioned.fill(
+            Positioned.fill(
               child: DecoratedBox(
                 decoration: BoxDecoration(
                   gradient: LinearGradient(
                     begin: Alignment.topLeft,
                     end: Alignment.bottomRight,
-                    colors: [Color(0xFFCDEBD3), Color(0xFFBFE0EC)],
+                    colors: tokens.mapGradient,
                   ),
                 ),
               ),
             ),
-            const Positioned.fill(child: CustomPaint(painter: _GridPainter())),
+            Positioned.fill(
+              child: CustomPaint(
+                painter: _GridPainter(tokens.scrim.withValues(alpha: 0.7)),
+              ),
+            ),
             if (showHalo && pins.isNotEmpty)
               Positioned(
                 key: const ValueKey('map-halo'),
@@ -80,14 +84,16 @@ class StylisedMap extends StatelessWidget {
 }
 
 class _GridPainter extends CustomPainter {
-  const _GridPainter();
+  const _GridPainter(this.color);
+
+  final Color color;
 
   static const _cell = 28.0;
 
   @override
   void paint(Canvas canvas, Size size) {
     final paint = Paint()
-      ..color = Colors.white.withValues(alpha: 0.7)
+      ..color = color
       ..strokeWidth = 1;
     for (var x = _cell; x < size.width; x += _cell) {
       canvas.drawLine(Offset(x, 0), Offset(x, size.height), paint);
@@ -98,5 +104,5 @@ class _GridPainter extends CustomPainter {
   }
 
   @override
-  bool shouldRepaint(_GridPainter oldDelegate) => false;
+  bool shouldRepaint(_GridPainter oldDelegate) => oldDelegate.color != color;
 }

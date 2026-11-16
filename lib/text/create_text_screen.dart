@@ -199,10 +199,10 @@ class _CreateTextScreenState extends State<CreateTextScreen> {
                             borderRadius: BorderRadius.circular(22),
                           ),
                           alignment: Alignment.center,
-                          child: const Text(
+                          child: Text(
                             'Save',
                             style: TextStyle(
-                              color: Colors.white,
+                              color: tokens.onInk,
                               fontSize: 15,
                               fontWeight: FontWeight.w600,
                             ),

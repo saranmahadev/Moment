@@ -184,10 +184,10 @@ class _CreateEmojiScreenState extends State<CreateEmojiScreen> {
                             borderRadius: BorderRadius.circular(22),
                           ),
                           alignment: Alignment.center,
-                          child: const Text(
+                          child: Text(
                             'Log mood',
                             style: TextStyle(
-                              color: Colors.white,
+                              color: tokens.onInk,
                               fontSize: 15,
                               fontWeight: FontWeight.w600,
                             ),
@@ -329,8 +329,8 @@ class _StrengthButton extends StatelessWidget {
                   child: Center(
                     child: Text(
                       '$value',
-                      style: const TextStyle(
-                        color: Colors.white,
+                      style: TextStyle(
+                        color: tokens.onInk,
                         fontWeight: FontWeight.w600,
                       ),
                     ),

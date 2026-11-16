@@ -480,7 +480,7 @@ class _PlayPauseButton extends StatelessWidget {
           decoration: BoxDecoration(color: tokens.ink, shape: BoxShape.circle),
           child: Icon(
             playing ? Icons.pause : Icons.play_arrow,
-            color: Colors.white,
+            color: tokens.onInk,
             size: 30,
           ),
         ),
