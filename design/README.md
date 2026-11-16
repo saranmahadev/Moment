@@ -33,3 +33,8 @@ Moment's logo, built from the app's own colours and typeface: one ink dot (the m
 - `export.cjs` renders every PNG from them: the Android launcher icons and adaptive layers, the iOS icon set, and the site's icons.
 
 Change the logo in `build_logo.py`, run both scripts, and commit what they write. `test/platform/app_icon_test.dart` checks that every size exists.
+
+## `video/`
+
+The 44-second film about the app. `moment.html` is the whole animation (open it in a browser to watch it play); every element is a CSS animation with a start time, so `render.cjs` can draw any frame exactly. `node design/video/render.cjs` writes `site/media/`: the film as MP4 and WebM, a poster frame, and a short loop for the README. It needs Playwright with Chromium, and ffmpeg. The film uses the screenshots in `site/screens/`, which come from the preview renderer (`flutter test --run-skipped --tags preview test/gate/previews_test.dart`).
+

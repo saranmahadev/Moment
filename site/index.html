@@ -1,0 +1,401 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Moment: a private journal of your days</title>
+<meta name="description" content="Moment is a free, open-source life journal for your phone. Six kinds of log, encrypted on your device, with no account and no cloud.">
+<meta property="og:title" content="Moment: a private journal of your days">
+<meta property="og:description" content="A free, open-source life journal. Encrypted on your phone, with no account and no cloud.">
+<meta property="og:image" content="media/moment-poster.jpg">
+<link rel="icon" href="icons/favicon-32.png" sizes="32x32">
+<link rel="apple-touch-icon" href="icons/apple-touch-icon.png">
+<style>
+  /* Everything this page shows is served from this site: the app's own
+     typefaces, its screens and its film. Nothing is fetched from anyone
+     else's server (test/site/site_test.dart keeps it so). */
+  @font-face { font-family: "Inter"; font-weight: 400; font-display: swap; src: url("fonts/inter-400.woff2") format("woff2"); }
+  @font-face { font-family: "Inter"; font-weight: 500; font-display: swap; src: url("fonts/inter-500.woff2") format("woff2"); }
+  @font-face { font-family: "Inter"; font-weight: 600; font-display: swap; src: url("fonts/inter-600.woff2") format("woff2"); }
+  @font-face { font-family: "Newsreader"; font-weight: 400; font-display: swap; src: url("fonts/newsreader-400.woff2") format("woff2"); }
+  @font-face { font-family: "Newsreader"; font-weight: 500; font-display: swap; src: url("fonts/newsreader-500.woff2") format("woff2"); }
+
+  /* The app's tokens (lib/design/tokens.dart), light then dark. */
+  :root {
+    color-scheme: light dark;
+    --ground: #edf0f7; --surface: rgba(255, 255, 255, 0.58); --edge: rgba(255, 255, 255, 0.85);
+    --ink: #1b1f2a; --on-ink: #ffffff; --secondary: #3a4152; --line: rgba(27, 31, 42, 0.12);
+    --shadow: rgba(40, 50, 100, 0.14); --frame: #1b1f2a;
+    --text: #1d4ed8; --emoji: #b45309; --photo: #be185d; --video: #6d28d9; --audio: #0f766e; --location: #15803d;
+    --orb-a: rgba(160, 172, 250, 0.85); --orb-b: rgba(255, 190, 170, 0.85); --orb-c: rgba(160, 228, 205, 0.85);
+    --display: "Newsreader", "Iowan Old Style", Georgia, serif;
+    --body: "Inter", system-ui, -apple-system, "Segoe UI", sans-serif;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root {
+      --ground: #0f1218; --surface: rgba(255, 255, 255, 0.07); --edge: rgba(255, 255, 255, 0.13);
+      --ink: #f1f3f8; --on-ink: #0f1218; --secondary: #b7bece; --line: rgba(241, 243, 248, 0.14);
+      --shadow: rgba(0, 0, 0, 0.4); --frame: #05070b;
+      --text: #8fb1ff; --emoji: #f2a94e; --photo: #f58bb6; --video: #b9a0fa; --audio: #56cdbf; --location: #6bcb88;
+      --orb-a: rgba(58, 71, 168, 0.6); --orb-b: rgba(140, 74, 56, 0.55); --orb-c: rgba(43, 107, 91, 0.55);
+    }
+  }
+
+  * { box-sizing: border-box; }
+  html { scroll-behavior: smooth; }
+  body {
+    margin: 0; background: var(--ground); color: var(--ink);
+    font-family: var(--body); font-size: 17px; line-height: 1.55;
+    overflow-x: hidden; position: relative;
+  }
+  /* The app's soft orbs, drawn once behind the page. */
+  body::before {
+    content: ""; position: absolute; inset: 0; z-index: -1; pointer-events: none;
+    background:
+      radial-gradient(520px 520px at 8% 180px, var(--orb-a), transparent 70%),
+      radial-gradient(480px 480px at 96% 620px, var(--orb-b), transparent 70%),
+      radial-gradient(520px 520px at 12% 1500px, var(--orb-c), transparent 70%),
+      radial-gradient(520px 520px at 92% 2500px, var(--orb-a), transparent 70%),
+      radial-gradient(480px 480px at 6% 3400px, var(--orb-b), transparent 70%),
+      radial-gradient(520px 520px at 94% 4300px, var(--orb-c), transparent 70%);
+    background-repeat: no-repeat;
+  }
+  a { color: inherit; }
+  img, video { max-width: 100%; display: block; }
+  .wrap { max-width: 1120px; margin-inline: auto; padding-inline: max(20px, env(safe-area-inset-left, 0px)); }
+  h1, h2, h3 { font-family: var(--display); font-weight: 500; letter-spacing: -0.01em; text-wrap: balance; margin: 0; }
+  h1 { font-size: clamp(2.6rem, 6.4vw, 4.6rem); line-height: 1.04; }
+  h2 { font-size: clamp(2rem, 4.4vw, 3rem); line-height: 1.1; }
+  h3 { font-size: 1.45rem; line-height: 1.2; }
+  p { margin: 0; }
+  .lede { font-size: clamp(1.1rem, 2vw, 1.3rem); color: var(--secondary); max-width: 34em; }
+  .eyebrow { font-size: 0.8rem; font-weight: 600; letter-spacing: 0.12em; text-transform: uppercase; color: var(--secondary); }
+  .muted { color: var(--secondary); }
+
+  .glass {
+    background: var(--surface); border: 1px solid var(--edge); border-radius: 24px;
+    box-shadow: 0 8px 32px var(--shadow);
+  }
+
+  header.top { padding-block: 18px; }
+  header.top .wrap { display: flex; align-items: center; gap: 16px; flex-wrap: wrap; }
+  .brand { display: flex; align-items: center; gap: 12px; text-decoration: none; margin-right: auto; }
+  .brand img { width: 40px; height: 40px; border-radius: 10px; }
+  .brand span { font-family: var(--display); font-weight: 500; font-size: 1.6rem; }
+  nav { display: flex; gap: 6px; flex-wrap: wrap; }
+  nav a { text-decoration: none; font-weight: 500; font-size: 0.95rem; padding: 10px 14px; border-radius: 999px; }
+  nav a:hover, nav a:focus-visible { background: var(--surface); outline: none; }
+
+  .button {
+    display: inline-flex; align-items: center; gap: 10px; min-height: 48px; padding: 12px 22px;
+    border-radius: 999px; font-weight: 600; text-decoration: none; border: 1px solid transparent;
+  }
+  .button.primary { background: var(--ink); color: var(--on-ink); }
+  .button.quiet { background: var(--surface); border-color: var(--edge); }
+  .button:focus-visible { outline: 2px solid var(--ink); outline-offset: 3px; }
+  .button svg { width: 20px; height: 20px; }
+  svg.line { fill: none; stroke: currentColor; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
+
+  .hero { padding-block: clamp(28px, 6vw, 72px) clamp(40px, 7vw, 88px); }
+  .hero .wrap { display: grid; grid-template-columns: minmax(0, 1.05fr) minmax(0, 0.95fr); gap: clamp(28px, 5vw, 64px); align-items: center; }
+  .hero .copy { display: flex; flex-direction: column; gap: 22px; }
+  .actions { display: flex; flex-wrap: wrap; gap: 12px; }
+  .fine { font-size: 0.9rem; color: var(--secondary); }
+
+  .phones { position: relative; height: clamp(440px, 60vw, 640px); }
+  .phone { position: absolute; padding: 7px; border-radius: 38px; background: var(--frame); box-shadow: 0 30px 70px var(--shadow); }
+  .phone img { border-radius: 32px; width: 100%; height: auto; aspect-ratio: 390 / 844; }
+  .phone.front { width: min(58%, 290px); left: 6%; top: 0; z-index: 1; }
+  .phone.back { width: min(52%, 260px); right: 4%; top: 9%; transform: rotate(5deg); }
+
+  section { padding-block: clamp(40px, 7vw, 88px); }
+  .head { display: flex; flex-direction: column; gap: 12px; margin-bottom: clamp(24px, 4vw, 40px); max-width: 44em; }
+
+  .film { border-radius: 28px; overflow: hidden; padding: 0; }
+  .film video { width: 100%; height: auto; aspect-ratio: 16 / 9; background: var(--ground); }
+
+  .kinds { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 16px; }
+  .kind { padding: 22px; display: flex; flex-direction: column; gap: 10px; }
+  .badge { width: 52px; height: 52px; border-radius: 50%; display: grid; place-items: center; color: var(--c); background: color-mix(in srgb, var(--c) 16%, transparent); }
+  .badge svg { width: 28px; height: 28px; }
+  .kind p { color: var(--secondary); font-size: 0.97rem; }
+
+  .features { display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 16px; }
+  .feature { padding: 24px; display: flex; flex-direction: column; gap: 8px; }
+  .feature p { color: var(--secondary); }
+
+  .privacy .wrap { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: clamp(24px, 5vw, 56px); align-items: start; }
+  .promises { list-style: none; margin: 0; padding: 0; display: grid; gap: 6px; }
+  .promises li { font-family: var(--display); font-weight: 500; font-size: clamp(1.7rem, 3.6vw, 2.5rem); line-height: 1.15; display: flex; gap: 16px; align-items: baseline; }
+  .promises li::before { content: ""; width: 0.36em; height: 0.36em; border-radius: 50%; background: var(--c); flex: none; transform: translateY(-0.12em); }
+  .exception { padding: 24px; display: flex; flex-direction: column; gap: 10px; }
+  .exception ul { margin: 0; padding-left: 1.1em; color: var(--secondary); display: grid; gap: 6px; }
+
+  .shots { display: grid; grid-auto-flow: column; grid-auto-columns: min(62vw, 230px); gap: 18px; overflow-x: auto; padding: 6px 2px 18px; scroll-snap-type: x proximity; }
+  .shots figure { margin: 0; scroll-snap-align: start; display: flex; flex-direction: column; gap: 10px; }
+  .shots .phone { position: static; padding: 6px; border-radius: 32px; }
+  .shots .phone img { border-radius: 27px; }
+  .shots figcaption { font-size: 0.92rem; font-weight: 500; text-align: center; }
+
+  .get .wrap { display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 16px; }
+  .card { padding: 26px; display: flex; flex-direction: column; gap: 12px; align-items: flex-start; }
+  .card p { color: var(--secondary); }
+  code { font-family: ui-monospace, "SF Mono", Menlo, Consolas, monospace; font-size: 0.9em; background: var(--surface); border: 1px solid var(--line); border-radius: 8px; padding: 2px 7px; }
+  pre { margin: 0; padding: 16px; border-radius: 16px; background: var(--surface); border: 1px solid var(--line); overflow-x: auto; width: 100%; }
+  pre code { background: none; border: 0; padding: 0; }
+
+  .road { display: grid; gap: 10px; }
+  .phase { padding: 16px 20px; display: flex; gap: 16px; align-items: baseline; flex-wrap: wrap; }
+  .phase b { font-variant-numeric: tabular-nums; min-width: 3.4em; }
+  .phase span { color: var(--secondary); flex: 1 1 16em; min-width: 0; }
+  .state { font-size: 0.8rem; font-weight: 600; letter-spacing: 0.06em; text-transform: uppercase; padding: 4px 10px; border-radius: 999px; border: 1px solid var(--line); }
+  .state.done { color: var(--location); }
+  .state.next { color: var(--emoji); }
+
+  footer { padding-block: 40px 56px; border-top: 1px solid var(--line); }
+  footer .wrap { display: flex; flex-wrap: wrap; gap: 12px 28px; align-items: center; color: var(--secondary); font-size: 0.93rem; }
+  footer a { text-underline-offset: 3px; }
+
+  @media (max-width: 820px) {
+    .hero .wrap, .privacy .wrap { grid-template-columns: minmax(0, 1fr); }
+    .phones { height: clamp(420px, 110vw, 600px); }
+    nav { width: 100%; }
+    .kinds { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  }
+  @media (max-width: 520px) { .kinds { grid-template-columns: minmax(0, 1fr); } }
+  @media (prefers-reduced-motion: reduce) { html { scroll-behavior: auto; } }
+</style>
+</head>
+<body>
+
+<header class="top">
+  <div class="wrap">
+    <a class="brand" href="#top" aria-label="Moment, home">
+      <img src="icons/apple-touch-icon.png" alt="" width="40" height="40">
+      <span>Moment</span>
+    </a>
+    <nav aria-label="Sections">
+      <a href="#kinds">Six kinds</a>
+      <a href="#features">Features</a>
+      <a href="#privacy">Privacy</a>
+      <a href="#get">Get it</a>
+      <a href="https://github.com/saranmahadev/Moment">Source</a>
+    </nav>
+  </div>
+</header>
+
+<main id="top">
+  <div class="hero">
+    <div class="wrap">
+      <div class="copy">
+        <span class="eyebrow">Free and open source</span>
+        <h1>A private journal of your days.</h1>
+        <p class="lede">Moment keeps what you write, feel, see, hear and where you were, in six separate logs. It is encrypted on your phone, with no account and no cloud.</p>
+        <div class="actions">
+          <a class="button primary" href="https://github.com/saranmahadev/Moment/releases/latest">
+            <svg class="line" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 4v11M7.500 10.800 12 15.300l4.500-4.500M5 19.500h14"/></svg>
+            Download for Android
+          </a>
+          <a class="button quiet" href="https://github.com/saranmahadev/Moment">View the source</a>
+        </div>
+        <p class="fine">Version 0.4.0, a preview on the way to 1.0. Android APK today; iOS builds from source.</p>
+      </div>
+      <div class="phones" aria-hidden="true">
+        <div class="phone back">
+          <picture>
+            <source srcset="screens/calendar_dark.webp" media="(prefers-color-scheme: dark)">
+            <img src="screens/calendar_light.webp" alt="" width="390" height="844">
+          </picture>
+        </div>
+        <div class="phone front">
+          <picture>
+            <source srcset="screens/home_dark.webp" media="(prefers-color-scheme: dark)">
+            <img src="screens/home_light.webp" alt="" width="390" height="844">
+          </picture>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <section id="film" aria-labelledby="film-title">
+    <div class="wrap">
+      <div class="head">
+        <span class="eyebrow">In 44 seconds</span>
+        <h2 id="film-title">See what it is.</h2>
+      </div>
+      <div class="film glass">
+        <video controls preload="none" playsinline poster="media/moment-poster.jpg" width="1920" height="1080" aria-label="A short silent film introducing Moment">
+          <source src="media/moment.webm" type="video/webm">
+          <source src="media/moment.mp4" type="video/mp4">
+        </video>
+      </div>
+      <p class="fine" style="margin-top: 12px">Silent. Made from the app's own screens, colours and typefaces.</p>
+    </div>
+  </section>
+
+  <section id="kinds" aria-labelledby="kinds-title">
+    <div class="wrap">
+      <div class="head">
+        <span class="eyebrow">Log anything</span>
+        <h2 id="kinds-title">Six kinds of moment, each kept in its own place.</h2>
+        <p class="lede">Nothing is merged into one mixed-up entry. A photo is a photo; a mood is a mood. Home shows today's of every kind together, and each kind has its own section.</p>
+      </div>
+      <div class="kinds">
+        <div class="kind glass" style="--c: var(--text)">
+          <div class="badge"><svg class="line" viewBox="0 0 24 24" aria-hidden="true"><path d="M5 6.5V5h14v1.500M12 5v14M9.500 19h5"/></svg></div>
+          <h3>Text</h3><p>What is on your mind, in your own words.</p>
+        </div>
+        <div class="kind glass" style="--c: var(--emoji)">
+          <div class="badge"><svg class="line" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="8.500"/><path d="M8.600 14.200c1.900 2.200 4.900 2.200 6.800 0M9.200 9.800h.01M14.800 9.800h.01"/></svg></div>
+          <h3>Emoji</h3><p>How you feel and how strongly, in one tap.</p>
+        </div>
+        <div class="kind glass" style="--c: var(--photo)">
+          <div class="badge"><svg class="line" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 8.500h3.200L8.800 6h6.400l1.600 2.500H20v10H4z"/><circle cx="12" cy="13.200" r="3.200"/></svg></div>
+          <h3>Photo</h3><p>What you saw. Location data is stripped when you add it.</p>
+        </div>
+        <div class="kind glass" style="--c: var(--video)">
+          <div class="badge"><svg class="line" viewBox="0 0 24 24" aria-hidden="true"><rect x="3.500" y="7" width="11.500" height="10" rx="2"/><path d="M15 10.800l5-2.600v7.600l-5-2.600"/></svg></div>
+          <h3>Video</h3><p>How it moved, kept exactly as recorded.</p>
+        </div>
+        <div class="kind glass" style="--c: var(--audio)">
+          <div class="badge"><svg class="line" viewBox="0 0 24 24" aria-hidden="true"><rect x="9" y="3.500" width="6" height="10.500" rx="3"/><path d="M5.800 11.500a6.200 6.200 0 0 0 12.400 0M12 17.700v2.800M9 20.500h6"/></svg></div>
+          <h3>Audio</h3><p>A voice note, with a title and a note if you like.</p>
+        </div>
+        <div class="kind glass" style="--c: var(--location)">
+          <div class="badge"><svg class="line" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 21s6.500-5.600 6.500-11A6.500 6.500 0 0 0 5.500 10c0 5.400 6.500 11 6.500 11z"/><circle cx="12" cy="10" r="2.400"/></svg></div>
+          <h3>Location</h3><p>Where you were: a pin, a name and a note.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section id="features" aria-labelledby="features-title">
+    <div class="wrap">
+      <div class="head">
+        <span class="eyebrow">What it does</span>
+        <h2 id="features-title">Small, calm, and complete.</h2>
+      </div>
+      <div class="features">
+        <div class="feature glass"><h3>Calendar</h3><p>A month at a glance, with a dot for every kind of log on the day it happened. Days stay put when you travel.</p></div>
+        <div class="feature glass"><h3>Search</h3><p>Full-text search as you type, across everything you have written, named or captioned. It runs on your phone.</p></div>
+        <div class="feature glass"><h3>Encrypted backup</h3><p>One file holds everything, locked with a passphrase only you know. Restore is all or nothing, so a bad file changes nothing.</p></div>
+        <div class="feature glass"><h3>Export</h3><p>Take your logs out as Markdown, JSON and the original files whenever you want. They are yours.</p></div>
+        <div class="feature glass"><h3>App lock</h3><p>A PIN, with Face ID or fingerprint, in front of an encrypted database.</p></div>
+        <div class="feature glass"><h3>Trash</h3><p>Deleted logs wait 30 days before they go for good, files included.</p></div>
+        <div class="feature glass"><h3>Light and dark</h3><p>Follow the system or choose. Prefer solid surfaces to glass? One switch.</p></div>
+        <div class="feature glass"><h3>Built to be used by everyone</h3><p>Every control is labelled for screen readers, tap targets are full size, and text fits at 200%.</p></div>
+      </div>
+    </div>
+  </section>
+
+  <section id="screens" aria-labelledby="screens-title">
+    <div class="wrap">
+      <div class="head">
+        <span class="eyebrow">Screens</span>
+        <h2 id="screens-title">A look around.</h2>
+        <p class="muted">Shown in your device's light or dark setting.</p>
+      </div>
+      <div class="shots" tabindex="0" aria-label="Screenshots, scroll sideways">
+        <figure><div class="phone"><picture><source srcset="screens/home_dark.webp" media="(prefers-color-scheme: dark)"><img src="screens/home_light.webp" alt="Home: today's logs of every kind in one feed" width="390" height="844" loading="lazy"></picture></div><figcaption>Home</figcaption></figure>
+        <figure><div class="phone"><picture><source srcset="screens/calendar_dark.webp" media="(prefers-color-scheme: dark)"><img src="screens/calendar_light.webp" alt="Calendar: a month with a dot per kind of log" width="390" height="844" loading="lazy"></picture></div><figcaption>Calendar</figcaption></figure>
+        <figure><div class="phone"><picture><source srcset="screens/search_results_dark.webp" media="(prefers-color-scheme: dark)"><img src="screens/search_results_light.webp" alt="Search: results grouped by kind with matches highlighted" width="390" height="844" loading="lazy"></picture></div><figcaption>Search</figcaption></figure>
+        <figure><div class="phone"><picture><source srcset="screens/new_emoji_dark.webp" media="(prefers-color-scheme: dark)"><img src="screens/new_emoji_light.webp" alt="New emoji: pick a mood and how strong it is" width="390" height="844" loading="lazy"></picture></div><figcaption>Log a mood</figcaption></figure>
+        <figure><div class="phone"><picture><source srcset="screens/library_dark.webp" media="(prefers-color-scheme: dark)"><img src="screens/library_light.webp" alt="Library: one section per kind of log" width="390" height="844" loading="lazy"></picture></div><figcaption>Library</figcaption></figure>
+        <figure><div class="phone"><picture><source srcset="screens/privacy_dark.webp" media="(prefers-color-scheme: dark)"><img src="screens/privacy_light.webp" alt="Privacy and backup: app lock, encrypted backup, export" width="390" height="844" loading="lazy"></picture></div><figcaption>Privacy and backup</figcaption></figure>
+        <figure><div class="phone"><picture><source srcset="screens/settings_dark.webp" media="(prefers-color-scheme: dark)"><img src="screens/settings_light.webp" alt="Settings: theme, reminder, photo quality" width="390" height="844" loading="lazy"></picture></div><figcaption>Settings</figcaption></figure>
+        <figure><div class="phone"><picture><source srcset="screens/lock_dark.webp" media="(prefers-color-scheme: dark)"><img src="screens/lock_light.webp" alt="Lock screen with a PIN pad" width="390" height="844" loading="lazy"></picture></div><figcaption>App lock</figcaption></figure>
+      </div>
+      <p class="fine">These are renders from the app's test suite, with placeholder frames where photos and video would be.</p>
+    </div>
+  </section>
+
+  <section id="privacy" class="privacy" aria-labelledby="privacy-title">
+    <div class="wrap">
+      <div>
+        <div class="head">
+          <span class="eyebrow">Yours alone</span>
+          <h2 id="privacy-title">Private by how it is built.</h2>
+        </div>
+        <ul class="promises">
+          <li style="--c: var(--text)">No account.</li>
+          <li style="--c: var(--photo)">No cloud.</li>
+          <li style="--c: var(--audio)">No analytics, no ads.</li>
+          <li style="--c: var(--video)">Encrypted on your phone.</li>
+        </ul>
+      </div>
+      <div class="exception glass">
+        <h3>The one exception, said plainly</h3>
+        <p class="muted">Moment can use the internet for exactly one thing, and only if you turn it on.</p>
+        <ul>
+          <li><b>Look up place names</b> is off by default. While it is on, the coordinates of a new pin are sent to OpenStreetMap to suggest a name.</li>
+          <li>Nothing else in the app can open a connection. A test in the source keeps network code to one file and one address.</li>
+          <li>The reminder is a notification made on your phone, and it never shows anything from your journal.</li>
+          <li>You do not have to take our word for it: the source is open, and this page itself loads nothing from other servers.</li>
+        </ul>
+      </div>
+    </div>
+  </section>
+
+  <section id="get" class="get" aria-labelledby="get-title">
+    <div class="wrap" style="display: block">
+      <div class="head">
+        <span class="eyebrow">Get it</span>
+        <h2 id="get-title">Free, now and later.</h2>
+      </div>
+    </div>
+    <div class="wrap">
+      <div class="card glass">
+        <h3>Android</h3>
+        <p>Download the APK from the latest release and open it on your phone.</p>
+        <a class="button primary" href="https://github.com/saranmahadev/Moment/releases/latest">Latest release</a>
+        <p class="fine">Until 1.0 these are preview builds: each one is installed fresh, so back up in the app before moving to a newer one.</p>
+      </div>
+      <div class="card glass">
+        <h3>iPhone</h3>
+        <p>Not in the App Store yet. With Xcode and Flutter you can build and run it yourself.</p>
+        <a class="button quiet" href="https://github.com/saranmahadev/Moment#build-it-yourself">Build instructions</a>
+      </div>
+      <div class="card glass">
+        <h3>From source</h3>
+        <pre><code>git clone https://github.com/saranmahadev/Moment
+cd Moment
+flutter pub get
+dart run build_runner build
+flutter run</code></pre>
+      </div>
+    </div>
+  </section>
+
+  <section id="open" aria-labelledby="open-title">
+    <div class="wrap">
+      <div class="head">
+        <span class="eyebrow">Open source</span>
+        <h2 id="open-title">Built in the open, test first.</h2>
+        <p class="lede">Moment is licensed under GPL-3.0: you can use it, study it and change it, and versions you pass on stay open too. Every feature starts as a failing test.</p>
+      </div>
+      <div class="road">
+        <div class="phase glass"><b>0.1</b><span>Foundation: encrypted storage, app lock, Text and Emoji.</span><i class="state done">Done</i></div>
+        <div class="phase glass"><b>0.2</b><span>Photo, Audio, encrypted backup and export.</span><i class="state done">Done</i></div>
+        <div class="phase glass"><b>0.3</b><span>Video and Location.</span><i class="state done">Done</i></div>
+        <div class="phase glass"><b>0.4</b><span>Calendar, Search, Settings, dark theme.</span><i class="state done">Done</i></div>
+        <div class="phase glass"><b>1.0</b><span>Polish, hardening and signed releases.</span><i class="state next">Next</i></div>
+      </div>
+      <div class="actions" style="margin-top: 22px">
+        <a class="button quiet" href="https://github.com/saranmahadev/Moment/blob/main/CONTRIBUTING.md">How to contribute</a>
+        <a class="button quiet" href="https://github.com/saranmahadev/Moment/issues">Report a problem</a>
+        <a class="button quiet" href="https://github.com/saranmahadev/Moment/blob/main/CHANGELOG.md">Changelog</a>
+      </div>
+    </div>
+  </section>
+</main>
+
+<footer>
+  <div class="wrap">
+    <span>Moment is free software under the <a href="https://github.com/saranmahadev/Moment/blob/main/LICENSE">GPL-3.0</a> licence.</span>
+    <span>Typefaces: Inter and Newsreader, SIL Open Font License.</span>
+    <span>Place names, when turned on, © OpenStreetMap contributors.</span>
+  </div>
+</footer>
+
+</body>
+</html>

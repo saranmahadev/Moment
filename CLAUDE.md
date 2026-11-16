@@ -90,6 +90,14 @@ Screens in Phase 1: Lock, Home, Add, Library, New text, New emoji, Text section,
 - Accessibility: a labelled button written as `Semantics(excludeSemantics: true, child: GestureDetector)` must also pass `onTap` to the `Semantics` (the exclusion hides the child's tap from screen readers); `test/gate/semantics_source_test.dart` enforces it. Fixed-shape layouts grow with the text size through `lib/design/text_growth.dart`.
 - Every-screen checks: `test/support/screen_cases.dart` lists all 27 mockup screens plus About and the quick-emoji editor; `test/gate/all_screens_test.dart` runs each through Reduce Transparency (no blur, both themes), labels, 44 pt targets, text at 200 %, and light and dark goldens drawn with the app's real fonts. Add a new screen to that list.
 
+## Logo, site, film and open-source files (before Phase 5)
+
+- Licence: GPL-3.0, chosen by the owner (`LICENSE`). `CONTRIBUTING.md` and `SECURITY.md` state the rules; the fonts' credits are in `assets/fonts/README.md`.
+- Logo (`design/logo/`): one ink dot in a pane of glass, ringed by six dots in the type colours, over the app's orbs. `build_logo.py` writes the SVGs from the tokens and Newsreader; `export.cjs` renders the Android launcher icons (with adaptive layers), the iOS icon set and the site icons. `test/platform/app_icon_test.dart` checks every size.
+- Site (`site/`, published to GitHub Pages by `.github/workflows/pages.yml`; the owner must set Pages' source to "GitHub Actions" once): one static page in the app's look. It loads nothing from other servers (`test/site/site_test.dart`): fonts, screens and the film are all in `site/`.
+- Film (`design/video/`): `moment.html` is the animation, `render.cjs` draws it frame by frame and encodes `site/media/` with ffmpeg. Screens for the site and the film are in `site/screens/`, copied from the preview renderer's output; refresh them when the app's look changes.
+- When the version, the feature list or the privacy promise changes, update `README.md`, `site/index.html` and, if it shows it, the film.
+
 ## Visual language (for the design system chunk)
 
 Minimal, frictionless glassmorphism. Newsreader for words, Inter for UI. Real blur only on floating surfaces (the tab bar and sheets; header buttons no longer blur, see the Phase 4 performance note). Feed cards use a translucent fill, gradient edge and soft shadow, because blur in scrolling lists janks on mid-range phones. Type colours: Text #1D4ED8, Emoji #B45309, Photo #BE185D, Video #6D28D9, Audio #0F766E, Location #15803D. Primary buttons ink #1B1F2A. Ground #EDF0F7. Tab bar: Home, Library, + (Add), Calendar, Settings. The mockups' source files are in the mockup artifact; goldens must match them.
