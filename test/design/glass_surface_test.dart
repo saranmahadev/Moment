@@ -13,25 +13,64 @@ void main() {
     );
   }
 
-  testWidgets('renders a BackdropFilter blurring by the recipe sigma', (
-    tester,
-  ) async {
-    await tester.pumpWidget(
+  group('live blur is kept to what floats', () {
+    Future<void> pumpVariant(
+      WidgetTester tester,
+      GlassVariant variant, {
+      bool? blur,
+    }) => tester.pumpWidget(
       host(
-        const SizedBox(
+        SizedBox(
           width: 100,
           height: 100,
-          child: GlassSurface(variant: GlassVariant.card),
+          child: GlassSurface(variant: variant, blur: blur),
         ),
       ),
     );
 
-    final backdrop = tester.widget<BackdropFilter>(find.byType(BackdropFilter));
-    final filter = backdrop.filter;
-    expect(filter, isA<ImageFilter>());
-    // The compose filter does not expose its inner sigma directly, but its
-    // string form does, which is the simplest faithful way to assert it.
-    expect(filter.toString(), contains('24.0'));
+    testWidgets('the dock and sheets blur what is behind them', (tester) async {
+      await pumpVariant(tester, GlassVariant.strong);
+
+      final backdrop = tester.widget<BackdropFilter>(
+        find.byType(BackdropFilter),
+      );
+      expect(backdrop.filter, isA<ImageFilter>());
+      // The compose filter does not expose its inner sigma directly, but
+      // its string form does.
+      expect(backdrop.filter.toString(), contains('28.0'));
+    });
+
+    for (final variant in [GlassVariant.card, GlassVariant.surface]) {
+      testWidgets('${variant.name}: a translucent fill, no blur', (
+        tester,
+      ) async {
+        // A blur re-reads and re-blurs the screen behind it on every
+        // frame; a list of them is what made scrolling stutter.
+        await pumpVariant(tester, variant);
+
+        expect(find.byType(BackdropFilter), findsNothing);
+        final decoration =
+            tester
+                    .widget<DecoratedBox>(
+                      find.descendant(
+                        of: find.byType(GlassSurface),
+                        matching: find.byType(DecoratedBox),
+                      ),
+                    )
+                    .decoration
+                as BoxDecoration;
+        expect(decoration.color!.a, lessThan(1));
+        expect(decoration.border, isNotNull);
+      });
+    }
+
+    testWidgets('a surface can ask for blur, or refuse it', (tester) async {
+      await pumpVariant(tester, GlassVariant.card, blur: true);
+      expect(find.byType(BackdropFilter), findsOneWidget);
+
+      await pumpVariant(tester, GlassVariant.strong, blur: false);
+      expect(find.byType(BackdropFilter), findsNothing);
+    });
   });
 
   testWidgets('card variant uses the card recipe default radius', (
@@ -158,7 +197,7 @@ void main() {
           body: SizedBox(
             width: 100,
             height: 100,
-            child: GlassSurface(variant: GlassVariant.card),
+            child: GlassSurface(variant: GlassVariant.strong),
           ),
         ),
       ),
@@ -177,7 +216,7 @@ void main() {
             as BoxDecoration;
     expect(
       decoration.color!.a,
-      closeTo(MomentTokens.dark.card.fillOpacity, 0.01),
+      closeTo(MomentTokens.dark.strong.fillOpacity, 0.01),
     );
   });
 }
