@@ -409,6 +409,54 @@ class LogRepository {
     return [for (final row in rows) _rowToLog(row)];
   }
 
+  /// Turns what was typed into an FTS5 query: every word must be there,
+  /// each matched from its start (so results narrow as you type). Null
+  /// when there is no word to look for.
+  static String? searchQuery(String typed) {
+    final words = RegExp(
+      r'[\p{L}\p{N}]+',
+      unicode: true,
+    ).allMatches(typed).map((match) => match.group(0)!).toList();
+    if (words.isEmpty) return null;
+    return words.map((word) => '"$word"*').join(' ');
+  }
+
+  /// Logs whose words match [typed], newest first. Searches text, emoji
+  /// names, captions, titles, notes and place names with SQLite's
+  /// full-text index; logs in Trash are never returned. With [type], only
+  /// logs of that type.
+  Future<List<Log>> search(
+    String typed, {
+    LogType? type,
+    int limit = 200,
+  }) async {
+    final query = searchQuery(typed);
+    if (query == null) return const [];
+
+    final matches = await _db
+        .customSelect(
+          'SELECT l.id AS id FROM log_search '
+          'JOIN log l ON l.id = log_search.log_id '
+          'WHERE log_search MATCH ? AND l.deleted_at_ms IS NULL '
+          '${type == null ? '' : 'AND l.type = ? '}'
+          'ORDER BY l.created_at_ms DESC, l.id DESC LIMIT ?',
+          variables: [
+            Variable.withString(query),
+            if (type != null) Variable.withString(type.name),
+            Variable.withInt(limit),
+          ],
+        )
+        .get();
+    final ids = [for (final row in matches) row.read<String>('id')];
+    if (ids.isEmpty) return const [];
+
+    final rows = await (_feedQuery()..where(_db.logsTable.id.isIn(ids))).get();
+    final found = {
+      for (final row in rows) row.readTable(_db.logsTable).id: _rowToLog(row),
+    };
+    return [for (final id in ids) ?found[id]];
+  }
+
   /// Every log that is not in Trash, newest first (ties broken by id),
   /// optionally restricted to [types].
   Stream<List<Log>> watchFeed({Set<LogType>? types}) {

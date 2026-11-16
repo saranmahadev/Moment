@@ -142,6 +142,30 @@ class AppSettings extends ChangeNotifier {
   Future<void> setMediaQuality(MediaQuality quality) =>
       _set('mediaQuality', quality.name, mediaQuality.name);
 
+  /// What was searched for lately, newest first, at most [_maxRecent].
+  List<String> get recentSearches {
+    final stored = _values['recentSearches'];
+    return stored is List ? stored.whereType<String>().toList() : [];
+  }
+
+  static const _maxRecent = 8;
+
+  /// Remembers [query] as the newest search. One searched before moves to
+  /// the front instead of appearing twice.
+  Future<void> addRecentSearch(String query) {
+    final trimmed = query.trim();
+    final current = recentSearches;
+    if (trimmed.isEmpty) return Future.value();
+    final updated = [
+      trimmed,
+      ...current.where((q) => q.toLowerCase() != trimmed.toLowerCase()),
+    ].take(_maxRecent).toList();
+    return _setList('recentSearches', updated, current);
+  }
+
+  Future<void> clearRecentSearches() =>
+      _setList('recentSearches', const [], recentSearches);
+
   T _read<T>(String key, T fallback) {
     final value = _values[key];
     return value is T ? value : fallback;

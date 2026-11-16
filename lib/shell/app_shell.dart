@@ -25,6 +25,7 @@ import '../location/create_location_screen.dart';
 import '../location/location_detail_screen.dart';
 import '../location/location_provider.dart';
 import '../location/place_name_lookup.dart';
+import '../search/search_screen.dart';
 import '../settings/app_settings.dart';
 import '../settings/reminder_scheduler.dart';
 import '../location/location_section_screen.dart';
@@ -262,6 +263,19 @@ class _AppShellState extends State<AppShell> {
     );
   }
 
+  void _openSearch() {
+    Navigator.of(context).push(
+      MaterialPageRoute<void>(
+        builder: (_) => SearchScreen(
+          repository: widget.repository,
+          settings: widget.settings,
+          onOpenLog: _openDetail,
+          onBack: () => Navigator.of(context).pop(),
+        ),
+      ),
+    );
+  }
+
   void _openPrivacy() {
     Navigator.of(context).push(
       MaterialPageRoute<void>(
@@ -327,6 +341,7 @@ class _AppShellState extends State<AppShell> {
                 settings: widget.settings,
                 now: widget.now,
                 onOpenLog: _openDetail,
+                onSearchTap: _openSearch,
               ),
               LibraryScreen(
                 repository: widget.repository,

@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:moment/calendar/calendar_screen.dart';
+import 'package:moment/search/search_screen.dart';
 
 import 'shell_harness.dart';
 
@@ -45,6 +46,36 @@ void main() {
     // The text detail screen, with its own controls.
     expect(find.bySemanticsLabel('Edit'), findsOneWidget);
     expect(find.text('Finished the book'), findsOneWidget);
+
+    await shell.close(tester);
+  });
+
+  testWidgets('search: from Home, find a log and open it', (tester) async {
+    final shell = await ShellHarness.pump(tester, now: () => now);
+    await shell.repo.createText(
+      body: 'Morning light on the balcony',
+      createdAt: DateTime.utc(2026, 11, 6, 8, 40),
+    );
+    await shell.repo.createText(
+      body: 'Something else entirely',
+      createdAt: DateTime.utc(2026, 11, 6, 9),
+    );
+    await tester.pumpAndSettle();
+
+    await tester.tap(find.byIcon(Icons.search));
+    await tester.pumpAndSettle();
+    expect(find.byType(SearchScreen), findsOneWidget);
+
+    await tester.enterText(find.byType(TextField), 'balc');
+    await tester.pumpAndSettle();
+    expect(find.text('TEXT · 1'), findsOneWidget);
+
+    await tester.tap(find.text('Fri 6 Nov · 08:40'));
+    await tester.pumpAndSettle();
+
+    // The detail screen, over the search.
+    expect(find.bySemanticsLabel('Edit'), findsOneWidget);
+    expect(find.text('Morning light on the balcony'), findsOneWidget);
 
     await shell.close(tester);
   });
