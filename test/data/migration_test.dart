@@ -150,6 +150,45 @@ void _writeV3Database(String path) {
   raw.close();
 }
 
+/// A database as 0.3.0 left it (schemaVersion 4): the 0.2.0 tables plus
+/// video_log and location_log, with one log of every type, and no search
+/// index.
+void _writeV4Database(String path) {
+  _writeV3Database(path);
+  final raw = sqlite3.sqlite3.open(path);
+  raw.execute('''
+    CREATE TABLE video_log (
+      log_id TEXT NOT NULL PRIMARY KEY REFERENCES log(id) ON DELETE CASCADE,
+      path TEXT NOT NULL,
+      poster_path TEXT NOT NULL,
+      duration_ms INTEGER NOT NULL,
+      caption TEXT
+    );
+    CREATE TABLE location_log (
+      log_id TEXT NOT NULL PRIMARY KEY REFERENCES log(id) ON DELETE CASCADE,
+      latitude REAL NOT NULL,
+      longitude REAL NOT NULL,
+      accuracy_m REAL,
+      name TEXT,
+      note TEXT
+    );
+  ''');
+  raw.execute(
+    'INSERT INTO log (id, type, created_at_ms, tz_offset_minutes) '
+    "VALUES ('v', 'video', 0, 0), ('l', 'location', 0, 0)",
+  );
+  raw.execute(
+    "INSERT INTO video_log VALUES ('v', '/v.mp4', '/v.jpg', 48000, "
+    "'Walk to the station')",
+  );
+  raw.execute(
+    "INSERT INTO location_log VALUES ('l', 12.5, 77.25, 12, "
+    "'Favourite bench', 'by the lake')",
+  );
+  raw.execute('PRAGMA user_version = 4');
+  raw.close();
+}
+
 void main() {
   test(
     'a 0.1.0 database upgrades to add photo_log, with every existing log intact',
@@ -249,5 +288,74 @@ void main() {
     expect(await repo.getById(id), isA<LocationLog>());
 
     await db.close();
+  });
+
+  test(
+    'a 0.3.0 database opens in 0.4.0 intact, and is searchable at once',
+    () async {
+      final dir = Directory.systemTemp.createTempSync('migration_test_');
+      addTearDown(() => dir.deleteSync(recursive: true));
+      final dbPath = p.join(dir.path, 'moment.db');
+      _writeV4Database(dbPath);
+
+      final db = AppDatabase(NativeDatabase(File(dbPath)));
+      final repo = LogRepository(db);
+
+      // Nothing lost.
+      expect(await repo.getAll(), hasLength(6));
+      expect((await repo.getById('t') as TextLog).body, 'written in 0.2.0');
+      final video = await repo.getById('v') as VideoLog;
+      expect(video.caption, 'Walk to the station');
+      expect(video.duration, const Duration(seconds: 48));
+      final place = await repo.getById('l') as LocationLog;
+      expect((place.latitude, place.longitude), (12.5, 77.25));
+      expect(place.note, 'by the lake');
+
+      // Logs written before the index existed are in it.
+      expect((await repo.search('written')).single, isA<TextLog>());
+      expect((await repo.search('calm')).single, isA<EmojiLog>());
+      expect((await repo.search('voice')).single, isA<AudioLog>());
+      expect((await repo.search('station')).single, isA<VideoLog>());
+      expect((await repo.search('bench')).single, isA<LocationLog>());
+      expect((await repo.search('lake')).single, isA<LocationLog>());
+
+      // And new ones join it.
+      await repo.createText(body: 'written in 0.4.0');
+      expect(await repo.search('written'), hasLength(2));
+
+      await db.close();
+    },
+  );
+
+  test('a 0.1.0 database gains the search index on the way up', () async {
+    final dir = Directory.systemTemp.createTempSync('migration_test_');
+    addTearDown(() => dir.deleteSync(recursive: true));
+    final dbPath = p.join(dir.path, 'moment.db');
+    _writeV1Database(dbPath);
+
+    final db = AppDatabase(NativeDatabase(File(dbPath)));
+    final repo = LogRepository(db);
+
+    expect(await repo.search('written'), hasLength(1));
+
+    await db.close();
+  });
+
+  test('opening an upgraded database again changes nothing', () async {
+    final dir = Directory.systemTemp.createTempSync('migration_test_');
+    addTearDown(() => dir.deleteSync(recursive: true));
+    final dbPath = p.join(dir.path, 'moment.db');
+    _writeV4Database(dbPath);
+
+    final first = AppDatabase(NativeDatabase(File(dbPath)));
+    await LogRepository(first).search('bench');
+    await first.close();
+    final second = AppDatabase(NativeDatabase(File(dbPath)));
+    final repo = LogRepository(second);
+
+    expect(await repo.getAll(), hasLength(6));
+    expect(await repo.search('bench'), hasLength(1));
+
+    await second.close();
   });
 }
