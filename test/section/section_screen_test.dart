@@ -18,6 +18,7 @@ void main() {
     LogRepository repo,
     LogType type, {
     VoidCallback? onBack,
+    VoidCallback? onSearch,
     ValueChanged<Log>? onOpenLog,
   }) async {
     await tester.binding.setSurfaceSize(const Size(390, 844));
@@ -29,6 +30,7 @@ void main() {
           type: type,
           repository: repo,
           onBack: onBack,
+          onSearch: onSearch,
           onOpenLog: onOpenLog,
         ),
       ),
@@ -110,6 +112,22 @@ void main() {
 
     expect(find.text('gone'), findsNothing);
     expect(find.text('0 logs'), findsOneWidget);
+
+    await tester.pumpWidget(const SizedBox());
+    await tester.pumpAndSettle();
+    await db.close();
+  });
+
+  testWidgets('the Search button opens search', (tester) async {
+    final db = AppDatabase(NativeDatabase.memory());
+    final repo = LogRepository(db);
+    var searched = false;
+
+    await pump(tester, repo, LogType.text, onSearch: () => searched = true);
+    await tester.pump();
+    await tester.tap(find.byIcon(Icons.search));
+
+    expect(searched, isTrue);
 
     await tester.pumpWidget(const SizedBox());
     await tester.pumpAndSettle();

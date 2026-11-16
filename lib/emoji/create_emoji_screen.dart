@@ -91,6 +91,7 @@ class _CreateEmojiScreenState extends State<CreateEmojiScreen> {
                       Semantics(
                         button: true,
                         label: 'Close without saving',
+                        onTap: widget.onClose,
                         excludeSemantics: true,
                         child: GestureDetector(
                           onTap: widget.onClose,
@@ -296,6 +297,7 @@ class _StrengthButton extends StatelessWidget {
     return Semantics(
       button: true,
       label: label,
+      onTap: onTap,
       excludeSemantics: true,
       child: GestureDetector(
         onTap: onTap,
@@ -359,6 +361,7 @@ class _MoodCell extends StatelessWidget {
     return Semantics(
       button: true,
       label: '$label${isSelected ? ', selected' : ''}',
+      onTap: onTap,
       excludeSemantics: true,
       child: GestureDetector(
         onTap: onTap,

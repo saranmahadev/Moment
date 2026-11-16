@@ -84,6 +84,7 @@ class TrashScreen extends StatelessWidget {
                     Semantics(
                       button: true,
                       label: 'Back',
+                      onTap: onBack,
                       excludeSemantics: true,
                       child: GestureDetector(
                         onTap: onBack,

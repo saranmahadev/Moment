@@ -206,26 +206,32 @@ class _VideoDetailScreenState extends State<VideoDetailScreen> {
                     aspectRatio: 16 / 10,
                     child: ClipRRect(
                       borderRadius: BorderRadius.circular(28),
-                      child: GestureDetector(
+                      child: Semantics(
+                        button: true,
+                        label: 'Video. Tap to play or pause',
                         onTap: _togglePlay,
-                        child: Stack(
-                          fit: StackFit.expand,
-                          children: [
-                            if (_started)
-                              ColoredBox(
-                                color: Colors.black,
-                                child: widget.playback.buildView(),
-                              )
-                            else
-                              VideoPoster(
-                                path: _log.posterPath,
-                                tokens: tokens,
-                              ),
-                            if (!_playing)
-                              Center(
-                                child: PlayBadge(tokens: tokens, size: 64),
-                              ),
-                          ],
+                        excludeSemantics: true,
+                        child: GestureDetector(
+                          onTap: _togglePlay,
+                          child: Stack(
+                            fit: StackFit.expand,
+                            children: [
+                              if (_started)
+                                ColoredBox(
+                                  color: Colors.black,
+                                  child: widget.playback.buildView(),
+                                )
+                              else
+                                VideoPoster(
+                                  path: _log.posterPath,
+                                  tokens: tokens,
+                                ),
+                              if (!_playing)
+                                Center(
+                                  child: PlayBadge(tokens: tokens, size: 64),
+                                ),
+                            ],
+                          ),
                         ),
                       ),
                     ),
@@ -385,6 +391,7 @@ class _RoundIconButton extends StatelessWidget {
     return Semantics(
       button: true,
       label: label,
+      onTap: onTap,
       excludeSemantics: true,
       child: GestureDetector(
         onTap: onTap,
@@ -422,6 +429,7 @@ class _RoundControl extends StatelessWidget {
     return Semantics(
       button: true,
       label: label,
+      onTap: onTap,
       excludeSemantics: true,
       child: GestureDetector(
         onTap: onTap,

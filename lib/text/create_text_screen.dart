@@ -132,6 +132,7 @@ class _CreateTextScreenState extends State<CreateTextScreen> {
                       Semantics(
                         button: true,
                         label: 'Close without saving',
+                        onTap: widget.onClose,
                         excludeSemantics: true,
                         child: GestureDetector(
                           onTap: widget.onClose,
@@ -216,7 +217,7 @@ class _CreateTextScreenState extends State<CreateTextScreen> {
                     child: GestureDetector(
                       onTap: _pickDate,
                       child: SizedBox(
-                        height: 40,
+                        height: 44,
                         child: GlassSurface(
                           variant: GlassVariant.card,
                           borderRadius: 20,

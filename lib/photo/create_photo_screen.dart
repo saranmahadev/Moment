@@ -167,6 +167,7 @@ class _Header extends StatelessWidget {
         Semantics(
           button: true,
           label: 'Close without saving',
+          onTap: onClose,
           excludeSemantics: true,
           child: GestureDetector(
             onTap: onClose,

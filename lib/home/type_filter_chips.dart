@@ -100,6 +100,7 @@ class _Chip extends StatelessWidget {
     return Semantics(
       button: true,
       selected: isSelected,
+      onTap: onTap,
       excludeSemantics: true,
       label: label,
       child: GestureDetector(

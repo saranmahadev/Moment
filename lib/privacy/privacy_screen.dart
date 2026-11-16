@@ -10,6 +10,7 @@ import '../export/export_coordinator.dart';
 import '../settings/app_settings.dart';
 import '../storage/storage_service.dart';
 import '../design/orb_field.dart';
+import '../design/round_glass_button.dart';
 import '../design/tokens.dart';
 import '../lock/app_lock_controller.dart';
 import '../lock/create_pin_screen.dart';
@@ -186,21 +187,13 @@ class _PrivacyScreenState extends State<PrivacyScreen> {
             child: ListView(
               padding: const EdgeInsets.fromLTRB(20, 16, 20, 20),
               children: [
-                Semantics(
-                  button: true,
-                  label: 'Back',
-                  excludeSemantics: true,
-                  child: GestureDetector(
+                // Aligned, or the list would stretch it across the screen.
+                Align(
+                  alignment: Alignment.centerLeft,
+                  child: RoundGlassButton(
+                    icon: Icons.chevron_left,
+                    label: 'Back',
                     onTap: widget.onBack,
-                    child: SizedBox(
-                      width: 44,
-                      height: 44,
-                      child: GlassSurface(
-                        variant: GlassVariant.card,
-                        borderRadius: 22,
-                        child: Icon(Icons.chevron_left, color: tokens.ink),
-                      ),
-                    ),
                   ),
                 ),
                 const SizedBox(height: 10),
@@ -725,6 +718,7 @@ class _ExportChip extends StatelessWidget {
       button: true,
       selected: selected,
       label: momentLabelFor(type),
+      onTap: onTap,
       excludeSemantics: true,
       child: GestureDetector(
         onTap: onTap,

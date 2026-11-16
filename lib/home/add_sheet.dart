@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
 import '../design/glass_surface.dart';
+import '../design/text_growth.dart';
 import '../design/tokens.dart';
 import '../design/type_icons.dart';
 import '../domain/log_type.dart';
@@ -79,6 +80,7 @@ class AddSheet extends StatelessWidget {
                   Semantics(
                     button: true,
                     label: 'Close',
+                    onTap: onClose,
                     excludeSemantics: true,
                     child: GestureDetector(
                       onTap: onClose,
@@ -102,7 +104,8 @@ class AddSheet extends StatelessWidget {
                 physics: const NeverScrollableScrollPhysics(),
                 mainAxisSpacing: 12,
                 crossAxisSpacing: 12,
-                childAspectRatio: 0.92,
+                // Taller cards when the system text size is larger.
+                childAspectRatio: 0.92 / textGrowth(context),
                 children: [
                   for (final type in builtLogTypes)
                     _TypeCard(

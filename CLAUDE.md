@@ -17,7 +17,7 @@ Releases: Phase 1 = 0.1.0 (Foundation, Text and Emoji), 2 = 0.2.0 (Photo, Audio,
 
 ## State
 
-Phases 1, 2 and 3 are released (`v0.1.0`, `v0.2.0`, `v0.3.0`): all six log types (Text, Emoji, Photo, Video, Audio, Location) can be created, viewed, edited, deleted, restored, exported and backed up. `CHANGELOG.md` has the detail per release. Next is Phase 4 (Calendar, Search, Settings, dark mode) in `docs/ROADMAP.md`. CI pins Flutter 3.47.9; develop and verify on that version. First time setup is in `README.md` (`flutter create` for platform folders, then `build_runner`).
+Phases 1, 2 and 3 are released (`v0.1.0` and `v0.2.0` await their tags from the owner, `v0.3.0` is published with its APK). Phase 4 (Calendar, Search, Settings, dark mode) is built on `main` and waits for the owner to approve Calendar, Search, Settings and the dark theme before `0.4.0` is released. `CHANGELOG.md` has the detail per release. After that comes Phase 5 (polish and hardening, 1.0.0) in `docs/ROADMAP.md`. CI pins Flutter 3.47.9; develop and verify on that version. First time setup is in `README.md` (`flutter create` for platform folders, then `build_runner`).
 
 Tags are never pushed by hand: the **Release** workflow (`.github/workflows/release.yml`, run with a version and optionally a commit) checks, builds, tags and publishes the APK in one go. See `docs/WORKFLOW.md`, "Releases".
 
@@ -77,10 +77,22 @@ Screens in Phase 1: Lock, Home, Add, Library, New text, New emoji, Text section,
 - `test/live/` talks to the real service and is skipped everywhere (`dart_test.yaml`, tag `live`) except the hand-run **Live check** workflow.
 - `appVersion` in `lib/app/app_info.dart` must equal `pubspec.yaml` (tested); bump both at a release.
 
+## Phase 4 decisions (Calendar, Search, Settings, dark mode)
+
+- Settings live in `AppSettings` (see above): `themeMode`, `reduceTransparency`, `quickEmoji` (always five), `reminderOn` and `reminderTime`, `mediaQuality`, `recentSearches` (newest first, at most eight). Every setter notifies at once and then writes.
+- Themes: `momentTheme({brightness, reduceTransparency})`; `MomentTokens.standard` (light, from the mockups) and `MomentTokens.dark` (designed in Phase 4, since the mockups are light only; awaiting the owner's approval). `ThemedApp` builds the `MaterialApp` from the settings. Screens never write a colour: `test/design/no_fixed_colours_test.dart` allows fixed colours only in the token file, the glass film and the video player. Use `tokens.onInk` on ink-filled controls and `tokens.scrim` for pills over media.
+- Reduce Transparency is a flag on the tokens: `GlassSurface` then draws `solidSurface` with no `BackdropFilter`. `GlassSurface` is the only blur in the app.
+- Calendar (`lib/calendar/`): `monthGrid` (six weeks from Monday, UTC midnights), `logsByDay` on `Log.localDay`, so travel and daylight saving move nothing; `summaryOf(log)` is the one-line description used by Calendar and Search.
+- Search: schema version 5 adds an FTS5 table `log_search(log_id UNINDEXED, content)` with insert, update and delete triggers on each type table, created by `AppDatabase._createSearchIndex` (not a Drift table, so it is not in backups; restore fills it through the triggers). `rebuildSearchIndex()` refills it. `LogRepository.search` matches every typed word from its start, ignoring case and accents, never returns Trash, and is tested at 20,000 logs under 200 ms. `highlightParts` marks matches by the same rule.
+- Reminder: `ReminderScheduler` seam over `flutter_local_notifications` (kept below 23, which needs Android compile SDK 37), inexact daily notification, rescheduled at each launch. The notification text says nothing from the journal.
+- Photo quality: `MediaStore(photoQuality:)` scales the long edge to 2560 or 1600 px; videos are never re-encoded.
+- Accessibility: a labelled button written as `Semantics(excludeSemantics: true, child: GestureDetector)` must also pass `onTap` to the `Semantics` (the exclusion hides the child's tap from screen readers); `test/gate/semantics_source_test.dart` enforces it. Fixed-shape layouts grow with the text size through `lib/design/text_growth.dart`.
+- Every-screen checks: `test/support/screen_cases.dart` lists all 27 mockup screens plus About and the quick-emoji editor; `test/gate/all_screens_test.dart` runs each through Reduce Transparency (no blur, both themes), labels, 44 pt targets, text at 200 %, and light and dark goldens drawn with the app's real fonts. Add a new screen to that list.
+
 ## Visual language (for the design system chunk)
 
 Minimal, frictionless glassmorphism. Newsreader for words, Inter for UI. Real blur only on floating surfaces (tab bar, sheets, header buttons). Feed cards use a translucent fill, gradient edge and soft shadow, because blur in scrolling lists janks on mid-range phones. Type colours: Text #1D4ED8, Emoji #B45309, Photo #BE185D, Video #6D28D9, Audio #0F766E, Location #15803D. Primary buttons ink #1B1F2A. Ground #EDF0F7. Tab bar: Home, Library, + (Add), Calendar, Settings. The mockups' source files are in the mockup artifact; goldens must match them.
 
 ## Open decisions (defaults until the owner says otherwise)
 
-Minimum iOS 16 and Android 8 (API 26). Placeholder map, no real offline map. App lock is a screen gate (4-digit PIN plus Face ID). Dark mode is designed at the start of Phase 4. No first-run backup explainer unless approved.
+Minimum iOS 16 and Android 8 (API 26). Placeholder map, no real offline map. App lock is a screen gate (4-digit PIN plus Face ID). The dark palette was designed in Phase 4 and awaits approval. No first-run backup explainer unless approved.
