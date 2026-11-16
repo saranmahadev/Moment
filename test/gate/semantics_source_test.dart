@@ -19,6 +19,14 @@ void main() {
       final lines = file.readAsLinesSync();
       for (var i = 0; i < lines.length; i++) {
         if (!lines[i].trimRight().endsWith('Semantics(')) continue;
+        // Wrapped directly by a GestureDetector, the tap and the label
+        // already share one node.
+        final wrapped =
+            lines[i].trim() == 'child: Semantics(' &&
+            lines
+                .sublist(i < 8 ? 0 : i - 8, i)
+                .any((line) => line.contains('GestureDetector('));
+        if (wrapped) continue;
         // The widget's own arguments: the lines one level in, up to child.
         final indent = RegExp(r'^\s*').stringMatch(lines[i + 1])!;
         final arguments = <String>[];
