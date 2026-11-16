@@ -19,9 +19,24 @@ dart run build_runner build --delete-conflicting-outputs
 ```sh
 dart run build_runner watch --delete-conflicting-outputs   # regenerate Drift code
 flutter test                                                # all tests
+flutter test --exclude-tags slow                            # skip the 1 GB video test
 flutter analyze
 dart format .
+
+# Regenerate the light and dark baselines of every screen after a deliberate change
+flutter test --update-goldens test/gate/all_screens_test.dart --plain-name goldens
+
+# Write every screen to build/previews/ as PNG (light, dark, glass, solid) to look at
+flutter test --run-skipped --tags preview test/gate/previews_test.dart
 ```
+
+## Checks on every screen
+
+`test/support/screen_cases.dart` lists every screen of the app. `test/gate/all_screens_test.dart` runs each one through the same checks: Reduce Transparency leaves no blur in either theme, every control has a label and a 44 pt tap target, text fits at 200 % size, and it matches its light and dark baseline. A new screen joins all of them by being added to that list.
+
+## Releasing
+
+Run the **Release** workflow (Actions → Release → Run workflow) with the version. It checks, builds, tags and publishes the APK in one go. See `docs/WORKFLOW.md`, "Releases", including how to set up the signing key so updates install over each other.
 
 ## Privacy checks
 
