@@ -1,46 +1,183 @@
-# Moment
+<div align="center">
 
-A completely local life journal. Six separate log types: Text, Emoji, Photo, Video, Audio and Location. No cloud, no account, no analytics. The app uses the internet for one thing only, and only if you turn it on: "Look up place names" (off by default) sends a new pin's coordinates to OpenStreetMap to suggest a name.
+<picture>
+  <source media="(prefers-color-scheme: dark)" srcset="design/logo/lockup-dark.svg">
+  <img src="design/logo/lockup.svg" alt="Moment" height="96">
+</picture>
 
-Built in five phases, one release each: 0.1.0, 0.2.0, 0.3.0, 0.4.0, then 1.0.0. Every phase is built test-first. See `docs/WORKFLOW.md` for the git and TDD rules.
+### A private journal of your days
 
-## First-time setup
+Six kinds of log, encrypted on your phone. No account, no cloud.
+
+[![CI](https://github.com/saranmahadev/Moment/actions/workflows/ci.yml/badge.svg)](https://github.com/saranmahadev/Moment/actions/workflows/ci.yml)
+[![Latest release](https://img.shields.io/github/v/release/saranmahadev/Moment?label=release)](https://github.com/saranmahadev/Moment/releases/latest)
+[![Licence: GPL-3.0](https://img.shields.io/badge/licence-GPL--3.0-blue)](LICENSE)
+
+[**Website**](https://saranmahadev.github.io/Moment/) · [**Download**](https://github.com/saranmahadev/Moment/releases/latest) · [**Changelog**](CHANGELOG.md) · [**Contributing**](CONTRIBUTING.md)
+
+<a href="https://saranmahadev.github.io/Moment/#film">
+  <img src="site/media/moment-preview.gif" alt="A short film introducing Moment: the logo, then the six kinds of log" width="720">
+</a>
+
+</div>
+
+## What it is
+
+Moment is a life journal for your phone. It keeps what you write, feel, see, hear and where you were, as six **separate** kinds of log that are never merged into one mixed-up entry:
+
+| Kind | What it holds |
+|---|---|
+| **Text** | What is on your mind, in your own words |
+| **Emoji** | How you feel and how strongly, in one tap |
+| **Photo** | What you saw, with location data stripped on the way in |
+| **Video** | How it moved, kept exactly as recorded |
+| **Audio** | A voice note, with a title and a note |
+| **Location** | Where you were: a pin, a name and a note |
+
+Everything stays on the device, in an encrypted database. There is nothing to sign up for.
+
+> **Status:** version 0.4.0, a preview on the way to 1.0. Every screen exists and the app is usable day to day, but it has had little testing on real phones yet. See [Status and roadmap](#status-and-roadmap).
+
+## Screens
+
+<table>
+  <tr>
+    <td><img src="site/screens/home_light.webp" alt="Home: today's logs of every kind in one feed" width="200"></td>
+    <td><img src="site/screens/calendar_light.webp" alt="Calendar: a month with a dot per kind of log" width="200"></td>
+    <td><img src="site/screens/search_results_light.webp" alt="Search: results grouped by kind, matches highlighted" width="200"></td>
+    <td><img src="site/screens/home_dark.webp" alt="Home in the dark theme" width="200"></td>
+  </tr>
+  <tr>
+    <td align="center">Home</td>
+    <td align="center">Calendar</td>
+    <td align="center">Search</td>
+    <td align="center">Dark theme</td>
+  </tr>
+</table>
+
+More on the [website](https://saranmahadev.github.io/Moment/#screens). These are renders from the test suite, with placeholder frames where photos and video would be.
+
+## Features
+
+- **Home** shows today's logs of every kind in one calm feed, with a one-tap mood row you can customise.
+- **Library** has a section for each kind of log.
+- **Calendar**: a month at a glance with a dot per kind on each day. Days are the ones logs were made on, so travel and daylight saving move nothing.
+- **Search**: full-text search as you type across everything you have written, named or captioned, on the device (SQLite FTS5). Fast at 20,000 logs.
+- **Encrypted backup**: one passphrase-protected `.moment` file holds every log and media file. Restore is all or nothing.
+- **Export** to Markdown, JSON and the original files, for the kinds you choose.
+- **App lock**: a PIN, with Face ID or fingerprint.
+- **Trash**: deleted logs wait 30 days, then go for good, files included.
+- **Light and dark** themes, and **Reduce Transparency** for solid surfaces.
+- **Accessible**: every control is labelled for screen readers, tap targets are at least 44 pt, and text fits at 200% size.
+- **Evening reminder**: a notification made on the phone, which never shows anything from the journal.
+
+## Privacy
+
+Moment is private by how it is built, not by a policy.
+
+- **No account, no cloud, no analytics, no ads.**
+- **Encrypted at rest.** The database is encrypted (SQLite3MultipleCiphers) with a random key made on the device and kept in the Keychain or Keystore. Backups are encrypted with a passphrase only you know.
+- **One exception, off by default.** "Look up place names" sends the coordinates of a new pin to OpenStreetMap to suggest a name. It is the only thing in the app that uses the internet, and with the switch off the app is not even handed the code that does it.
+
+This is checked, not just claimed:
+
+- `test/location/network_boundary_test.dart` keeps network code to one file, one address, over HTTPS, and keeps HTTP and geocoding packages out of the dependencies.
+- `tool/check_manifest.dart` lists every permission the Android release build asks for and fails CI on ones a private journal never needs (background location, advertising id, contacts, SMS, call log).
+- The **Live check** workflow asks the real place-name service two questions, to confirm the one request the app can send still works.
+
+Found a security or privacy problem? Please see [SECURITY.md](SECURITY.md).
+
+## Install
+
+### Android
+
+Download the APK from the [latest release](https://github.com/saranmahadev/Moment/releases/latest) and open it on your phone. Android will ask you to allow installing from your browser or file manager.
+
+> Until 1.0, releases are signed with a temporary key, so a new version does not install over the old one. Back up in the app (Settings → Privacy and backup), uninstall, install the new version, then restore.
+
+### iPhone
+
+Moment is not in the App Store yet. You can build and run it yourself with Xcode: see below.
+
+## Build it yourself
+
+You need [Flutter](https://docs.flutter.dev/get-started/install) 3.47.9, the version CI uses.
 
 ```sh
-# Once, to create the android/ and ios/ folders, then commit them:
-flutter create . --platforms=android,ios --project-name moment --org app.moment
-
+git clone https://github.com/saranmahadev/Moment
+cd Moment
 flutter pub get
-dart run build_runner build --delete-conflicting-outputs
+dart run build_runner build --delete-conflicting-outputs   # generates the database code
+flutter run                                                # on a connected phone or simulator
 ```
 
-## Everyday commands
+To build a release APK: `flutter build apk --release`.
+
+## Development
 
 ```sh
-dart run build_runner watch --delete-conflicting-outputs   # regenerate Drift code
-flutter test                                                # all tests
-flutter test --exclude-tags slow                            # skip the 1 GB video test
+flutter test                         # everything, including a 1 GB video test
+flutter test --exclude-tags slow     # the quick run
 flutter analyze
 dart format .
+dart run build_runner watch --delete-conflicting-outputs
+```
 
-# Regenerate the light and dark baselines of every screen after a deliberate change
+Work is test-first: a failing test is committed before the change that makes it pass. [CONTRIBUTING.md](CONTRIBUTING.md) has the rules, and `docs/WORKFLOW.md` the full working agreement.
+
+### Checks on every screen
+
+`test/support/screen_cases.dart` lists every screen of the app. `test/gate/all_screens_test.dart` runs each through the same checks: no live blur, Reduce Transparency in both themes, a label and a 44 pt target for every control, text at 200% size, and a light and a dark baseline image. A new screen joins all of them by being added to that list.
+
+```sh
+# Regenerate the baselines after a deliberate visual change
 flutter test --update-goldens test/gate/all_screens_test.dart --plain-name goldens
 
-# Write every screen to build/previews/ as PNG (light, dark, glass, solid) to look at
+# Write every screen to build/previews/ as PNG (light, dark, glass, solid)
 flutter test --run-skipped --tags preview test/gate/previews_test.dart
 ```
 
-## Checks on every screen
+### Where things are
 
-`test/support/screen_cases.dart` lists every screen of the app. `test/gate/all_screens_test.dart` runs each one through the same checks: Reduce Transparency leaves no blur in either theme, every control has a label and a 44 pt tap target, text fits at 200 % size, and it matches its light and dark baseline. A new screen joins all of them by being added to that list.
+| Path | What is there |
+|---|---|
+| `lib/data/` | Encrypted database (Drift), the one repository every screen goes through, media storage |
+| `lib/domain/` | The six kinds of log |
+| `lib/design/` | Tokens (colours, glass recipes), theme, shared widgets |
+| `lib/home/`, `lib/library/`, `lib/calendar/`, `lib/search/`, `lib/settings/`, `lib/privacy/` | Screens |
+| `lib/text/`, `lib/emoji/`, `lib/photo/`, `lib/video/`, `lib/audio/`, `lib/location/` | Creating and viewing each kind |
+| `lib/backup/`, `lib/export/` | Encrypted backup, restore and export |
+| `test/` | Tests, mirroring `lib/`; `test/gate/` holds the every-screen checks |
+| `design/` | Mockups, the logo and the film, with the scripts that build them |
+| `site/` | The project website, published to GitHub Pages |
+| `docs/` | Roadmap and working agreement |
 
-## Releasing
+### Releasing
 
-Run the **Release** workflow (Actions → Release → Run workflow) with the version. It checks, builds, tags and publishes the APK in one go. See `docs/WORKFLOW.md`, "Releases", including how to set up the signing key so updates install over each other.
+Run the **Release** workflow (Actions → Release → Run workflow) with the version. It checks, builds, tags and publishes the APK in one go. See `docs/WORKFLOW.md`, "Releases".
 
-## Privacy checks
+## Status and roadmap
 
-- `test/location/network_boundary_test.dart` keeps network code to one file (the opt-in place-name lookup, one host, HTTPS) and keeps HTTP and geocoding packages out of the dependencies. With the setting off, the app is never even handed the lookup.
-- `tool/check_manifest.dart` lists every permission the built Android manifest asks for and fails on ones a private journal never needs (background location, advertising id, contacts, SMS, call log). CI runs it on the release build.
-- The **Live check** workflow (run by hand) asks the real place-name service two questions, to confirm the request the app sends still works.
-- The database is encrypted with SQLite3MultipleCiphers. The key is random, created on first launch, and kept in the Keychain or Keystore.
+| Version | What | State |
+|---|---|---|
+| 0.1 | Encrypted storage, app lock, Text and Emoji | Done |
+| 0.2 | Photo, Audio, encrypted backup and export | Done |
+| 0.3 | Video and Location | Released |
+| 0.4 | Calendar, Search, Settings, dark theme | Released |
+| 1.0 | Polish, hardening, signed releases | Next |
+
+The plan for each phase, with its tests and exit gate, is in [docs/ROADMAP.md](docs/ROADMAP.md).
+
+## Contributing
+
+Contributions are welcome. Start with [CONTRIBUTING.md](CONTRIBUTING.md): it explains the test-first workflow and the handful of rules that protect the privacy promise (no new network access, no new permissions without discussion).
+
+## Built with
+
+- [Flutter](https://flutter.dev) and [Drift](https://drift.simonbinder.eu) on [SQLite3 Multiple Ciphers](https://utelle.github.io/SQLite3MultipleCiphers/)
+- [Inter](https://rsms.me/inter/) and [Newsreader](https://github.com/productiontype/Newsreader), under the SIL Open Font License
+- Place names, when turned on, from [OpenStreetMap](https://www.openstreetmap.org/copyright) contributors
+
+## Licence
+
+Moment is free software, licensed under the [GNU General Public License v3.0](LICENSE). You can use it, study it, change it and share it; versions you distribute must stay under the same licence.
