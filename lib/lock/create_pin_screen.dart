@@ -107,6 +107,7 @@ class _CreatePinScreenState extends State<CreatePinScreen> {
                     child: Semantics(
                       button: true,
                       label: 'Cancel',
+                      onTap: widget.onCancel,
                       excludeSemantics: true,
                       child: GestureDetector(
                         onTap: widget.onCancel,

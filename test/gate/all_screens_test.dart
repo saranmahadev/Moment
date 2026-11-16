@@ -90,7 +90,7 @@ void main() {
           );
 
           await expectLater(
-            find.byType(MaterialApp),
+            find.byKey(screenBoundaryKey),
             matchesGoldenFile('goldens/${screen.name}_${brightness.name}.png'),
           );
 

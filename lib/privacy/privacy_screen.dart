@@ -189,6 +189,7 @@ class _PrivacyScreenState extends State<PrivacyScreen> {
                 Semantics(
                   button: true,
                   label: 'Back',
+                  onTap: widget.onBack,
                   excludeSemantics: true,
                   child: GestureDetector(
                     onTap: widget.onBack,
@@ -725,6 +726,7 @@ class _ExportChip extends StatelessWidget {
       button: true,
       selected: selected,
       label: momentLabelFor(type),
+      onTap: onTap,
       excludeSemantics: true,
       child: GestureDetector(
         onTap: onTap,

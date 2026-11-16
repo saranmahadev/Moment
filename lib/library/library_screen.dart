@@ -3,6 +3,7 @@ import 'package:intl/intl.dart';
 
 import '../data/log_repository.dart';
 import '../design/glass_surface.dart';
+import '../design/text_growth.dart';
 import '../design/tokens.dart';
 import '../design/type_icons.dart';
 import '../domain/log.dart';
@@ -76,7 +77,8 @@ class LibraryScreen extends StatelessWidget {
               physics: const NeverScrollableScrollPhysics(),
               mainAxisSpacing: 12,
               crossAxisSpacing: 12,
-              childAspectRatio: 0.78,
+              // Taller tiles when the system text size is larger.
+              childAspectRatio: 0.78 / textGrowth(context),
               children: [
                 for (final type in builtLogTypes)
                   _TypeTile(

@@ -159,7 +159,8 @@ class _SearchScreenState extends State<SearchScreen> {
                 cursorColor: tokens.ink,
                 decoration: InputDecoration(
                   border: InputBorder.none,
-                  isCollapsed: true,
+                  // Fills the pill, so the whole height takes a tap.
+                  contentPadding: const EdgeInsets.symmetric(vertical: 13),
                   hintText: 'Search your logs',
                   hintStyle: TextStyle(color: tokens.secondary),
                 ),
@@ -172,6 +173,7 @@ class _SearchScreenState extends State<SearchScreen> {
                   : Semantics(
                       button: true,
                       label: 'Clear search',
+                      onTap: _controller.clear,
                       excludeSemantics: true,
                       child: GestureDetector(
                         onTap: _controller.clear,

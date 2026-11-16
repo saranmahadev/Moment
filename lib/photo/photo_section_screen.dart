@@ -1,6 +1,7 @@
 import 'dart:io';
 
 import 'package:flutter/material.dart';
+import 'package:intl/intl.dart';
 
 import '../data/log_repository.dart';
 import '../design/glass_surface.dart';
@@ -9,6 +10,8 @@ import '../design/tokens.dart';
 import '../design/type_icons.dart';
 import '../domain/log.dart';
 import '../domain/log_type.dart';
+
+final _tileDate = DateFormat('d MMMM y');
 
 /// Photos, as a grid: Library opens this when the Photo tile is tapped.
 /// Matches design/mockups/png/13-Section-Photos.png (month grouping is a
@@ -48,6 +51,7 @@ class PhotoSectionScreen extends StatelessWidget {
                       children: [
                         Semantics(
                           button: true,
+                          onTap: onBack,
                           label: 'Back to Library',
                           excludeSemantics: true,
                           child: GestureDetector(
@@ -124,14 +128,23 @@ class PhotoSectionScreen extends StatelessWidget {
                       itemCount: logs.length,
                       itemBuilder: (context, index) {
                         final log = logs[index] as PhotoLog;
-                        return GestureDetector(
-                          key: ValueKey('photo-tile-${log.id}'),
+                        final caption = log.caption;
+                        return Semantics(
+                          button: true,
+                          label:
+                              'Photo, ${_tileDate.format(log.localMoment)}'
+                              '${caption == null ? '' : ', $caption'}',
                           onTap: () => onOpenLog?.call(log),
-                          child: ClipRRect(
-                            borderRadius: BorderRadius.circular(16),
-                            child: Image.file(
-                              File(log.thumbnailPath),
-                              fit: BoxFit.cover,
+                          excludeSemantics: true,
+                          child: GestureDetector(
+                            key: ValueKey('photo-tile-${log.id}'),
+                            onTap: () => onOpenLog?.call(log),
+                            child: ClipRRect(
+                              borderRadius: BorderRadius.circular(16),
+                              child: Image.file(
+                                File(log.thumbnailPath),
+                                fit: BoxFit.cover,
+                              ),
                             ),
                           ),
                         );

@@ -338,34 +338,42 @@ class _Waveform extends StatelessWidget {
         padding: const EdgeInsets.all(16),
         child: LayoutBuilder(
           builder: (context, constraints) {
-            return GestureDetector(
-              onTapUp: (details) {
-                if (constraints.maxWidth <= 0) return;
-                final tapped = (details.localPosition.dx / constraints.maxWidth)
-                    .clamp(0.0, 1.0);
-                onSeekFraction(tapped);
-              },
-              child: SizedBox(
-                height: 64,
-                width: double.infinity,
-                child: peaks.isEmpty
-                    ? null
-                    : Row(
-                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                        children: [
-                          for (var i = 0; i < peaks.length; i++)
-                            Container(
-                              width: 3,
-                              height: 8 + peaks[i] * 48,
-                              decoration: BoxDecoration(
-                                color: (i / peaks.length) <= fraction
-                                    ? color
-                                    : tokens.ink.withValues(alpha: 0.2),
-                                borderRadius: BorderRadius.circular(2),
+            // Tapping the waveform jumps to that point, which means nothing
+            // without seeing it: screen readers get the play and 15-second
+            // buttons instead.
+            return ExcludeSemantics(
+              child: GestureDetector(
+                onTapUp: (details) {
+                  if (constraints.maxWidth <= 0) return;
+                  final tapped =
+                      (details.localPosition.dx / constraints.maxWidth).clamp(
+                        0.0,
+                        1.0,
+                      );
+                  onSeekFraction(tapped);
+                },
+                child: SizedBox(
+                  height: 64,
+                  width: double.infinity,
+                  child: peaks.isEmpty
+                      ? null
+                      : Row(
+                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                          children: [
+                            for (var i = 0; i < peaks.length; i++)
+                              Container(
+                                width: 3,
+                                height: 8 + peaks[i] * 48,
+                                decoration: BoxDecoration(
+                                  color: (i / peaks.length) <= fraction
+                                      ? color
+                                      : tokens.ink.withValues(alpha: 0.2),
+                                  borderRadius: BorderRadius.circular(2),
+                                ),
                               ),
-                            ),
-                        ],
-                      ),
+                          ],
+                        ),
+                ),
               ),
             );
           },
@@ -393,6 +401,7 @@ class _RoundIconButton extends StatelessWidget {
     return Semantics(
       button: true,
       label: label,
+      onTap: onTap,
       excludeSemantics: true,
       child: GestureDetector(
         onTap: onTap,
@@ -428,6 +437,7 @@ class _SkipButton extends StatelessWidget {
     return Semantics(
       button: true,
       label: label,
+      onTap: onTap,
       excludeSemantics: true,
       child: GestureDetector(
         onTap: onTap,
@@ -471,6 +481,7 @@ class _PlayPauseButton extends StatelessWidget {
     return Semantics(
       button: true,
       label: playing ? 'Pause' : 'Play',
+      onTap: onTap,
       excludeSemantics: true,
       child: GestureDetector(
         onTap: onTap,

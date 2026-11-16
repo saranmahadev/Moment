@@ -316,6 +316,7 @@ class _AppShellState extends State<AppShell> {
             type: type,
             repository: widget.repository,
             onBack: back,
+            onSearch: _openSearch,
             onOpenLog: _openDetail,
           ),
         },
@@ -469,6 +470,7 @@ class _DockItem extends StatelessWidget {
       button: true,
       selected: isActive,
       label: label,
+      onTap: onTap,
       excludeSemantics: true,
       child: GestureDetector(
         onTap: onTap,
@@ -511,6 +513,7 @@ class _AddButton extends StatelessWidget {
     return Semantics(
       button: true,
       label: 'Add a log',
+      onTap: onTap,
       excludeSemantics: true,
       child: GestureDetector(
         onTap: onTap,

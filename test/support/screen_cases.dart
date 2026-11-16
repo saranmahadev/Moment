@@ -401,6 +401,9 @@ final screenCases = <ScreenCase>[
   ),
 ];
 
+/// Wraps the screen [pumpScreenCase] shows; goldens are taken of it.
+const screenBoundaryKey = ValueKey('screen-under-test');
+
 /// Shows [screen] on a phone-sized surface in the given theme, the way
 /// the app would: with real theme tokens, and the orbs behind a tab
 /// screen. Returns the fixture, already registered for clean-up.
@@ -435,17 +438,22 @@ Future<ScreenFixture> pumpScreenCase(
         ).copyWith(textScaler: TextScaler.linear(textScale)),
         child: child!,
       ),
-      home: screen.withOrbs
-          ? Scaffold(
-              backgroundColor: theme.extension<MomentTokens>()!.ground,
-              body: Stack(
-                children: [
-                  const Positioned.fill(child: OrbField()),
-                  widget,
-                ],
-              ),
-            )
-          : widget,
+      // The boundary a golden is taken of: the screen at one pixel per
+      // logical pixel, like the other baselines.
+      home: RepaintBoundary(
+        key: screenBoundaryKey,
+        child: screen.withOrbs
+            ? Scaffold(
+                backgroundColor: theme.extension<MomentTokens>()!.ground,
+                body: Stack(
+                  children: [
+                    const Positioned.fill(child: OrbField()),
+                    widget,
+                  ],
+                ),
+              )
+            : widget,
+      ),
     ),
   );
   await tester.pump();

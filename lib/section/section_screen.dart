@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 
 import '../data/log_repository.dart';
 import '../design/glass_surface.dart';
+import '../design/round_glass_button.dart';
 import '../design/orb_field.dart';
 import '../design/tokens.dart';
 import '../design/type_icons.dart';
@@ -17,12 +18,14 @@ class SectionScreen extends StatelessWidget {
     required this.type,
     required this.repository,
     this.onBack,
+    this.onSearch,
     this.onOpenLog,
   });
 
   final LogType type;
   final LogRepository repository;
   final VoidCallback? onBack;
+  final VoidCallback? onSearch;
   final ValueChanged<Log>? onOpenLog;
 
   @override
@@ -49,6 +52,7 @@ class SectionScreen extends StatelessWidget {
                         Semantics(
                           button: true,
                           label: 'Back to Library',
+                          onTap: onBack,
                           excludeSemantics: true,
                           child: GestureDetector(
                             onTap: onBack,
@@ -67,19 +71,10 @@ class SectionScreen extends StatelessWidget {
                           ),
                         ),
                         const Spacer(),
-                        Semantics(
-                          button: true,
+                        RoundGlassButton(
+                          icon: Icons.search,
                           label: 'Search',
-                          excludeSemantics: true,
-                          child: SizedBox(
-                            width: 44,
-                            height: 44,
-                            child: GlassSurface(
-                              variant: GlassVariant.card,
-                              borderRadius: 22,
-                              child: Icon(Icons.search, color: tokens.ink),
-                            ),
-                          ),
+                          onTap: onSearch,
                         ),
                       ],
                     ),

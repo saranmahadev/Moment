@@ -4,6 +4,7 @@ import 'package:intl/intl.dart';
 import '../data/log_repository.dart';
 import '../design/glass_surface.dart';
 import '../design/round_glass_button.dart';
+import '../design/text_growth.dart';
 import '../design/tokens.dart';
 import '../design/type_icons.dart';
 import '../domain/log.dart';
@@ -331,12 +332,13 @@ class _DayCell extends StatelessWidget {
       label:
           '${_dayTitle.format(day)}${isToday ? ', today' : ''}, $count'
           '${selected ? ', selected' : ''}',
+      onTap: onTap,
       excludeSemantics: true,
       child: GestureDetector(
         onTap: onTap,
         behavior: HitTestBehavior.opaque,
         child: Container(
-          height: 52,
+          height: 52 + extraTextHeight(context, 15),
           margin: const EdgeInsets.all(1),
           decoration: BoxDecoration(
             color: selected ? tokens.ink.withValues(alpha: 0.07) : null,

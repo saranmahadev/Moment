@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import '../design/glass_surface.dart';
 import '../design/orb_field.dart';
 import '../design/round_glass_button.dart';
+import '../design/text_growth.dart';
 import '../design/tokens.dart';
 import '../domain/log_type.dart';
 import '../emoji/moods.dart';
@@ -204,13 +205,17 @@ class _Cell extends StatelessWidget {
     return Semantics(
       button: true,
       label: label,
+      onTap: onTap,
       excludeSemantics: true,
       child: GestureDetector(
         onTap: onTap,
         behavior: HitTestBehavior.opaque,
         child: Container(
           width: size,
-          height: caption == null ? size : size + 6,
+          height:
+              (caption == null ? size : size + 6) +
+              extraTextHeight(context, 28) +
+              (caption == null ? 0 : extraTextHeight(context, 11.5)),
           decoration: BoxDecoration(
             color: selected ? tint : null,
             borderRadius: BorderRadius.circular(18),

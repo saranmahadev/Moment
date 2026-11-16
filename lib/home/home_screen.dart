@@ -164,6 +164,7 @@ class _Header extends StatelessWidget {
         Semantics(
           button: true,
           label: 'Search',
+          onTap: onSearchTap,
           excludeSemantics: true,
           child: GestureDetector(
             onTap: onSearchTap,

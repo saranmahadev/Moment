@@ -53,6 +53,7 @@ class LocationSectionScreen extends StatelessWidget {
                       children: [
                         Semantics(
                           button: true,
+                          onTap: onBack,
                           label: 'Back to Library',
                           excludeSemantics: true,
                           child: GestureDetector(

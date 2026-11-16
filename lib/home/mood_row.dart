@@ -48,6 +48,7 @@ class MoodRow extends StatelessWidget {
               Semantics(
                 button: true,
                 label: 'Log mood ${(moodLabel(emoji) ?? emoji).toLowerCase()}',
+                onTap: () => onMoodTapped(emoji),
                 excludeSemantics: true,
                 child: GestureDetector(
                   onTap: () => onMoodTapped(emoji),

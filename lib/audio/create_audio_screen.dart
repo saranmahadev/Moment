@@ -144,6 +144,7 @@ class _CreateAudioScreenState extends State<CreateAudioScreen> {
                       Semantics(
                         button: true,
                         label: 'Close without saving',
+                        onTap: _discard,
                         excludeSemantics: true,
                         child: GestureDetector(
                           onTap: _discard,
@@ -319,6 +320,7 @@ class _RoundAction extends StatelessWidget {
     return Semantics(
       button: true,
       label: label,
+      onTap: onTap,
       excludeSemantics: true,
       child: GestureDetector(
         onTap: onTap,
@@ -363,6 +365,7 @@ class _PauseResumeButton extends StatelessWidget {
     return Semantics(
       button: true,
       label: label,
+      onTap: onTap,
       excludeSemantics: true,
       child: GestureDetector(
         onTap: onTap,
