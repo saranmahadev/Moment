@@ -354,6 +354,16 @@ final screenCases = <ScreenCase>[
     ),
   ),
   ScreenCase(
+    '24_search_results',
+    (f) async => SearchScreen(
+      repository: f.repo,
+      settings: f.settings,
+      initialQuery: 'balcony',
+      onOpenLog: (_) {},
+      onBack: () {},
+    ),
+  ),
+  ScreenCase(
     '25_settings',
     (f) async => SettingsScreen(
       repository: f.repo,

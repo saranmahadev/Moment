@@ -1,5 +1,8 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/rendering.dart';
 import 'package:flutter_test/flutter_test.dart';
+
+import 'package:moment/design/round_glass_button.dart';
 
 import '../support/screen_cases.dart';
 
@@ -17,7 +20,7 @@ void main() {
       for (final screen in screenCases)
         if (RegExp(r'^\d\d_').hasMatch(screen.name))
           int.parse(screen.name.substring(0, 2)),
-    ];
+    ].toSet().toList();
 
     expect(numbered, [for (var i = 1; i <= 27; i++) i]);
   });
@@ -98,5 +101,53 @@ void main() {
         });
       }
     }
+  });
+
+  group('with the real typefaces, on a 390 pt phone', () {
+    ScreenCase screen(String name) =>
+        screenCases.singleWhere((screen) => screen.name == name);
+
+    testWidgets('Home asks "How are you?" in full', (tester) async {
+      final fixture = await pumpScreenCase(tester, screen('02_home'));
+
+      final question = tester.renderObject<RenderParagraph>(
+        find.text('How are you?'),
+      );
+      expect(question.didExceedMaxLines, isFalse);
+      expect(
+        question.size.width,
+        greaterThanOrEqualTo(
+          question.getMaxIntrinsicWidth(double.infinity).floor(),
+        ),
+      );
+
+      await closeScreenCase(tester, fixture);
+    });
+
+    testWidgets('Privacy\'s Back button is a round 44 pt button', (
+      tester,
+    ) async {
+      final fixture = await pumpScreenCase(tester, screen('26_privacy'));
+
+      expect(
+        tester.getSize(
+          find.widgetWithIcon(RoundGlassButton, Icons.chevron_left),
+        ),
+        const Size(44, 44),
+      );
+
+      await closeScreenCase(tester, fixture);
+    });
+
+    testWidgets('Search shows results for what it was opened with', (
+      tester,
+    ) async {
+      final fixture = await pumpScreenCase(tester, screen('24_search_results'));
+
+      expect(find.text('TEXT · 2'), findsOneWidget);
+      expect(find.text('PHOTO · 1'), findsOneWidget);
+
+      await closeScreenCase(tester, fixture);
+    });
   });
 }
