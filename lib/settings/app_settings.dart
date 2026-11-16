@@ -1,7 +1,7 @@
 import 'dart:convert';
 import 'dart:io';
 
-import 'package:flutter/foundation.dart';
+import 'package:flutter/material.dart';
 
 /// Where the app's settings are kept between launches.
 abstract interface class SettingsStore {
@@ -72,6 +72,22 @@ class AppSettings extends ChangeNotifier {
 
   Future<void> setLookUpPlaceNames(bool value) =>
       _set('lookUpPlaceNames', value, false);
+
+  /// Light, dark, or whatever the system is set to.
+  ThemeMode get themeMode {
+    final name = _read<String?>('themeMode', null);
+    return ThemeMode.values.where((mode) => mode.name == name).firstOrNull ??
+        ThemeMode.system;
+  }
+
+  Future<void> setThemeMode(ThemeMode mode) =>
+      _set('themeMode', mode.name, ThemeMode.system.name);
+
+  /// Swaps glass for solid surfaces on every screen.
+  bool get reduceTransparency => _read('reduceTransparency', false);
+
+  Future<void> setReduceTransparency(bool value) =>
+      _set('reduceTransparency', value, false);
 
   T _read<T>(String key, T fallback) {
     final value = _values[key];

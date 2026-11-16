@@ -2,18 +2,27 @@ import 'package:flutter/material.dart';
 
 import 'tokens.dart';
 
-/// Builds Moment's single light theme (dark mode is designed at the start
-/// of Phase 4): Inter for UI text and controls, Newsreader for the user's
-/// own words, and [MomentTokens.standard] as a [ThemeExtension].
-ThemeData momentTheme() {
-  const tokens = MomentTokens.standard;
+/// Builds Moment's theme for [brightness]: Inter for UI text and
+/// controls, Newsreader for the user's own words, and the matching
+/// [MomentTokens] as a [ThemeExtension]. With [reduceTransparency] the
+/// tokens tell every glass surface to draw solid.
+ThemeData momentTheme({
+  Brightness brightness = Brightness.light,
+  bool reduceTransparency = false,
+}) {
+  final palette = brightness == Brightness.dark
+      ? MomentTokens.dark
+      : MomentTokens.standard;
+  final tokens = reduceTransparency
+      ? palette.copyWith(reduceTransparency: true)
+      : palette;
   final base = ThemeData(
     useMaterial3: true,
-    brightness: Brightness.light,
+    brightness: brightness,
     scaffoldBackgroundColor: tokens.ground,
     colorScheme: ColorScheme.fromSeed(
-      seedColor: tokens.ink,
-      brightness: Brightness.light,
+      seedColor: MomentTokens.standard.ink,
+      brightness: brightness,
     ),
     fontFamily: 'Inter',
   );
@@ -46,6 +55,6 @@ ThemeData momentTheme() {
             fontFamily: 'Newsreader',
           ),
         ),
-    extensions: const [tokens],
+    extensions: [tokens],
   );
 }

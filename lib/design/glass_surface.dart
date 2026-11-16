@@ -19,7 +19,8 @@ enum GlassVariant {
 
 /// A translucent, blurred surface in one of Moment's glass recipes: a
 /// white fill over a saturation-boosted blur of whatever is behind it, with
-/// a soft 1px border and shadow.
+/// a soft 1px border and shadow. With Reduce Transparency on it is a solid
+/// surface of the same shape instead.
 class GlassSurface extends StatelessWidget {
   const GlassSurface({
     super.key,
@@ -48,6 +49,31 @@ class GlassSurface extends StatelessWidget {
     final recipe = _recipeOf(tokens);
     final radius = BorderRadius.circular(borderRadius ?? recipe.defaultRadius);
 
+    final shadow = [
+      BoxShadow(
+        color: recipe.shadowColor,
+        offset: recipe.shadowOffset,
+        blurRadius: recipe.shadowBlurRadius,
+      ),
+    ];
+
+    if (tokens.reduceTransparency) {
+      // Reduce Transparency: the same shape and shadow, filled solid, with
+      // nothing blurred behind it.
+      return ClipRRect(
+        borderRadius: radius,
+        child: DecoratedBox(
+          decoration: BoxDecoration(
+            color: tokens.solidSurface,
+            border: Border.all(color: tokens.ink.withValues(alpha: 0.10)),
+            borderRadius: radius,
+            boxShadow: shadow,
+          ),
+          child: child,
+        ),
+      );
+    }
+
     return ClipRRect(
       borderRadius: radius,
       child: BackdropFilter(
@@ -65,13 +91,7 @@ class GlassSurface extends StatelessWidget {
               color: Colors.white.withValues(alpha: recipe.borderOpacity),
             ),
             borderRadius: radius,
-            boxShadow: [
-              BoxShadow(
-                color: recipe.shadowColor,
-                offset: recipe.shadowOffset,
-                blurRadius: recipe.shadowBlurRadius,
-              ),
-            ],
+            boxShadow: shadow,
           ),
           child: child,
         ),
