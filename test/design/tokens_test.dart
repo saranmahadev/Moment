@@ -66,4 +66,71 @@ void main() {
       expect(theme.extension<MomentTokens>(), MomentTokens.standard);
     });
   });
+
+  group('dark palette', () {
+    const dark = MomentTokens.dark;
+    const light = MomentTokens.standard;
+
+    double contrast(Color a, Color b) {
+      final la = a.computeLuminance(), lb = b.computeLuminance();
+      return (la > lb ? la + 0.05 : lb + 0.05) /
+          (la > lb ? lb + 0.05 : la + 0.05);
+    }
+
+    test('is a dark ground with light ink', () {
+      expect(dark.brightness, Brightness.dark);
+      expect(light.brightness, Brightness.light);
+      expect(dark.ground.computeLuminance(), lessThan(0.02));
+      expect(contrast(dark.ink, dark.ground), greaterThan(12));
+      expect(contrast(dark.secondary, dark.ground), greaterThan(7));
+    });
+
+    test('every type colour reads on the dark ground and on solid cards', () {
+      for (final type in LogType.values) {
+        expect(
+          contrast(dark.colorFor(type), dark.ground),
+          greaterThan(4.5),
+          reason: type.name,
+        );
+        expect(
+          contrast(dark.colorFor(type), dark.solidSurface),
+          greaterThan(4.5),
+          reason: type.name,
+        );
+        expect(dark.tintFor(type).a, lessThan(1), reason: type.name);
+      }
+    });
+
+    test('what sits on an ink-filled button reads on it, in both', () {
+      expect(light.onInk, const Color(0xFFFFFFFF));
+      expect(contrast(light.onInk, light.ink), greaterThan(12));
+      expect(contrast(dark.onInk, dark.ink), greaterThan(12));
+    });
+
+    test('glass is fainter on dark, so it does not turn grey', () {
+      expect(dark.card.fillOpacity, lessThan(light.card.fillOpacity));
+      expect(dark.strong.fillOpacity, lessThan(light.strong.fillOpacity));
+      expect(dark.surface.fillOpacity, lessThan(light.surface.fillOpacity));
+    });
+
+    test('the danger colour reads on the dark ground', () {
+      expect(contrast(dark.danger, dark.ground), greaterThan(4.5));
+    });
+  });
+
+  group('reduce transparency', () {
+    test('is off in both palettes and can be switched on', () {
+      expect(MomentTokens.standard.reduceTransparency, isFalse);
+      expect(MomentTokens.dark.reduceTransparency, isFalse);
+
+      final solid = MomentTokens.dark.copyWith(reduceTransparency: true);
+      expect(solid.reduceTransparency, isTrue);
+      expect(solid.ground, MomentTokens.dark.ground);
+    });
+
+    test('solid surfaces are opaque', () {
+      expect(MomentTokens.standard.solidSurface.a, 1);
+      expect(MomentTokens.dark.solidSurface.a, 1);
+    });
+  });
 }

@@ -108,4 +108,76 @@ void main() {
       matchesGoldenFile('goldens/glass_surface_card.png'),
     );
   });
+
+  group('with Reduce Transparency on', () {
+    for (final palette in [MomentTokens.standard, MomentTokens.dark]) {
+      testWidgets('${palette.brightness.name}: a solid surface, no blur', (
+        tester,
+      ) async {
+        final tokens = palette.copyWith(reduceTransparency: true);
+        await tester.pumpWidget(
+          MaterialApp(
+            theme: ThemeData(extensions: [tokens]),
+            home: const Scaffold(
+              body: Center(
+                child: SizedBox(
+                  width: 100,
+                  height: 100,
+                  child: GlassSurface(
+                    variant: GlassVariant.strong,
+                    child: Text('on top'),
+                  ),
+                ),
+              ),
+            ),
+          ),
+        );
+
+        expect(find.byType(BackdropFilter), findsNothing);
+        expect(find.text('on top'), findsOneWidget);
+        final box = tester.widget<DecoratedBox>(
+          find.descendant(
+            of: find.byType(GlassSurface),
+            matching: find.byType(DecoratedBox),
+          ),
+        );
+        final decoration = box.decoration as BoxDecoration;
+        expect(decoration.color, tokens.solidSurface);
+        expect(decoration.color!.a, 1);
+      });
+    }
+  });
+
+  testWidgets('on dark, glass is a faint light film over the blur', (
+    tester,
+  ) async {
+    await tester.pumpWidget(
+      MaterialApp(
+        theme: ThemeData(extensions: const [MomentTokens.dark]),
+        home: const Scaffold(
+          body: SizedBox(
+            width: 100,
+            height: 100,
+            child: GlassSurface(variant: GlassVariant.card),
+          ),
+        ),
+      ),
+    );
+
+    expect(find.byType(BackdropFilter), findsOneWidget);
+    final decoration =
+        tester
+                .widget<DecoratedBox>(
+                  find.descendant(
+                    of: find.byType(GlassSurface),
+                    matching: find.byType(DecoratedBox),
+                  ),
+                )
+                .decoration
+            as BoxDecoration;
+    expect(
+      decoration.color!.a,
+      closeTo(MomentTokens.dark.card.fillOpacity, 0.01),
+    );
+  });
 }
