@@ -36,6 +36,7 @@ Before a chunk merges into `main`:
 - A tag is created only after CI is green on the release commit and the phase exit gate in the roadmap is met.
 - `CHANGELOG.md` gets one entry per release.
 - Tags are made by the **Release** workflow (`.github/workflows/release.yml`), never by hand: Actions → Release → Run workflow, with the version (and the commit, when it is not the head of `main`). In one run it checks the version against `pubspec.yaml` and the changelog, analyses, tests, builds the release APK, checks the permissions of the release manifest, creates the annotated tag and publishes a GitHub Release with the APK attached. If any step fails, nothing is tagged.
+- Releasing an older commit (not the head of `main`): GitHub does not let a workflow tag a commit whose workflow files differ from `main`'s. Push that tag by hand (`git tag -a v0.1.0 <commit> -m "Moment 0.1.0" && git push origin v0.1.0`), then run the Release workflow with the same version and commit: it sees the tag, and builds and publishes the release for it.
 - `release-check.yml` builds the same APK without releasing it; it runs automatically when dependencies or the `android/` project change.
 
 ### Signing the APK
