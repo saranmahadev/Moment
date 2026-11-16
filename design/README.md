@@ -24,3 +24,12 @@ The Python scripts that produced the HTML (`lib.py` has the helpers such as `gla
 - Primary buttons: ink `#1B1F2A`. Ground: `#EDF0F7`.
 - Fonts: Newsreader for the user's words, Inter for UI. Both must be bundled in the app (no internet permission, so no runtime font download).
 - Tab bar: Home, Library, + (Add), Calendar, Settings.
+
+## `logo/`
+
+Moment's logo, built from the app's own colours and typeface: one ink dot (the moment) in a pane of glass, ringed by six dots in the six log-type colours, over the app's soft orbs.
+
+- `build_logo.py` writes the SVGs: `mark.svg` and `mark-dark.svg` (the icon on its rounded tile), `mark-square.svg` (for iOS, which rounds the corners itself), the two Android adaptive-icon layers, and `lockup.svg` / `lockup-dark.svg` (the mark beside the name, set in Newsreader).
+- `export.cjs` renders every PNG from them: the Android launcher icons and adaptive layers, the iOS icon set, and the site's icons.
+
+Change the logo in `build_logo.py`, run both scripts, and commit what they write. `test/platform/app_icon_test.dart` checks that every size exists.
