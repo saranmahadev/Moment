@@ -36,5 +36,11 @@ Change the logo in `build_logo.py`, run both scripts, and commit what they write
 
 ## `video/`
 
-The 44-second film about the app. `moment.html` is the whole animation (open it in a browser to watch it play); every element is a CSS animation with a start time, so `render.cjs` can draw any frame exactly. `node design/video/render.cjs` writes `site/media/`: the film as MP4 and WebM, a poster frame, and a short loop for the README. It needs Playwright with Chromium, and ffmpeg. The film uses the screenshots in `site/screens/`, which come from the preview renderer (`flutter test --run-skipped --tags preview test/gate/previews_test.dart`).
+The one-minute narrated film about the app.
 
+- `narration.json` is the script: what is said in each scene.
+- `voice.py` speaks it with Kokoro, an open text-to-speech model run locally (the narration is a synthetic voice), and from the length of each line writes `timeline.js` (when each scene starts and ends), the captions (`site/media/moment.vtt`) and the soundtrack (the voice over a quiet bed of generated chords).
+- `moment.html` is the animation. Every element is a CSS animation timed from its scene's start, and the scenes take their times from `timeline.js`, so the pictures follow the words. Open it in a browser to watch it play, silently.
+- `render.cjs` draws it frame by frame and encodes `site/media/`: the film as MP4 and WebM, a poster frame, and a short silent loop for the README.
+
+To change the film: edit the script or the page, then run `python3 design/video/voice.py` and `node design/video/render.cjs`. That needs `pip install kokoro-onnx soundfile numpy`, Playwright with Chromium, and ffmpeg; the voice model (about 350 MB) is downloaded once to `~/.cache/moment-film/` and is not in the repository. The film uses the screenshots in `site/screens/`, which come from the preview renderer (`flutter test --run-skipped --tags preview test/gate/previews_test.dart`).

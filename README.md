@@ -16,7 +16,10 @@ Six kinds of log, encrypted on your phone. No account, no cloud.
 [**Website**](https://saranmahadev.github.io/Moment/) · [**Download**](https://github.com/saranmahadev/Moment/releases/latest) · [**Changelog**](CHANGELOG.md) · [**Contributing**](CONTRIBUTING.md)
 
 <a href="https://saranmahadev.github.io/Moment/#film">
-  <img src="site/media/moment-preview.gif" alt="A short film introducing Moment: the logo, then the six kinds of log" width="720">
+  <img src="site/media/moment-preview.gif" alt="The opening of a short film introducing Moment: the logo, then the six kinds of log" width="640">
+</a>
+
+<a href="https://saranmahadev.github.io/Moment/#film"><sub>Watch the one-minute film, with narration and captions</sub>
 </a>
 
 </div>
