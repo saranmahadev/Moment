@@ -227,7 +227,7 @@ void main() {
 
       await repo.updateText(text, body: 'newword');
       await repo.updateEmoji(emoji, emoji: '😌', label: 'newword', strength: 3);
-      await repo.updatePhoto(photo, caption: 'newword');
+      await repo.updateCaption(photo, caption: 'newword');
       await repo.updateVideo(video, caption: 'newword');
       await repo.updateAudio(audio, title: 'newword');
       await repo.updateLocation(place, name: 'newword', note: null);

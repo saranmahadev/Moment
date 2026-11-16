@@ -21,11 +21,14 @@ class AppDatabase extends _$AppDatabase {
   AppDatabase(super.executor);
 
   @override
-  int get schemaVersion => 4;
+  int get schemaVersion => 5;
 
   @override
   MigrationStrategy get migration => MigrationStrategy(
-    onCreate: (migrator) => migrator.createAll(),
+    onCreate: (migrator) async {
+      await migrator.createAll();
+      await _createSearchIndex();
+    },
     onUpgrade: (migrator, from, to) async {
       if (from < 2) {
         await migrator.createTable(photoLogsTable);
@@ -37,9 +40,73 @@ class AppDatabase extends _$AppDatabase {
         await migrator.createTable(videoLogsTable);
         await migrator.createTable(locationLogsTable);
       }
+      if (from < 5) {
+        await _createSearchIndex();
+        await rebuildSearchIndex();
+      }
     },
     beforeOpen: (details) async {
       await customStatement('PRAGMA foreign_keys = ON');
     },
   );
+
+  /// What of each type is searchable: the table, and the SQL expression
+  /// (over a row called `new` in a trigger, or the table itself in a
+  /// rebuild) that yields its words.
+  static const _searchable = {
+    'text_log': ['body'],
+    'emoji_log': ['label'],
+    'photo_log': ['caption'],
+    'video_log': ['caption'],
+    'audio_log': ['title', 'note'],
+    'location_log': ['name', 'note'],
+  };
+
+  static String _words(List<String> columns, String row) =>
+      columns.map((column) => "coalesce($row.$column, '')").join(" || ' ' || ");
+
+  /// Creates the full-text index (FTS5) and the triggers that keep it in
+  /// step with the logs: one row per log, holding its words. Because the
+  /// upkeep is in the database itself, every way a row can change is
+  /// covered, restore from backup and cascading deletes included.
+  Future<void> _createSearchIndex() async {
+    await customStatement(
+      'CREATE VIRTUAL TABLE IF NOT EXISTS log_search USING fts5('
+      'log_id UNINDEXED, content, '
+      "tokenize = 'unicode61 remove_diacritics 2')",
+    );
+    for (final MapEntry(key: table, value: columns) in _searchable.entries) {
+      await customStatement(
+        'CREATE TRIGGER IF NOT EXISTS ${table}_search_insert '
+        'AFTER INSERT ON $table BEGIN '
+        'INSERT INTO log_search (log_id, content) '
+        "VALUES (new.log_id, ${_words(columns, 'new')}); END",
+      );
+      await customStatement(
+        'CREATE TRIGGER IF NOT EXISTS ${table}_search_update '
+        'AFTER UPDATE ON $table BEGIN '
+        'DELETE FROM log_search WHERE log_id = old.log_id; '
+        'INSERT INTO log_search (log_id, content) '
+        "VALUES (new.log_id, ${_words(columns, 'new')}); END",
+      );
+      await customStatement(
+        'CREATE TRIGGER IF NOT EXISTS ${table}_search_delete '
+        'AFTER DELETE ON $table BEGIN '
+        'DELETE FROM log_search WHERE log_id = old.log_id; END',
+      );
+    }
+  }
+
+  /// Empties the full-text index and fills it again from the logs. Used
+  /// when upgrading a database that had no index, and safe to run at any
+  /// time.
+  Future<void> rebuildSearchIndex() => transaction(() async {
+    await customStatement('DELETE FROM log_search');
+    for (final MapEntry(key: table, value: columns) in _searchable.entries) {
+      await customStatement(
+        'INSERT INTO log_search (log_id, content) '
+        'SELECT log_id, ${_words(columns, table)} FROM $table',
+      );
+    }
+  });
 }
