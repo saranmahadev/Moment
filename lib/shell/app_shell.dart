@@ -25,6 +25,7 @@ import '../location/location_detail_screen.dart';
 import '../location/location_provider.dart';
 import '../location/place_name_lookup.dart';
 import '../settings/app_settings.dart';
+import '../settings/reminder_scheduler.dart';
 import '../location/location_section_screen.dart';
 import '../lock/app_lock_controller.dart';
 import '../photo/create_photo_screen.dart';
@@ -63,6 +64,7 @@ class AppShell extends StatefulWidget {
     required this.locationProvider,
     required this.placeNames,
     required this.settings,
+    required this.reminders,
     required this.backups,
     required this.exports,
     required this.storage,
@@ -84,6 +86,7 @@ class AppShell extends StatefulWidget {
   /// [AppSettings.lookUpPlaceNames] is on.
   final PlaceNameLookup placeNames;
   final AppSettings settings;
+  final ReminderScheduler reminders;
   final BackupCoordinator backups;
   final ExportCoordinator exports;
   final StorageService storage;
@@ -320,6 +323,7 @@ class _AppShellState extends State<AppShell> {
             children: [
               HomeScreen(
                 repository: widget.repository,
+                settings: widget.settings,
                 now: widget.now,
                 onOpenLog: _openDetail,
               ),
@@ -332,6 +336,8 @@ class _AppShellState extends State<AppShell> {
               const _Placeholder('Calendar'),
               SettingsScreen(
                 repository: widget.repository,
+                settings: widget.settings,
+                reminders: widget.reminders,
                 onOpenPrivacy: _openPrivacy,
                 onOpenTrash: _openTrash,
               ),

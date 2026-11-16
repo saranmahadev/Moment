@@ -7,25 +7,7 @@ import '../design/tokens.dart';
 import '../design/type_icons.dart';
 import '../domain/log.dart';
 import '../domain/log_type.dart';
-
-/// The twelve quick-pick moods offered on the New Emoji screen, in grid
-/// order. Labels for 😊, 😌, 😐, 😔 and 😤 match the mood row and the
-/// section/detail screens; the rest are this screen's own reasonable
-/// choices, since the mockups do not name them.
-const _presetMoods = [
-  ('😊', 'Happy'),
-  ('😌', 'Calm'),
-  ('🙂', 'Content'),
-  ('😄', 'Joyful'),
-  ('🥰', 'Loved'),
-  ('😴', 'Tired'),
-  ('😐', 'Neutral'),
-  ('😔', 'Sad'),
-  ('😢', 'Crying'),
-  ('😤', 'Frustrated'),
-  ('😰', 'Anxious'),
-  ('🤒', 'Unwell'),
-];
+import 'moods.dart';
 
 /// The New Emoji screen: pick a mood, set how strong it is, and save.
 /// Matches design/mockups/png/06-Create-Emoji.png.
@@ -58,12 +40,12 @@ class _CreateEmojiScreenState extends State<CreateEmojiScreen> {
 
   static int _indexFor(String? emoji) {
     if (emoji == null) return 0;
-    final index = _presetMoods.indexWhere((mood) => mood.$1 == emoji);
+    final index = moodPalette.indexWhere((mood) => mood.$1 == emoji);
     return index == -1 ? 0 : index;
   }
 
   Future<void> _save() async {
-    final (emoji, label) = _presetMoods[_selectedIndex];
+    final (emoji, label) = moodPalette[_selectedIndex];
 
     final editing = widget.editing;
     if (editing != null) {
@@ -90,7 +72,7 @@ class _CreateEmojiScreenState extends State<CreateEmojiScreen> {
   Widget build(BuildContext context) {
     final tokens =
         Theme.of(context).extension<MomentTokens>() ?? MomentTokens.standard;
-    final (emoji, label) = _presetMoods[_selectedIndex];
+    final (emoji, label) = moodPalette[_selectedIndex];
     final typeColor = tokens.colorFor(LogType.emoji);
     final typeTint = tokens.tintFor(LogType.emoji);
 
@@ -272,10 +254,10 @@ class _CreateEmojiScreenState extends State<CreateEmojiScreen> {
                         crossAxisSpacing: 6,
                         childAspectRatio: 1,
                         children: [
-                          for (var i = 0; i < _presetMoods.length; i++)
+                          for (var i = 0; i < moodPalette.length; i++)
                             _MoodCell(
-                              emoji: _presetMoods[i].$1,
-                              label: _presetMoods[i].$2,
+                              emoji: moodPalette[i].$1,
+                              label: moodPalette[i].$2,
                               isSelected: i == _selectedIndex,
                               typeColor: typeColor,
                               typeTint: typeTint,

@@ -26,6 +26,7 @@ import 'package:path/path.dart' as p;
 
 import '../location/location_fakes.dart';
 import '../video/video_fakes.dart';
+import 'shell_harness.dart' show NoReminders;
 
 class _FakePinStorage implements PinStorage {
   String? stored;
@@ -153,6 +154,7 @@ void main() {
             locationProvider: FakeLocationProvider(),
             placeNames: FakePlaceNameLookup(),
             settings: AppSettings.inMemory(),
+            reminders: NoReminders(),
             backups: BackupCoordinator(
               service: BackupService(
                 db: db,

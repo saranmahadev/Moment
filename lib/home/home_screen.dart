@@ -1,3 +1,5 @@
+import '../emoji/moods.dart';
+import '../settings/app_settings.dart';
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 
@@ -20,12 +22,16 @@ class HomeScreen extends StatefulWidget {
   const HomeScreen({
     super.key,
     required this.repository,
+    this.settings,
     DateTime Function()? now,
     this.onOpenLog,
     this.onSearchTap,
   }) : now = now ?? DateTime.now;
 
   final LogRepository repository;
+
+  /// Where the quick emoji row comes from; the default five without it.
+  final AppSettings? settings;
   final DateTime Function() now;
   final ValueChanged<Log>? onOpenLog;
   final VoidCallback? onSearchTap;
@@ -61,9 +67,16 @@ class _HomeScreenState extends State<HomeScreen> {
               onSelected: (type) => setState(() => _selectedType = type),
             ),
             const SizedBox(height: 12),
-            MoodRow(
-              onMoodTapped: (emoji) =>
-                  widget.repository.createEmoji(emoji: emoji, strength: 3),
+            ListenableBuilder(
+              listenable: widget.settings ?? const _NoSettings(),
+              builder: (context, _) => MoodRow(
+                emoji: widget.settings?.quickEmoji ?? defaultQuickEmoji,
+                onMoodTapped: (emoji) => widget.repository.createEmoji(
+                  emoji: emoji,
+                  label: moodLabel(emoji),
+                  strength: 3,
+                ),
+              ),
             ),
             if (sections.isEmpty)
               Padding(
@@ -168,4 +181,16 @@ class _Header extends StatelessWidget {
       ],
     );
   }
+}
+
+/// Stands in for the settings when a screen is shown without them: it
+/// never changes.
+class _NoSettings implements Listenable {
+  const _NoSettings();
+
+  @override
+  void addListener(VoidCallback listener) {}
+
+  @override
+  void removeListener(VoidCallback listener) {}
 }

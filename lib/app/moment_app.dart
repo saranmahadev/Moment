@@ -22,6 +22,7 @@ import '../data/secure_database.dart';
 import '../location/location_provider.dart';
 import '../location/nominatim_place_names.dart';
 import '../settings/app_settings.dart';
+import '../settings/reminder_scheduler.dart';
 import '../lock/app_lock_controller.dart';
 import '../lock/biometric_authenticator.dart';
 import '../lock/pin_storage.dart';
@@ -68,13 +69,19 @@ Future<_Resources> _bootstrap() async {
     lockController.unlock();
   }
 
+  final settings = await AppSettings.load(
+    FileSettingsStore(File(p.join(supportDir.path, 'settings.json'))),
+  );
   final tempDir = await getTemporaryDirectory();
   final repository = LogRepository(db);
   final gateway = DeviceBackupFileGateway();
   return _Resources(
     repository: repository,
     lockController: lockController,
-    mediaStore: MediaStore(root: supportDir),
+    mediaStore: MediaStore(
+      root: supportDir,
+      photoQuality: () => settings.mediaQuality,
+    ),
     backups: BackupCoordinator(
       service: BackupService(db: db, mediaRoot: supportDir),
       gateway: gateway,
@@ -89,9 +96,7 @@ Future<_Resources> _bootstrap() async {
       scratchDirectory: Directory(p.join(tempDir.path, 'exports')),
     ),
     storage: StorageService(repository: repository),
-    settings: await AppSettings.load(
-      FileSettingsStore(File(p.join(supportDir.path, 'settings.json'))),
-    ),
+    settings: settings,
     hasPin: hasPin,
   );
 }
@@ -112,6 +117,8 @@ class _MomentAppState extends State<MomentApp> with WidgetsBindingObserver {
   /// spacing and its memory of spots already asked about hold. It is only
   /// handed to a screen while "Look up place names" is on.
   final _placeNames = NominatimPlaceNameLookup();
+
+  final _reminders = DeviceReminderScheduler();
   AppLockController? _lockController;
 
   /// Null until the bootstrap has read them; the app follows the system
@@ -124,6 +131,12 @@ class _MomentAppState extends State<MomentApp> with WidgetsBindingObserver {
     WidgetsBinding.instance.addObserver(this);
     _resources.then((resources) {
       if (mounted) setState(() => _settings = resources.settings);
+      // Schedule the reminder afresh at each launch: it survives a change
+      // of time zone, and a schedule the system dropped comes back.
+      final settings = resources.settings;
+      if (settings.reminderOn) {
+        _reminders.enable(settings.reminderTime).ignore();
+      }
     });
   }
 
@@ -170,6 +183,7 @@ class _MomentAppState extends State<MomentApp> with WidgetsBindingObserver {
               locationProvider: DeviceLocationProvider(),
               placeNames: _placeNames,
               settings: resources.settings,
+              reminders: _reminders,
               backups: resources.backups,
               exports: resources.exports,
               storage: resources.storage,

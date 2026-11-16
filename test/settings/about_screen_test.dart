@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:moment/app/app_info.dart';
+import 'package:moment/design/round_glass_button.dart';
 import 'package:moment/design/theme.dart';
 import 'package:moment/settings/about_screen.dart';
 
@@ -53,7 +54,10 @@ void main() {
     var back = false;
     await pump(tester, onBack: () => back = true);
 
-    await tester.tap(find.bySemanticsLabel('Back'));
+    // The label belongs to the whole first row of the list, so aim at the
+    // button itself.
+    expect(find.bySemanticsLabel('Back'), findsOneWidget);
+    await tester.tap(find.byType(RoundGlassButton));
 
     expect(back, isTrue);
   });

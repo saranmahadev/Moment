@@ -31,6 +31,7 @@ import 'package:path/path.dart' as p;
 
 import '../location/location_fakes.dart';
 import '../video/video_fakes.dart';
+import '../integration/shell_harness.dart' show NoReminders;
 
 File _sampleSourcePhoto(String path) {
   final image = img.Image(width: 800, height: 600);
@@ -213,6 +214,7 @@ void main() {
           locationProvider: locationProvider ?? FakeLocationProvider(),
           placeNames: FakePlaceNameLookup(),
           settings: AppSettings.inMemory(),
+          reminders: NoReminders(),
           backups: backupsFor(tester),
           exports: ExportCoordinator(
             service: ExportService(repository: repo),

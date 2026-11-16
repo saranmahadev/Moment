@@ -21,6 +21,7 @@ import 'package:moment/lock/app_lock_controller.dart';
 import 'package:moment/lock/pin_storage.dart';
 import 'package:moment/photo/photo_picker.dart';
 import 'package:moment/settings/app_settings.dart';
+import 'package:moment/settings/reminder_scheduler.dart';
 import 'package:moment/shell/app_shell.dart';
 import 'package:moment/storage/storage_service.dart';
 import 'package:path/path.dart' as p;
@@ -101,6 +102,15 @@ class SilentAudioPlayback implements AudioPlaybackController {
   Future<void> dispose() async {}
 }
 
+/// A reminder scheduler that schedules nothing and always succeeds.
+class NoReminders implements ReminderScheduler {
+  @override
+  Future<bool> enable(TimeOfDay time) async => true;
+
+  @override
+  Future<void> disable() async {}
+}
+
 class CollectingFileGateway implements BackupFileGateway {
   final delivered = <File>[];
   File? toPick;
@@ -167,6 +177,7 @@ class ShellHarness {
           locationProvider: locationProvider ?? FakeLocationProvider(),
           placeNames: placeNames ?? FakePlaceNameLookup(),
           settings: settings ?? AppSettings.inMemory(),
+          reminders: NoReminders(),
           backups: BackupCoordinator(
             service: BackupService(
               db: db,
