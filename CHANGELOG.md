@@ -1,5 +1,42 @@
 # Changelog
 
+## 0.4.0 — Calendar, Search and Settings
+
+Every screen in the mockups now exists, in light and dark.
+
+- **Calendar**: a month at a time with a dot per type on each day. Tap a
+  day to see its logs, filter by type, and jump back to today. Days are
+  the ones logs were made on, so travel and daylight saving move nothing.
+- **Search**: full-text search across text, emoji names, captions,
+  titles, notes and place names, as you type. Results are grouped by type
+  with the matched words highlighted; recent searches are kept on the
+  device. It runs on the device (SQLite FTS5) and stays fast at 20,000
+  logs. Logs in Trash are never found.
+- **Settings** all work and apply at once: light, dark or system theme;
+  Reduce Transparency; the five emoji of Home's quick row; an evening
+  reminder (a local notification at a time you choose, which never shows
+  anything from the journal); photo quality (original, 2560 px or
+  1600 px; videos are always kept as recorded); and an About screen that
+  says plainly how the app treats your data.
+- **Dark theme**, designed for this release, and **Reduce Transparency**,
+  which swaps glass for solid surfaces on every screen.
+- **Smoother**: the app felt laggy because every card drew its own live
+  blur of the background, a dozen or more per screen. Only the tab bar
+  and small sheets blur now; cards are a translucent film over a
+  background that is soft by itself and drawn once.
+- **Accessibility**: every control has a label and a tap target of at
+  least 44 pt, buttons can be pressed from a screen reader (many could
+  only be announced before), and text fits at 200 % size.
+- Fixed: the Search button on the Text, Emoji and Audio sections did
+  nothing; Home's "How are you?" was cut short; the Privacy screen's Back
+  button stretched across the screen.
+- Upgrading from 0.3.0 keeps every log and makes all of them searchable.
+
+Known limits: the APK is signed with a throwaway key until a release key
+is set up (planned for 1.0.0), so it does not install over 0.3.0: back up
+in the app, uninstall, install this one, then restore. Nothing in this
+release has been tried on a physical phone by its author.
+
 ## 0.3.0 — Video and Location
 
 The last two log types: all six can now be created, viewed, edited,
