@@ -5,6 +5,7 @@ import '../backup/backup_coordinator.dart';
 import '../audio/audio_playback_controller.dart';
 import '../audio/audio_recorder_controller.dart';
 import '../audio/create_audio_screen.dart';
+import '../calendar/calendar_screen.dart';
 import '../data/log_repository.dart';
 import '../data/media_store.dart';
 import '../design/glass_surface.dart';
@@ -333,7 +334,11 @@ class _AppShellState extends State<AppShell> {
                 onOpenType: _openSection,
                 onOpenTrash: _openTrash,
               ),
-              const _Placeholder('Calendar'),
+              CalendarScreen(
+                repository: widget.repository,
+                now: widget.now,
+                onOpenLog: _openDetail,
+              ),
               SettingsScreen(
                 repository: widget.repository,
                 settings: widget.settings,
@@ -358,17 +363,6 @@ class _AppShellState extends State<AppShell> {
         ],
       ),
     );
-  }
-}
-
-class _Placeholder extends StatelessWidget {
-  const _Placeholder(this.label);
-
-  final String label;
-
-  @override
-  Widget build(BuildContext context) {
-    return Center(child: Text(label));
   }
 }
 
