@@ -43,8 +43,11 @@ void main() {
     });
 
     test('February in a leap year has its 29th', () {
-      expect(monthGrid(2028, 2), contains(DateTime.utc(2028, 2, 29)));
-      expect(monthGrid(2027, 2), isNot(contains(DateTime.utc(2027, 2, 29))));
+      int februaryDays(int year) =>
+          monthGrid(year, 2).where((d) => d.month == 2).length;
+
+      expect(februaryDays(2028), 29);
+      expect(februaryDays(2027), 28);
     });
 
     test('every cell is exactly one day after the one before', () {
