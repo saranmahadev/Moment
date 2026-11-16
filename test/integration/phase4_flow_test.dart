@@ -79,4 +79,26 @@ void main() {
 
     await shell.close(tester);
   });
+
+  testWidgets('performance: the whole app draws one live blur, the dock', (
+    tester,
+  ) async {
+    final shell = await ShellHarness.pump(tester, now: () => now);
+    for (var i = 0; i < 12; i++) {
+      await shell.repo.createText(
+        body: 'Entry $i',
+        createdAt: DateTime.utc(2026, 11, 6, 8, i),
+      );
+    }
+    await tester.pumpAndSettle();
+
+    for (final tab in ['Home', 'Library', 'Calendar', 'Settings']) {
+      await tester.tap(find.bySemanticsLabel(tab));
+      await tester.pumpAndSettle();
+
+      expect(find.byType(BackdropFilter), findsOneWidget, reason: tab);
+    }
+
+    await shell.close(tester);
+  });
 }

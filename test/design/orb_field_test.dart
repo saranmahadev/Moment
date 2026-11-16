@@ -53,4 +53,27 @@ void main() {
     await pump(tester, 844);
     expect(find.byType(IgnorePointer), findsOneWidget);
   });
+
+  testWidgets('is drawn once and kept, with no offscreen layer per orb', (
+    tester,
+  ) async {
+    await pump(tester, 844);
+
+    // An Opacity widget paints its child into a separate layer every
+    // frame; the orbs carry their transparency in their colours instead.
+    expect(find.byType(Opacity), findsNothing);
+    // Its own layer, so scrolling over it does not repaint it.
+    expect(
+      find.descendant(
+        of: find.byType(OrbField),
+        matching: find.byType(RepaintBoundary),
+      ),
+      findsOneWidget,
+    );
+    final gradient =
+        (tester.widget<Container>(find.byType(Container).first).decoration!
+                as BoxDecoration)
+            .gradient!;
+    expect(gradient.colors.every((color) => color.a < 1), isTrue);
+  });
 }

@@ -368,11 +368,15 @@ class _AppShellState extends State<AppShell> {
             alignment: Alignment.bottomCenter,
             child: Padding(
               padding: const EdgeInsets.only(left: 16, right: 16, bottom: 16),
-              child: _Dock(
-                tab: _tab,
-                tokens: tokens,
-                onTabSelected: (tab) => setState(() => _tab = tab),
-                onAddTapped: _openAddSheet,
+              // Its own layer, so the feed scrolling beneath does not
+              // repaint the dock's contents.
+              child: RepaintBoundary(
+                child: _Dock(
+                  tab: _tab,
+                  tokens: tokens,
+                  onTabSelected: (tab) => setState(() => _tab = tab),
+                  onAddTapped: _openAddSheet,
+                ),
               ),
             ),
           ),

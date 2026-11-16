@@ -25,6 +25,22 @@ void main() {
     expect(numbered, [for (var i = 1; i <= 27; i++) i]);
   });
 
+  group('live blur is kept to floating surfaces', () {
+    // Every blurred surface re-reads and re-blurs what is behind it on
+    // each frame. A screen full of them stutters on a mid-range phone, so
+    // no screen blurs: only the dock and the small choice sheets, which
+    // float above a screen, do (see the shell test in phase4_flow_test).
+    for (final screen in screenCases) {
+      testWidgets(screen.name, (tester) async {
+        final fixture = await pumpScreenCase(tester, screen);
+
+        expect(find.byType(BackdropFilter), findsNothing);
+
+        await closeScreenCase(tester, fixture);
+      });
+    }
+  });
+
   group('Reduce Transparency swaps blur for solid surfaces', () {
     for (final screen in screenCases) {
       for (final brightness in Brightness.values) {
