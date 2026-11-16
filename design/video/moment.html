@@ -1,0 +1,339 @@
+<!doctype html>
+<!--
+  Moment's motion graphics film: a 44-second, 1920x1080 animation built
+  from the app's own colours, typefaces, logo and screenshots.
+
+  Everything is a CSS animation with a start time (the --at, --in and
+  --out custom properties, in seconds), so any frame can be drawn by
+  setting every animation's clock to that moment. render.cjs does exactly
+  that, 30 times a second, and hands the frames to ffmpeg.
+
+  Open this file in a browser to watch it play in real time.
+-->
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Moment, the film</title>
+<style>
+  @font-face { font-family: "Inter"; font-weight: 400; src: url("../../assets/fonts/Inter/Inter-Regular.ttf"); }
+  @font-face { font-family: "Inter"; font-weight: 500; src: url("../../assets/fonts/Inter/Inter-Medium.ttf"); }
+  @font-face { font-family: "Inter"; font-weight: 600; src: url("../../assets/fonts/Inter/Inter-SemiBold.ttf"); }
+  @font-face { font-family: "Newsreader"; font-weight: 400; src: url("../../assets/fonts/Newsreader/Newsreader-Regular.ttf"); }
+  @font-face { font-family: "Newsreader"; font-weight: 500; src: url("../../assets/fonts/Newsreader/Newsreader-Medium.ttf"); }
+  @font-face { font-family: "Newsreader"; font-weight: 400; font-style: italic; src: url("../../assets/fonts/Newsreader/Newsreader-Italic.ttf"); }
+
+  :root {
+    --ground: #edf0f7; --ink: #1b1f2a; --secondary: #3a4152;
+    --night: #0f1218; --night-ink: #f1f3f8; --night-secondary: #b7bece;
+    --text: #1d4ed8; --emoji: #b45309; --photo: #be185d;
+    --video: #6d28d9; --audio: #0f766e; --location: #15803d;
+  }
+  * { box-sizing: border-box; margin: 0; }
+  html, body { background: #000; height: 100%; }
+  body { display: grid; place-items: center; overflow: hidden; }
+
+  .stage {
+    position: relative; width: 1920px; height: 1080px; overflow: hidden;
+    background: var(--ground); color: var(--ink);
+    font-family: "Inter", sans-serif;
+  }
+
+  /* The app's soft orbs, drifting slowly for the whole film. */
+  .orb { position: absolute; border-radius: 50%; animation: drift 44s linear both; }
+  .orb.a { width: 980px; height: 980px; left: -260px; top: -300px;
+    background: radial-gradient(closest-side, rgba(183,195,255,.95), rgba(139,147,245,.75) 60%, rgba(139,147,245,0));
+    --dx: 140px; --dy: 90px; }
+  .orb.b { width: 900px; height: 900px; right: -220px; top: 160px;
+    background: radial-gradient(closest-side, rgba(255,211,191,.95), rgba(255,174,154,.75) 60%, rgba(255,174,154,0));
+    --dx: -160px; --dy: -70px; }
+  .orb.c { width: 860px; height: 860px; left: 240px; bottom: -420px;
+    background: radial-gradient(closest-side, rgba(191,239,221,.95), rgba(138,219,194,.75) 60%, rgba(138,219,194,0));
+    --dx: 120px; --dy: -110px; }
+  @keyframes drift { from { transform: translate(0, 0); } to { transform: translate(var(--dx), var(--dy)); } }
+
+  /* Night falls for the dark-theme scene. */
+  .night { position: absolute; inset: 0; background: var(--night); opacity: 0;
+    animation: fadeIn 1s ease both, fadeOut 1s ease forwards;
+    animation-delay: calc(var(--in) * 1s), calc(var(--out) * 1s); }
+  .night .orb.a { background: radial-gradient(closest-side, rgba(58,71,168,.8), rgba(39,46,124,.6) 60%, rgba(39,46,124,0)); }
+  .night .orb.b { background: radial-gradient(closest-side, rgba(140,74,56,.8), rgba(107,50,38,.6) 60%, rgba(107,50,38,0)); }
+  .night .orb.c { background: radial-gradient(closest-side, rgba(43,107,91,.8), rgba(28,79,67,.6) 60%, rgba(28,79,67,0)); }
+
+  @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+  @keyframes fadeOut { from { opacity: 1; } to { opacity: 0; } }
+
+  /* A scene is on between --in and --out. */
+  .scene { position: absolute; inset: 0; opacity: 0;
+    animation: fadeIn .6s ease both, fadeOut .5s ease forwards;
+    animation-delay: calc(var(--in) * 1s), calc(var(--out) * 1s); }
+
+  /* Entrances, each starting at --at. */
+  .rise { animation: rise .9s cubic-bezier(.16,.8,.24,1) both; animation-delay: calc(var(--at) * 1s); }
+  @keyframes rise { from { opacity: 0; transform: translateY(44px); } to { opacity: 1; transform: none; } }
+  .pop { animation: pop .7s cubic-bezier(.2,1.5,.4,1) both; animation-delay: calc(var(--at) * 1s);
+    transform-box: fill-box; transform-origin: center; }
+  @keyframes pop { from { opacity: 0; transform: scale(.3); } to { opacity: 1; transform: scale(1); } }
+  .slide { animation: slide 1s cubic-bezier(.16,.8,.24,1) both; animation-delay: calc(var(--at) * 1s); }
+  @keyframes slide { from { opacity: 0; transform: translateX(140px) rotate(var(--tilt, 0deg)); }
+    to { opacity: 1; transform: translateX(0) rotate(var(--tilt, 0deg)); } }
+  .float { animation: float 5s ease-in-out both alternate; animation-delay: calc(var(--at) * 1s); }
+  @keyframes float { from { transform: translateY(10px); } to { transform: translateY(-14px); } }
+
+  h1, h2 { font-family: "Newsreader", serif; font-weight: 500; letter-spacing: -0.01em; }
+  h2 { font-size: 104px; line-height: 1.05; }
+  .sub { font-size: 38px; line-height: 1.35; color: var(--secondary); max-width: 760px; }
+  .eyebrow { font-size: 26px; font-weight: 600; letter-spacing: .12em; text-transform: uppercase; color: var(--secondary); }
+  .on-night { color: var(--night-ink); }
+  .on-night .sub, .on-night .eyebrow { color: var(--night-secondary); }
+
+  .glass { background: rgba(255,255,255,.55); border: 2px solid rgba(255,255,255,.85);
+    box-shadow: 0 24px 60px rgba(40,50,100,.16); backdrop-filter: blur(26px) saturate(160%); }
+
+  /* Scene 1 and 7: the logo. */
+  .center { position: absolute; inset: 0; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 28px; }
+  .mark { width: 300px; height: 300px; border-radius: 70px; position: relative;
+    box-shadow: 0 40px 90px rgba(40,50,100,.25); }
+  .mark svg { width: 100%; height: 100%; display: block; border-radius: 70px; }
+  .name { font-family: "Newsreader", serif; font-weight: 500; font-size: 190px; line-height: 1; letter-spacing: -0.02em; }
+  .tagline { font-size: 44px; color: var(--secondary); }
+
+  /* Scene 2: six kinds. */
+  .split { position: absolute; inset: 0; padding: 0 150px; display: flex; align-items: center; gap: 110px; }
+  .copy { flex: 0 0 660px; display: flex; flex-direction: column; gap: 30px; }
+  .kinds { flex: 1; display: grid; grid-template-columns: repeat(3, 1fr); gap: 30px; }
+  .kind { border-radius: 44px; padding: 38px 30px; display: flex; flex-direction: column; gap: 22px; }
+  .kind .badge { width: 96px; height: 96px; border-radius: 50%; display: grid; place-items: center;
+    background: color-mix(in srgb, var(--c) 16%, transparent); color: var(--c); }
+  .kind .badge svg { width: 52px; height: 52px; }
+  .kind b { font-family: "Newsreader", serif; font-weight: 500; font-size: 50px; }
+  .kind span { font-size: 25px; color: var(--secondary); line-height: 1.3; }
+  svg.line { fill: none; stroke: currentColor; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
+
+  /* Phones. */
+  .phones { flex: 1; position: relative; height: 880px; }
+  .phone { position: absolute; width: 372px; padding: 10px; border-radius: 58px; background: #1b1f2a;
+    box-shadow: 0 50px 100px rgba(40,50,100,.30); }
+  .phone img { display: block; width: 352px; height: 762px; border-radius: 48px; }
+  .phone.front { left: 80px; top: 48px; }
+  .phone.back { left: 400px; top: 110px; --tilt: 5deg; }
+  .phone.back img { opacity: .96; }
+  .on-night .phone { background: #05070b; box-shadow: 0 50px 100px rgba(0,0,0,.6); outline: 2px solid rgba(255,255,255,.12); }
+
+  /* Scene 5: privacy. */
+  .lockdisc { width: 420px; height: 420px; border-radius: 50%; display: grid; place-items: center; flex: 0 0 420px; }
+  .lockdisc svg { width: 190px; height: 190px; }
+  .promises { display: flex; flex-direction: column; gap: 22px; }
+  .promise { display: flex; align-items: center; gap: 26px; font-family: "Newsreader", serif; font-weight: 500; font-size: 82px; line-height: 1.1; }
+  .promise i { width: 26px; height: 26px; border-radius: 50%; background: var(--c); flex: none; }
+  .footnote { font-size: 30px; color: var(--secondary); max-width: 900px; line-height: 1.4; margin-top: 14px; }
+
+  /* Scene 6: backup. */
+  .file { width: 330px; height: 400px; border-radius: 48px; display: grid; place-items: center; flex: 0 0 330px; position: relative; }
+  .file svg { width: 150px; height: 150px; }
+  .file em { position: absolute; bottom: 36px; font-style: normal; font-size: 30px; font-weight: 600; letter-spacing: .04em; color: var(--secondary); }
+
+  /* Scene 7: the end. */
+  .pill { font-size: 36px; font-weight: 500; padding: 22px 44px; border-radius: 999px; }
+  .pill.ink { background: var(--ink); color: #fff; }
+  .row { display: flex; gap: 24px; align-items: center; }
+</style>
+</head>
+<body>
+<div class="stage">
+  <div class="orb a"></div><div class="orb b"></div><div class="orb c"></div>
+  <div class="night" style="--in: 21.2; --out: 27.4">
+    <div class="orb a"></div><div class="orb b"></div><div class="orb c"></div>
+  </div>
+
+  <!-- 1. The logo: the moment, in glass, among six kinds of log. -->
+  <section class="scene" style="--in: 0; --out: 5.2">
+    <div class="center">
+      <div class="mark pop" style="--at: .3">
+        <svg viewBox="0 0 512 512" aria-hidden="true">
+          <defs>
+            <radialGradient id="o0"><stop offset="0" stop-color="#B7C3FF" stop-opacity=".9"/><stop offset=".6" stop-color="#8B93F5" stop-opacity=".77"/><stop offset="1" stop-color="#8B93F5" stop-opacity="0"/></radialGradient>
+            <radialGradient id="o1"><stop offset="0" stop-color="#FFD3BF" stop-opacity=".9"/><stop offset=".6" stop-color="#FFAE9A" stop-opacity=".77"/><stop offset="1" stop-color="#FFAE9A" stop-opacity="0"/></radialGradient>
+            <radialGradient id="o2"><stop offset="0" stop-color="#BFEFDD" stop-opacity=".9"/><stop offset=".6" stop-color="#8ADBC2" stop-opacity=".77"/><stop offset="1" stop-color="#8ADBC2" stop-opacity="0"/></radialGradient>
+          </defs>
+          <rect width="512" height="512" fill="#EDF0F7"/>
+          <circle cx="118" cy="124" r="215" fill="url(#o0)"/>
+          <circle cx="436" cy="300" r="205" fill="url(#o1)"/>
+          <circle cx="150" cy="468" r="190" fill="url(#o2)"/>
+          <circle cx="256" cy="256" r="156" fill="rgba(255,255,255,.58)" stroke="rgba(255,255,255,.9)" stroke-width="3"/>
+          <circle class="pop" style="--at: 1.0" cx="256" cy="160" r="17" fill="#1D4ED8"/>
+          <circle class="pop" style="--at: 1.12" cx="339.1" cy="208" r="17" fill="#B45309"/>
+          <circle class="pop" style="--at: 1.24" cx="339.1" cy="304" r="17" fill="#BE185D"/>
+          <circle class="pop" style="--at: 1.36" cx="256" cy="352" r="17" fill="#6D28D9"/>
+          <circle class="pop" style="--at: 1.48" cx="172.9" cy="304" r="17" fill="#0F766E"/>
+          <circle class="pop" style="--at: 1.6" cx="172.9" cy="208" r="17" fill="#15803D"/>
+          <circle class="pop" style="--at: 1.9" cx="256" cy="256" r="36" fill="#1B1F2A"/>
+        </svg>
+      </div>
+      <div class="name rise" style="--at: 2.2">Moment</div>
+      <div class="tagline rise" style="--at: 2.8">A private journal of your days.</div>
+    </div>
+  </section>
+
+  <!-- 2. Six kinds of log, each kept apart. -->
+  <section class="scene" style="--in: 5.2; --out: 11.4">
+    <div class="split">
+      <div class="copy">
+        <div class="eyebrow rise" style="--at: 5.5">Log anything</div>
+        <h2 class="rise" style="--at: 5.7">Six kinds of moment.</h2>
+        <p class="sub rise" style="--at: 6.2">Each kept in its own place. Never mixed together.</p>
+      </div>
+      <div class="kinds">
+        <div class="kind glass pop" style="--at: 6.0; --c: var(--text)">
+          <div class="badge"><svg class="line" viewBox="0 0 24 24"><path d="M5 6.5V5h14v1.5M12 5v14M9.5 19h5"/></svg></div>
+          <b>Text</b><span>What is on your mind</span>
+        </div>
+        <div class="kind glass pop" style="--at: 6.2; --c: var(--emoji)">
+          <div class="badge"><svg class="line" viewBox="0 0 24 24"><circle cx="12" cy="12" r="8.5"/><path d="M8.6 14.2c1.9 2.2 4.9 2.2 6.8 0M9.2 9.8h.01M14.8 9.8h.01"/></svg></div>
+          <b>Emoji</b><span>How you feel</span>
+        </div>
+        <div class="kind glass pop" style="--at: 6.4; --c: var(--photo)">
+          <div class="badge"><svg class="line" viewBox="0 0 24 24"><path d="M4 8.5h3.2L8.8 6h6.4l1.6 2.5H20v10H4z"/><circle cx="12" cy="13.2" r="3.2"/></svg></div>
+          <b>Photo</b><span>What you saw</span>
+        </div>
+        <div class="kind glass pop" style="--at: 6.6; --c: var(--video)">
+          <div class="badge"><svg class="line" viewBox="0 0 24 24"><rect x="3.5" y="7" width="11.5" height="10" rx="2"/><path d="M15 10.8l5-2.6v7.6l-5-2.6"/></svg></div>
+          <b>Video</b><span>How it moved</span>
+        </div>
+        <div class="kind glass pop" style="--at: 6.8; --c: var(--audio)">
+          <div class="badge"><svg class="line" viewBox="0 0 24 24"><rect x="9" y="3.5" width="6" height="10.5" rx="3"/><path d="M5.8 11.5a6.2 6.2 0 0 0 12.4 0M12 17.7V20.5M9 20.5h6"/></svg></div>
+          <b>Audio</b><span>How it sounded</span>
+        </div>
+        <div class="kind glass pop" style="--at: 7.0; --c: var(--location)">
+          <div class="badge"><svg class="line" viewBox="0 0 24 24"><path d="M12 21s6.5-5.6 6.5-11A6.5 6.5 0 0 0 5.500 10c0 5.400 6.500 11 6.500 11z"/><circle cx="12" cy="10" r="2.4"/></svg></div>
+          <b>Location</b><span>Where you were</span>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- 3a. Home. -->
+  <section class="scene" style="--in: 11.4; --out: 14.8">
+    <div class="split">
+      <div class="copy">
+        <div class="eyebrow rise" style="--at: 11.6">Home</div>
+        <h2 class="rise" style="--at: 11.8">Today, in one calm feed.</h2>
+        <p class="sub rise" style="--at: 12.2">One tap to log a mood. Everything else a tap away.</p>
+      </div>
+      <div class="phones">
+        <div class="float" style="--at: 11.4">
+          <div class="phone back slide" style="--at: 12.0"><img src="../../site/screens/new_emoji_light.webp" alt=""></div>
+          <div class="phone front slide" style="--at: 11.7"><img src="../../site/screens/home_light.webp" alt=""></div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- 3b. Calendar. -->
+  <section class="scene" style="--in: 14.8; --out: 18.2">
+    <div class="split">
+      <div class="copy">
+        <div class="eyebrow rise" style="--at: 15.0">Calendar</div>
+        <h2 class="rise" style="--at: 15.2">Your month at a glance.</h2>
+        <p class="sub rise" style="--at: 15.6">A dot for every kind of log, on the day it happened.</p>
+      </div>
+      <div class="phones">
+        <div class="float" style="--at: 14.8">
+          <div class="phone back slide" style="--at: 15.4"><img src="../../site/screens/library_light.webp" alt=""></div>
+          <div class="phone front slide" style="--at: 15.1"><img src="../../site/screens/calendar_light.webp" alt=""></div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- 3c. Search. -->
+  <section class="scene" style="--in: 18.2; --out: 21.4">
+    <div class="split">
+      <div class="copy">
+        <div class="eyebrow rise" style="--at: 18.4">Search</div>
+        <h2 class="rise" style="--at: 18.6">Find it as you type.</h2>
+        <p class="sub rise" style="--at: 19.0">Across everything you have written, named or captioned. On your phone, not a server.</p>
+      </div>
+      <div class="phones">
+        <div class="float" style="--at: 18.2">
+          <div class="phone back slide" style="--at: 18.8"><img src="../../site/screens/text_detail_light.webp" alt=""></div>
+          <div class="phone front slide" style="--at: 18.5"><img src="../../site/screens/search_results_light.webp" alt=""></div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- 4. Night: the dark theme. -->
+  <section class="scene on-night" style="--in: 21.8; --out: 27.2">
+    <div class="split">
+      <div class="copy">
+        <div class="eyebrow rise" style="--at: 22.0">Appearance</div>
+        <h2 class="rise" style="--at: 22.2">Light by day. Dark by night.</h2>
+        <p class="sub rise" style="--at: 22.7">Follow the system or choose. Swap glass for solid surfaces if you prefer.</p>
+      </div>
+      <div class="phones">
+        <div class="float" style="--at: 21.8">
+          <div class="phone back slide" style="--at: 22.5"><img src="../../site/screens/settings_dark.webp" alt=""></div>
+          <div class="phone front slide" style="--at: 22.2"><img src="../../site/screens/home_dark.webp" alt=""></div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- 5. Privacy. -->
+  <section class="scene" style="--in: 27.8; --out: 35.0">
+    <div class="split">
+      <div class="lockdisc glass pop" style="--at: 28.0; color: var(--ink)">
+        <svg class="line" viewBox="0 0 24 24" style="stroke-width: 1.6"><rect x="5" y="10.5" width="14" height="10" rx="2.6"/><path d="M8 10.5V8a4 4 0 0 1 8 0v2.5M12 14.6v2.2"/></svg>
+      </div>
+      <div class="promises">
+        <div class="eyebrow rise" style="--at: 28.2">Yours alone</div>
+        <div class="promise rise" style="--at: 28.6; --c: var(--text)"><i></i>No account.</div>
+        <div class="promise rise" style="--at: 29.3; --c: var(--photo)"><i></i>No cloud.</div>
+        <div class="promise rise" style="--at: 30.0; --c: var(--audio)"><i></i>No tracking.</div>
+        <div class="promise rise" style="--at: 30.7; --c: var(--video)"><i></i>Encrypted on your phone.</div>
+        <p class="footnote rise" style="--at: 31.8">One optional switch looks up place names online. It is off unless you turn it on.</p>
+      </div>
+    </div>
+  </section>
+
+  <!-- 6. Backup. -->
+  <section class="scene" style="--in: 35.0; --out: 39.2">
+    <div class="split">
+      <div class="file glass pop" style="--at: 35.3; color: var(--ink)">
+        <svg class="line" viewBox="0 0 24 24" style="stroke-width: 1.6"><path d="M7 3.5h7l4 4V20.500H7z"/><path d="M14 3.5v4h4"/><rect x="9.6" y="13" width="4.8" height="4" rx="1"/><path d="M10.700 13v-1.200a1.300 1.300 0 0 1 2.600 0V13"/></svg>
+        <em>.moment</em>
+      </div>
+      <div class="copy" style="flex: 1">
+        <div class="eyebrow rise" style="--at: 35.4">Backup</div>
+        <h2 class="rise" style="--at: 35.6">One encrypted file. Yours to keep.</h2>
+        <p class="sub rise" style="--at: 36.2">Locked with a passphrase only you know. Export to Markdown and JSON any time.</p>
+      </div>
+    </div>
+  </section>
+
+  <!-- 7. The end. -->
+  <section class="scene" style="--in: 39.2; --out: 99">
+    <div class="center">
+      <div class="mark pop" style="--at: 39.4; width: 220px; height: 220px; border-radius: 52px">
+        <svg viewBox="0 0 512 512" aria-hidden="true" style="border-radius: 52px">
+          <rect width="512" height="512" fill="#EDF0F7"/>
+          <circle cx="118" cy="124" r="215" fill="url(#o0)"/>
+          <circle cx="436" cy="300" r="205" fill="url(#o1)"/>
+          <circle cx="150" cy="468" r="190" fill="url(#o2)"/>
+          <circle cx="256" cy="256" r="156" fill="rgba(255,255,255,.58)" stroke="rgba(255,255,255,.9)" stroke-width="3"/>
+          <circle cx="256" cy="160" r="17" fill="#1D4ED8"/><circle cx="339.1" cy="208" r="17" fill="#B45309"/>
+          <circle cx="339.1" cy="304" r="17" fill="#BE185D"/><circle cx="256" cy="352" r="17" fill="#6D28D9"/>
+          <circle cx="172.9" cy="304" r="17" fill="#0F766E"/><circle cx="172.9" cy="208" r="17" fill="#15803D"/>
+          <circle cx="256" cy="256" r="36" fill="#1B1F2A"/>
+        </svg>
+      </div>
+      <div class="name rise" style="--at: 39.7; font-size: 150px">Moment</div>
+      <div class="tagline rise" style="--at: 40.1">Free and open source.</div>
+      <div class="row rise" style="--at: 40.6; margin-top: 18px">
+        <div class="pill ink">github.com/saranmahadev/Moment</div>
+      </div>
+    </div>
+  </section>
+</div>
+</body>
+</html>
