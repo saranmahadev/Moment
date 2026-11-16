@@ -513,7 +513,7 @@ class _AddButton extends StatelessWidget {
               ),
             ],
           ),
-          child: const Icon(Icons.add, color: Colors.white, size: 26),
+          child: Icon(Icons.add, color: tokens.onInk, size: 26),
         ),
       ),
     );

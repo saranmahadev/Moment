@@ -163,10 +163,10 @@ class _PassphraseSheetState extends State<_PassphraseSheet> {
                           borderRadius: BorderRadius.circular(24),
                         ),
                         alignment: Alignment.center,
-                        child: const Text(
+                        child: Text(
                           'Continue',
                           style: TextStyle(
-                            color: Colors.white,
+                            color: tokens.onInk,
                             fontSize: 15,
                             fontWeight: FontWeight.w600,
                           ),

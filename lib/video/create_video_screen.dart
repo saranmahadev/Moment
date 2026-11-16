@@ -253,18 +253,18 @@ class _Header extends StatelessWidget {
               ),
               alignment: Alignment.center,
               child: saving
-                  ? const SizedBox(
+                  ? SizedBox(
                       width: 16,
                       height: 16,
                       child: CircularProgressIndicator(
                         strokeWidth: 2,
-                        color: Colors.white,
+                        color: tokens.onInk,
                       ),
                     )
-                  : const Text(
+                  : Text(
                       'Save',
                       style: TextStyle(
-                        color: Colors.white,
+                        color: tokens.onInk,
                         fontSize: 15,
                         fontWeight: FontWeight.w600,
                       ),

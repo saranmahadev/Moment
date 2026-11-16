@@ -82,7 +82,7 @@ class _Chip extends StatelessWidget {
           Icon(
             icon,
             size: 16,
-            color: isSelected ? Colors.white : iconColor ?? tokens.ink,
+            color: isSelected ? tokens.onInk : iconColor ?? tokens.ink,
           ),
           const SizedBox(width: 8),
           Text(
@@ -90,7 +90,7 @@ class _Chip extends StatelessWidget {
             style: TextStyle(
               fontSize: 14.5,
               fontWeight: FontWeight.w500,
-              color: isSelected ? Colors.white : tokens.ink,
+              color: isSelected ? tokens.onInk : tokens.ink,
             ),
           ),
         ],

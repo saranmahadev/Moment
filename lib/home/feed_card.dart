@@ -295,7 +295,7 @@ class _AudioBody extends StatelessWidget {
           width: 44,
           height: 44,
           decoration: BoxDecoration(color: color, shape: BoxShape.circle),
-          child: const Icon(Icons.play_arrow, color: Colors.white, size: 22),
+          child: Icon(Icons.play_arrow, color: tokens.onInk, size: 22),
         ),
         const SizedBox(width: 12),
         Expanded(

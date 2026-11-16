@@ -1,5 +1,6 @@
 import 'dart:io';
 
+import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:moment/settings/app_settings.dart';
 import 'package:path/path.dart' as p;
@@ -76,5 +77,44 @@ void main() {
     final settings = await AppSettings.load(FileSettingsStore(file));
 
     expect(settings.lookUpPlaceNames, isFalse);
+  });
+
+  group('appearance', () {
+    test('follows the system and keeps glass, until changed', () async {
+      final settings = await AppSettings.load(FileSettingsStore(file));
+
+      expect(settings.themeMode, ThemeMode.system);
+      expect(settings.reduceTransparency, isFalse);
+    });
+
+    test('theme and Reduce Transparency survive a restart', () async {
+      final first = await AppSettings.load(FileSettingsStore(file));
+      await first.setThemeMode(ThemeMode.dark);
+      await first.setReduceTransparency(true);
+
+      final second = await AppSettings.load(FileSettingsStore(file));
+
+      expect(second.themeMode, ThemeMode.dark);
+      expect(second.reduceTransparency, isTrue);
+    });
+
+    test('an unknown theme name falls back to the system', () {
+      expect(
+        AppSettings.inMemory({'themeMode': 'sepia'}).themeMode,
+        ThemeMode.system,
+      );
+    });
+
+    test('each change tells listeners once', () async {
+      final settings = AppSettings.inMemory();
+      var notified = 0;
+      settings.addListener(() => notified++);
+
+      await settings.setThemeMode(ThemeMode.light);
+      await settings.setThemeMode(ThemeMode.light);
+      await settings.setReduceTransparency(true);
+
+      expect(notified, 2);
+    });
   });
 }

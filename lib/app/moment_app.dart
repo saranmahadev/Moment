@@ -19,7 +19,6 @@ import '../video/video_probe.dart';
 import '../data/log_repository.dart';
 import '../data/media_store.dart';
 import '../data/secure_database.dart';
-import '../design/theme.dart';
 import '../location/location_provider.dart';
 import '../location/nominatim_place_names.dart';
 import '../settings/app_settings.dart';
@@ -29,6 +28,7 @@ import '../lock/pin_storage.dart';
 import '../photo/photo_picker.dart';
 import '../shell/app_shell.dart';
 import 'lock_gate.dart';
+import 'themed_app.dart';
 import '../data/database.dart';
 import '../data/key_store.dart';
 
@@ -114,10 +114,17 @@ class _MomentAppState extends State<MomentApp> with WidgetsBindingObserver {
   final _placeNames = NominatimPlaceNameLookup();
   AppLockController? _lockController;
 
+  /// Null until the bootstrap has read them; the app follows the system
+  /// theme until then.
+  AppSettings? _settings;
+
   @override
   void initState() {
     super.initState();
     WidgetsBinding.instance.addObserver(this);
+    _resources.then((resources) {
+      if (mounted) setState(() => _settings = resources.settings);
+    });
   }
 
   @override
@@ -133,10 +140,8 @@ class _MomentAppState extends State<MomentApp> with WidgetsBindingObserver {
 
   @override
   Widget build(BuildContext context) {
-    return MaterialApp(
-      title: 'Moment',
-      debugShowCheckedModeBanner: false,
-      theme: momentTheme(),
+    return ThemedApp(
+      settings: _settings,
       home: FutureBuilder<_Resources>(
         future: _resources,
         builder: (context, snapshot) {

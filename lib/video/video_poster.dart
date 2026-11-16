@@ -62,7 +62,7 @@ class PlayBadge extends StatelessWidget {
       width: size,
       height: size,
       decoration: BoxDecoration(
-        color: Colors.white.withValues(alpha: 0.75),
+        color: tokens.scrim.withValues(alpha: 0.75),
         shape: BoxShape.circle,
       ),
       child: Icon(Icons.play_arrow, color: tokens.ink, size: size * 0.55),
@@ -86,7 +86,7 @@ class ClipLengthPill extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 9, vertical: 3),
       decoration: BoxDecoration(
-        color: Colors.white.withValues(alpha: 0.78),
+        color: tokens.scrim.withValues(alpha: 0.78),
         borderRadius: BorderRadius.circular(12),
       ),
       child: Text(
