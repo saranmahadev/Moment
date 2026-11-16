@@ -6,6 +6,7 @@ import 'package:moment/data/log_repository.dart';
 import 'package:moment/design/theme.dart';
 import 'package:moment/domain/log.dart';
 import 'package:moment/home/home_screen.dart';
+import 'package:moment/settings/app_settings.dart';
 
 void main() {
   final now = DateTime.utc(2026, 11, 6, 21, 50);
@@ -20,12 +21,14 @@ void main() {
     WidgetTester tester,
     LogRepository repo, {
     ValueChanged<Log>? onOpenLog,
+    AppSettings? settings,
   }) {
     return tester.pumpWidget(
       MaterialApp(
         theme: momentTheme(),
         home: HomeScreen(
           repository: repo,
+          settings: settings,
           now: () => now,
           onOpenLog: onOpenLog,
         ),
@@ -88,6 +91,38 @@ void main() {
 
     // One in the mood row itself, one in the new feed card it created.
     expect(find.text('😌'), findsNWidgets(2));
+
+    await tester.pumpWidget(const SizedBox());
+    await tester.pumpAndSettle();
+    await db.close();
+  });
+
+  testWidgets('the mood row shows the five emoji chosen in Settings', (
+    tester,
+  ) async {
+    final db = AppDatabase(NativeDatabase.memory());
+    final repo = LogRepository(db, clock: () => now);
+    final settings = AppSettings.inMemory({
+      'quickEmoji': ['🥰', '😴', '😊', '😢', '🤒'],
+    });
+
+    await pump(tester, repo, settings: settings);
+    await tester.pump();
+
+    expect(find.bySemanticsLabel('Log mood loved'), findsOneWidget);
+    expect(find.bySemanticsLabel('Log mood calm'), findsNothing);
+
+    await tester.tap(find.bySemanticsLabel('Log mood tired'));
+    await tester.pumpAndSettle();
+    final logged = (await repo.getAll()).single as EmojiLog;
+    expect(logged.emoji, '😴');
+    expect(logged.label, 'Tired');
+
+    // A change in Settings shows without leaving Home.
+    await settings.setQuickEmoji(['😤', '😴', '😊', '😢', '🤒']);
+    await tester.pumpAndSettle();
+    expect(find.bySemanticsLabel('Log mood frustrated'), findsOneWidget);
+    expect(find.bySemanticsLabel('Log mood loved'), findsNothing);
 
     await tester.pumpWidget(const SizedBox());
     await tester.pumpAndSettle();

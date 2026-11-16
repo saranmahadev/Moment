@@ -3,6 +3,7 @@ import 'dart:io';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:image/image.dart' as img;
 import 'package:moment/data/media_store.dart';
+import 'package:moment/settings/media_quality.dart';
 import 'package:moment/video/video_probe.dart';
 import 'package:path/path.dart' as p;
 
@@ -247,5 +248,69 @@ void main() {
       // adds next to nothing. 64 MB leaves room for ordinary noise.
       expect(ProcessInfo.currentRss - before, lessThan(64 * 1024 * 1024));
     }, timeout: const Timeout(Duration(minutes: 3)));
+  });
+
+  group('photo quality', () {
+    File wide(String name) {
+      final image = img.Image(width: 2000, height: 1000);
+      img.fill(image, color: img.ColorRgb8(40, 120, 200));
+      return File(p.join(tempDir.path, name))
+        ..writeAsBytesSync(img.encodeJpg(image));
+    }
+
+    Future<img.Image> stored(MediaQuality quality) async {
+      final store = MediaStore(
+        root: root,
+        clock: () => DateTime.utc(2026, 11, 7),
+        photoQuality: () => quality,
+      );
+      final imported = await store.importPhoto(wide('${quality.name}.jpg'));
+      return img.decodeImage(File(imported.path).readAsBytesSync())!;
+    }
+
+    test('Original keeps every pixel', () async {
+      final photo = await stored(MediaQuality.original);
+      expect((photo.width, photo.height), (2000, 1000));
+    });
+
+    test('High leaves a photo under its limit alone', () async {
+      final photo = await stored(MediaQuality.high);
+      expect((photo.width, photo.height), (2000, 1000));
+    });
+
+    test(
+      'Smaller scales the long edge down to 1600, keeping the shape',
+      () async {
+        final photo = await stored(MediaQuality.smaller);
+        expect((photo.width, photo.height), (1600, 800));
+      },
+    );
+
+    test('a tall photo is limited by its height', () async {
+      final image = img.Image(width: 1000, height: 2000);
+      final source = File(p.join(tempDir.path, 'tall.jpg'))
+        ..writeAsBytesSync(img.encodeJpg(image));
+      final store = MediaStore(
+        root: root,
+        photoQuality: () => MediaQuality.smaller,
+      );
+
+      final imported = await store.importPhoto(source);
+      final photo = img.decodeImage(File(imported.path).readAsBytesSync())!;
+
+      expect((photo.width, photo.height), (800, 1600));
+    });
+
+    test('the quality is read at the time of each import', () async {
+      var quality = MediaQuality.original;
+      final store = MediaStore(root: root, photoQuality: () => quality);
+
+      final first = await store.importPhoto(wide('first.jpg'));
+      quality = MediaQuality.smaller;
+      final second = await store.importPhoto(wide('second.jpg'));
+
+      expect(img.decodeImage(File(first.path).readAsBytesSync())!.width, 2000);
+      expect(img.decodeImage(File(second.path).readAsBytesSync())!.width, 1600);
+    });
   });
 }
