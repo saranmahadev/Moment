@@ -424,6 +424,7 @@ Future<ScreenFixture> pumpScreenCase(
   bool reduceTransparency = false,
   double textScale = 1,
   Size size = const Size(390, 844),
+  List<String>? fontFamilyFallback,
 }) async {
   await tester.binding.setSurfaceSize(size);
   addTearDown(() => tester.binding.setSurfaceSize(null));
@@ -434,10 +435,17 @@ Future<ScreenFixture> pumpScreenCase(
     await fixture.seed();
     widget = await screen.build(fixture);
   });
-  final theme = momentTheme(
+  final base = momentTheme(
     brightness: brightness,
     reduceTransparency: reduceTransparency,
   );
+  final theme = fontFamilyFallback == null
+      ? base
+      : base.copyWith(
+          textTheme: base.textTheme.apply(
+            fontFamilyFallback: fontFamilyFallback,
+          ),
+        );
   await tester.pumpWidget(
     MaterialApp(
       debugShowCheckedModeBanner: false,

@@ -8,3 +8,8 @@ tags:
   # `flutter test --run-skipped --tags live`.
   live:
     skip: "Needs the real network; run by the Live check workflow."
+  # Renders every screen to PNG files for a person to look at (not
+  # compared with anything). Run with
+  # `flutter test --run-skipped --tags preview test/gate/previews_test.dart`.
+  preview:
+    skip: "Writes preview images; run by hand."

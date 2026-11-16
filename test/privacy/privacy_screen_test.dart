@@ -21,6 +21,7 @@ import 'package:moment/lock/pin_storage.dart';
 import 'package:moment/privacy/privacy_screen.dart';
 import 'package:moment/settings/app_settings.dart';
 import 'package:path/path.dart' as p;
+import 'package:moment/design/round_glass_button.dart';
 
 class _FakePinStorage implements PinStorage {
   String? stored;
@@ -358,7 +359,7 @@ void main() {
     var backed = false;
     await pump(tester, controller, onBack: () => backed = true);
 
-    await tester.tap(find.bySemanticsLabel('Back'));
+    await tester.tap(find.widgetWithIcon(RoundGlassButton, Icons.chevron_left));
 
     expect(backed, isTrue);
   });

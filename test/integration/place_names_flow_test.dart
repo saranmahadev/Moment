@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:moment/domain/log.dart';
 import 'package:moment/settings/app_settings.dart';
+import 'package:moment/design/round_glass_button.dart';
 
 import '../location/location_fakes.dart';
 import 'shell_harness.dart';
@@ -54,7 +55,7 @@ void main() {
     expect(settings.lookUpPlaceNames, isTrue);
     await tester.drag(find.byType(Scrollable).first, const Offset(0, 2000));
     await tester.pumpAndSettle();
-    await tester.tap(find.bySemanticsLabel('Back'));
+    await tester.tap(find.widgetWithIcon(RoundGlassButton, Icons.chevron_left));
     await tester.pumpAndSettle();
     await tester.tap(find.bySemanticsLabel('Home'));
     await tester.pumpAndSettle();

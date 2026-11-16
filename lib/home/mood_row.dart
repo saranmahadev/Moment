@@ -29,10 +29,11 @@ class MoodRow extends StatelessWidget {
       variant: GlassVariant.card,
       borderRadius: 28,
       child: Padding(
-        padding: const EdgeInsets.fromLTRB(18, 10, 12, 10),
+        padding: const EdgeInsets.fromLTRB(16, 10, 6, 10),
         child: Row(
           children: [
-            Flexible(
+            // The question takes whatever the five emoji leave.
+            Expanded(
               child: Text(
                 'How are you?',
                 overflow: TextOverflow.ellipsis,
@@ -43,7 +44,6 @@ class MoodRow extends StatelessWidget {
                 ),
               ),
             ),
-            const Spacer(),
             for (final emoji in emoji)
               Semantics(
                 button: true,

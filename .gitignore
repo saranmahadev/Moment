@@ -27,3 +27,6 @@ android/key.properties
 *.sqlite
 *.db
 *.moment
+
+# Images flutter_test writes when a golden does not match.
+**/failures/

@@ -16,11 +16,11 @@ void main() {
   setUpAll(loadAppFonts);
 
   test('all 27 screens of the mockups are covered', () {
-    final numbered = [
+    final numbered = {
       for (final screen in screenCases)
         if (RegExp(r'^\d\d_').hasMatch(screen.name))
           int.parse(screen.name.substring(0, 2)),
-    ].toSet().toList();
+    }.toList();
 
     expect(numbered, [for (var i = 1; i <= 27; i++) i]);
   });

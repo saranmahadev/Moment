@@ -28,7 +28,11 @@ class SearchScreen extends StatefulWidget {
     required this.settings,
     required this.onOpenLog,
     required this.onBack,
+    this.initialQuery = '',
   });
+
+  /// What the field holds, and is searched for, when the screen opens.
+  final String initialQuery;
 
   final LogRepository repository;
   final AppSettings settings;
@@ -57,6 +61,7 @@ class _SearchScreenState extends State<SearchScreen> {
   void initState() {
     super.initState();
     _controller.addListener(_search);
+    if (widget.initialQuery.isNotEmpty) _controller.text = widget.initialQuery;
   }
 
   @override
