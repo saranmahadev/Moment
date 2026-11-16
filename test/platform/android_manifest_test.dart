@@ -32,4 +32,38 @@ void main() {
   test('the launcher shows the app as "Moment"', () {
     expect(manifest, contains('android:label="Moment"'));
   });
+
+  group('the evening reminder', () {
+    test('comes back after the phone restarts', () {
+      // The plugin can only reschedule after a reboot if the app asks to
+      // be told about it and declares the plugin's receivers.
+      expect(declares('RECEIVE_BOOT_COMPLETED'), isTrue);
+      expect(
+        manifest,
+        contains(
+          'com.dexterous.flutterlocalnotifications.'
+          'ScheduledNotificationBootReceiver',
+        ),
+      );
+      expect(
+        manifest,
+        contains(
+          'com.dexterous.flutterlocalnotifications.'
+          'ScheduledNotificationReceiver',
+        ),
+      );
+    });
+
+    test('is a nudge, not an alarm: no exact-alarm permission', () {
+      expect(declares('SCHEDULE_EXACT_ALARM'), isFalse);
+      expect(declares('USE_EXACT_ALARM'), isFalse);
+    });
+
+    test('the build desugars, which the notification plugin requires', () {
+      final gradle = File('android/app/build.gradle.kts').readAsStringSync();
+
+      expect(gradle, contains('isCoreLibraryDesugaringEnabled = true'));
+      expect(gradle, contains('coreLibraryDesugaring('));
+    });
+  });
 }
