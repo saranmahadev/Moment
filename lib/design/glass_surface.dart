@@ -17,19 +17,28 @@ enum GlassVariant {
   surface,
 }
 
-/// A translucent, blurred surface in one of Moment's glass recipes: a
-/// white fill over a saturation-boosted blur of whatever is behind it, with
-/// a soft 1px border and shadow. With Reduce Transparency on it is a solid
-/// surface of the same shape instead.
+/// A glass surface in one of Moment's recipes: a translucent white film
+/// with a soft 1px border and shadow, and, for the dock and sheets, a
+/// saturation-boosted blur of whatever is behind it (see [blur]). With
+/// Reduce Transparency on it is a solid surface of the same shape instead.
 class GlassSurface extends StatelessWidget {
   const GlassSurface({
     super.key,
     required this.variant,
     this.borderRadius,
+    this.blur,
     this.child,
   });
 
   final GlassVariant variant;
+
+  /// Whether to blur what is behind the surface. Left unset, only
+  /// [GlassVariant.strong] does: the dock and sheets, which float above
+  /// everything. A blur re-reads and re-blurs the screen behind it on
+  /// every frame, so cards, tiles and buttons (there can be a dozen on a
+  /// screen, and they scroll) are a translucent fill with no blur; that
+  /// is what keeps scrolling smooth on a mid-range phone.
+  final bool? blur;
 
   /// Overrides the recipe's default corner radius.
   final double? borderRadius;
@@ -74,6 +83,22 @@ class GlassSurface extends StatelessWidget {
       );
     }
 
+    final film = DecoratedBox(
+      decoration: BoxDecoration(
+        color: Colors.white.withValues(alpha: recipe.fillOpacity),
+        border: Border.all(
+          color: Colors.white.withValues(alpha: recipe.borderOpacity),
+        ),
+        borderRadius: radius,
+        boxShadow: shadow,
+      ),
+      child: child,
+    );
+
+    if (!(blur ?? variant == GlassVariant.strong)) {
+      return ClipRRect(borderRadius: radius, child: film);
+    }
+
     return ClipRRect(
       borderRadius: radius,
       child: BackdropFilter(
@@ -84,17 +109,7 @@ class GlassSurface extends StatelessWidget {
             sigmaY: recipe.blurSigma,
           ),
         ),
-        child: DecoratedBox(
-          decoration: BoxDecoration(
-            color: Colors.white.withValues(alpha: recipe.fillOpacity),
-            border: Border.all(
-              color: Colors.white.withValues(alpha: recipe.borderOpacity),
-            ),
-            borderRadius: radius,
-            boxShadow: shadow,
-          ),
-          child: child,
-        ),
+        child: film,
       ),
     );
   }
