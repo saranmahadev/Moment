@@ -106,6 +106,16 @@ Screens in Phase 1: Lock, Home, Add, Library, New text, New emoji, Text section,
 - No note under the player (nothing is transcribed). `AudioLog.note` stays in the schema and backups; the screen just does not show or edit it.
 - No mini player, no background or lock-screen playback, no bookmarks, no clip sharing (owner declined).
 
+## Video player decisions (owner-approved design, after 0.4.1)
+
+- `VideoDetailScreen` (portrait) and `FullscreenVideoPlayer` share one `VideoPlayerModel` (position, playing, started, ended, mute, loop, speed 1/1.25/1.5/2/0.5; the screen that made the `VideoPlaybackController` still disposes it). Fakes: `FakeVideoPlaybackController`, `FakePlayerScreenControl`.
+- `FrameStripScrubber` is the scrubber (frames, dimmed unplayed part, playhead, drag shows the nearest frame and its time, seek on release, one slider for TalkBack; no `LayoutBuilder` inside, same reason as `PlayerWaveform`).
+- Frames: `VideoFrameStrip` makes 12 small JPEGs per video through `VideoProbe.writeFrame` (fc_native_video_thumbnail `at:`), into the app cache (`video-frames/<logId>/`), most recent 40 videos kept, never backed up, regenerated when missing.
+- `PlayerScreenControl` (`DevicePlayerScreenControl`: SystemChrome fullscreen and orientation, `wakelock_plus` for keeping the screen on) sits behind an interface; wide clips go landscape, tall ones portrait.
+- Controls over footage use two fixed colours in `lib/video/overlay_colours.dart` (a dark film, white marks); everything else comes from the tokens.
+- A `VideoPlayerModel` or timer created in a `setUp` of a widget test runs on the wrong clock: create them inside the test.
+- Not built (owner declined for now): mini player, picture-in-picture, background playback, captions.
+
 ## Logo, site, film and open-source files (before Phase 5)
 
 - Licence: GPL-3.0, chosen by the owner (`LICENSE`). `CONTRIBUTING.md` and `SECURITY.md` state the rules; the fonts' credits are in `assets/fonts/README.md`.

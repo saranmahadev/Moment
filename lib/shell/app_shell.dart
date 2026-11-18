@@ -40,6 +40,8 @@ import '../section/section_screen.dart';
 import '../settings/settings_screen.dart';
 import '../text/create_text_screen.dart';
 import '../trash/trash_screen.dart';
+import '../video/player_screen_control.dart';
+import '../video/video_frames.dart';
 import '../video/create_video_screen.dart';
 import '../video/video_detail_screen.dart';
 import '../video/video_picker.dart';
@@ -67,6 +69,8 @@ class AppShell extends StatefulWidget {
     required this.locationProvider,
     required this.placeNames,
     this.mapSource,
+    this.videoFrames,
+    this.playerScreen,
     required this.settings,
     required this.reminders,
     required this.backups,
@@ -92,6 +96,11 @@ class AppShell extends StatefulWidget {
 
   /// The bundled map behind Location previews; null shows the plain tile.
   final MapSource? mapSource;
+
+  /// Frames for the video scrubber, and fullscreen control; without them the
+  /// video player has a plain strip and no fullscreen effects.
+  final VideoFrameStrip? videoFrames;
+  final PlayerScreenControl? playerScreen;
   final AppSettings settings;
   final ReminderScheduler reminders;
   final BackupCoordinator backups;
@@ -243,6 +252,8 @@ class _AppShellState extends State<AppShell> {
         picker: widget.videoPicker,
         probe: widget.videoProbe,
         playback: widget.createVideoPlayback(),
+        frames: widget.videoFrames,
+        screen: widget.playerScreen,
         now: widget.now,
         onBack: () => Navigator.of(context).pop(),
       ),

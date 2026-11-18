@@ -30,6 +30,7 @@ dependencies:
   archive: ^4.7.1
   video_player: ^2.14.1
   fc_native_video_thumbnail: ^4.0.0
+  wakelock_plus: ^1.2.0
   geolocator: ^14.0.2
   # 23.x needs Android compile SDK 37, which the pinned Flutter (3.47.9,
   # SDK 36) does not build against. Move this with the Flutter pin.

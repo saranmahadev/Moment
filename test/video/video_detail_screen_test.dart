@@ -8,6 +8,8 @@ import 'package:moment/data/log_repository.dart';
 import 'package:moment/data/media_store.dart';
 import 'package:moment/design/theme.dart';
 import 'package:moment/domain/log.dart';
+import 'package:moment/video/frame_strip_scrubber.dart';
+import 'package:moment/video/fullscreen_video_player.dart';
 import 'package:moment/video/video_detail_screen.dart';
 import 'package:path/path.dart' as p;
 
@@ -45,6 +47,7 @@ void main() {
     required FakeVideoPlaybackController playback,
     VideoLog? log_,
     VoidCallback? onBack,
+    FakePlayerScreenControl? screen,
   }) async {
     await tester.binding.setSurfaceSize(const Size(390, 844));
     addTearDown(() => tester.binding.setSurfaceSize(null));
@@ -58,6 +61,7 @@ void main() {
           picker: FakeVideoPicker(),
           probe: FakeVideoProbe(),
           playback: playback,
+          screen: screen,
           now: () => now,
           onBack: onBack ?? () {},
         ),
@@ -83,7 +87,7 @@ void main() {
     expect(find.text('0:00'), findsOneWidget);
     expect(find.text('0:48'), findsOneWidget);
     expect(find.text('Walk to the station'), findsOneWidget);
-    expect(find.text('Stored on this device'), findsOneWidget);
+    expect(find.text('Stored on this device'), findsNothing);
 
     await close(tester);
   });
@@ -134,11 +138,13 @@ void main() {
     await close(tester);
   });
 
-  testWidgets('dragging the scrubber seeks within the video', (tester) async {
+  testWidgets('dragging the frame strip seeks within the video', (
+    tester,
+  ) async {
     final playback = FakeVideoPlaybackController();
     await pump(tester, playback: playback);
 
-    await tester.drag(find.byType(Slider), const Offset(120, 0));
+    await tester.drag(find.byType(FrameStripScrubber), const Offset(120, 0));
     await tester.pump(const Duration(milliseconds: 1));
 
     expect(playback.lastSeek, isNotNull);
@@ -172,7 +178,7 @@ void main() {
     await pump(tester, playback: FakeVideoPlaybackController(), log_: bare);
 
     expect(find.text('Walk to the station'), findsNothing);
-    expect(find.text('Stored on this device'), findsOneWidget);
+    expect(find.text('Video'), findsWidgets);
 
     await close(tester);
   });
@@ -227,6 +233,109 @@ void main() {
     await tester.tap(find.bySemanticsLabel('Back'));
 
     expect(backed, isTrue);
+
+    await close(tester);
+  });
+
+  testWidgets('Mute, Loop and Speed reach the player and show their state', (
+    tester,
+  ) async {
+    final playback = FakeVideoPlaybackController();
+    await pump(tester, playback: playback);
+
+    await tester.tap(find.bySemanticsLabel('Mute'));
+    await tester.pump();
+    expect(playback.muted, isTrue);
+    expect(find.bySemanticsLabel('Unmute'), findsOneWidget);
+
+    await tester.tap(find.bySemanticsLabel('Loop off'));
+    await tester.pump();
+    expect(playback.loop, isTrue);
+    expect(find.bySemanticsLabel('Loop on'), findsOneWidget);
+
+    await tester.tap(find.bySemanticsLabel('Speed 1.0 times'));
+    await tester.pump();
+    expect(playback.speed, 1.25);
+    expect(find.text('1.25×'), findsOneWidget);
+
+    await close(tester);
+  });
+
+  testWidgets('when the clip ends the button offers Replay', (tester) async {
+    final playback = FakeVideoPlaybackController();
+    await pump(tester, playback: playback);
+
+    await tester.tap(find.bySemanticsLabel('Play'));
+    await tester.pump(const Duration(milliseconds: 1));
+    playback.ended();
+    await tester.pump(const Duration(milliseconds: 1));
+
+    expect(find.bySemanticsLabel('Replay'), findsOneWidget);
+
+    await tester.tap(find.bySemanticsLabel('Replay'));
+    await tester.pump(const Duration(milliseconds: 1));
+    expect(playback.lastSeek, Duration.zero);
+    expect(find.bySemanticsLabel('Pause'), findsOneWidget);
+
+    await close(tester);
+  });
+
+  testWidgets('the screen stays awake only while playing', (tester) async {
+    final playback = FakeVideoPlaybackController();
+    final screen = FakePlayerScreenControl();
+    await pump(tester, playback: playback, screen: screen);
+
+    await tester.tap(find.bySemanticsLabel('Play'));
+    await tester.pump(const Duration(milliseconds: 1));
+    await tester.tap(find.bySemanticsLabel('Pause'));
+    await tester.pump(const Duration(milliseconds: 1));
+
+    expect(screen.awake, [true, false]);
+
+    await close(tester);
+  });
+
+  testWidgets('Fullscreen opens the player, landscape for a wide clip, and '
+      'closing goes back', (tester) async {
+    final playback = FakeVideoPlaybackController();
+    final screen = FakePlayerScreenControl();
+    await pump(tester, playback: playback, screen: screen);
+
+    await tester.tap(find.bySemanticsLabel('Fullscreen'));
+    await tester.pumpAndSettle();
+
+    expect(find.byType(FullscreenVideoPlayer), findsOneWidget);
+    expect(screen.fullscreen, [true]);
+
+    await tester.tap(find.bySemanticsLabel('Exit fullscreen').first);
+    await tester.pumpAndSettle();
+
+    expect(find.byType(FullscreenVideoPlayer), findsNothing);
+    expect(screen.exits, 1);
+
+    await close(tester);
+  });
+
+  testWidgets('a tall clip goes fullscreen in portrait', (tester) async {
+    final playback = FakeVideoPlaybackController()..aspectRatio = 9 / 16;
+    final screen = FakePlayerScreenControl();
+    await pump(tester, playback: playback, screen: screen);
+
+    await tester.tap(find.bySemanticsLabel('Fullscreen'));
+    await tester.pumpAndSettle();
+
+    expect(screen.fullscreen, [false]);
+
+    await close(tester);
+  });
+
+  testWidgets('tapping the picture plays and pauses', (tester) async {
+    final playback = FakeVideoPlaybackController();
+    await pump(tester, playback: playback);
+
+    await tester.tap(find.bySemanticsLabel('Video. Tap to play or pause'));
+    await tester.pump(const Duration(milliseconds: 1));
+    expect(playback.played, isTrue);
 
     await close(tester);
   });
