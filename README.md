@@ -39,7 +39,7 @@ Moment is a life journal for your phone. It keeps what you write, feel, see, hea
 
 Everything stays on the device, in an encrypted database. There is nothing to sign up for.
 
-> **Status:** version 0.4.3, a preview on the way to 1.0. Every screen exists and the app is usable day to day, but it has had little testing on real phones yet. See [Status and roadmap](#status-and-roadmap).
+> **Status:** version 0.4.4, a preview on the way to 1.0. Every screen exists and the app is usable day to day, but it has had little testing on real phones yet. See [Status and roadmap](#status-and-roadmap).
 
 ## Screens
 
