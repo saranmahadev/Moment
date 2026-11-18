@@ -24,7 +24,7 @@ void main() {
     await tester.pumpAndSettle();
     expect(find.byType(CreateTextScreen), findsOneWidget);
 
-    await tester.tap(find.bySemanticsLabel('Close'));
+    await tester.tap(find.bySemanticsLabel('Close without saving'));
     await tester.pumpAndSettle();
     inbox.post(const AddLink(LogType.emoji));
     await tester.pumpAndSettle();
@@ -78,7 +78,7 @@ void main() {
 
     expect(find.byType(StreaksScreen), findsNothing);
     expect(find.byType(CreateTextScreen), findsOneWidget);
-    await tester.tap(find.bySemanticsLabel('Close'));
+    await tester.tap(find.bySemanticsLabel('Close without saving'));
     await tester.pumpAndSettle();
     // One pop returns to the tabs: nothing is left underneath.
     expect(find.bySemanticsLabel('Add a log'), findsOneWidget);
