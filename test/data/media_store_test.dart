@@ -35,6 +35,10 @@ class _FakeVideoProbe implements VideoProbe {
   }
 
   @override
+  Future<bool> writeFrame(File video, File destination, Duration at) async =>
+      false;
+
+  @override
   Future<bool> writePoster(File video, File destination) async {
     if (!readable) return false;
     await destination.writeAsBytes([1, 2, 3]);
