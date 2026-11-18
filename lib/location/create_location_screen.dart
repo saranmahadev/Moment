@@ -331,6 +331,7 @@ class _CreateLocationScreenState extends State<CreateLocationScreen> {
             child: Padding(
               padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
               child: TextField(
+                enableIMEPersonalizedLearning: false,
                 key: const ValueKey('place-name'),
                 controller: _nameController,
                 style: TextStyle(fontSize: 15, color: tokens.ink),

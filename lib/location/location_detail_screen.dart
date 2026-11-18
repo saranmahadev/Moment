@@ -239,6 +239,7 @@ class _LocationDetailScreenState extends State<LocationDetailScreen> {
                         child: Column(
                           children: [
                             TextField(
+                              enableIMEPersonalizedLearning: false,
                               key: const ValueKey('place-name'),
                               controller: _nameController,
                               style: TextStyle(
@@ -253,6 +254,7 @@ class _LocationDetailScreenState extends State<LocationDetailScreen> {
                               ),
                             ),
                             TextField(
+                              enableIMEPersonalizedLearning: false,
                               key: const ValueKey('place-note'),
                               controller: _noteController,
                               maxLines: null,

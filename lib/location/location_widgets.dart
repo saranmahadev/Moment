@@ -134,6 +134,7 @@ class _CoordinatesEntryState extends State<CoordinatesEntry> {
           child: Padding(
             padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
             child: TextField(
+              enableIMEPersonalizedLearning: false,
               key: const ValueKey('coordinates-field'),
               controller: _controller,
               keyboardType: TextInputType.text,

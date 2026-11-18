@@ -214,6 +214,7 @@ class _AudioDetailScreenState extends State<AudioDetailScreen> {
                         const SizedBox(height: 14),
                         _editing
                             ? TextField(
+                                enableIMEPersonalizedLearning: false,
                                 controller: _titleController,
                                 style: TextStyle(
                                   fontFamily: 'Newsreader',

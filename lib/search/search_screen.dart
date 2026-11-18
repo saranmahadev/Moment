@@ -156,6 +156,7 @@ class _SearchScreenState extends State<SearchScreen> {
             const SizedBox(width: 8),
             Expanded(
               child: TextField(
+                enableIMEPersonalizedLearning: false,
                 controller: _controller,
                 autofocus: true,
                 textInputAction: TextInputAction.search,
