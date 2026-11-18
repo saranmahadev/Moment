@@ -63,7 +63,7 @@ void main() {
 
     await tester.pumpWidget(
       MaterialApp(
-        theme: momentTheme(),
+        theme: momentTheme(reduceTransparency: true),
         home: AppShell(
           repository: repo,
           lockController: AppLockController(MemoryPinStorage()),
@@ -76,7 +76,11 @@ void main() {
           createVideoPlayback: FakeVideoPlaybackController.new,
           locationProvider: FakeLocationProvider(),
           placeNames: FakePlaceNameLookup(),
-          settings: AppSettings.inMemory(),
+          // Reduce Transparency: no live blur. The CI emulator draws in
+          // software and went offline at the shell's first frame, the
+          // first with the dock's blur, in every run. The budget measures
+          // the UI thread's build times, which the blur does not change.
+          settings: AppSettings.inMemory({'reduceTransparency': true}),
           reminders: NoReminders(),
           backups: BackupCoordinator(
             service: BackupService(
