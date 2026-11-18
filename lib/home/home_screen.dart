@@ -8,6 +8,9 @@ import '../design/glass_surface.dart';
 import '../design/tokens.dart';
 import '../domain/log.dart';
 import '../domain/log_type.dart';
+import '../streaks/streak_builder.dart';
+import '../streaks/streak_chip.dart';
+import '../streaks/streak_model.dart';
 import 'feed_card.dart';
 import 'feed_grouping.dart';
 import 'mood_row.dart';
@@ -30,6 +33,7 @@ class HomeScreen extends StatefulWidget {
     DateTime Function()? now,
     this.onOpenLog,
     this.onSearchTap,
+    this.onOpenStreaks,
   }) : now = now ?? DateTime.now;
 
   final LogRepository repository;
@@ -39,6 +43,9 @@ class HomeScreen extends StatefulWidget {
   final DateTime Function() now;
   final ValueChanged<Log>? onOpenLog;
   final VoidCallback? onSearchTap;
+
+  /// Opens the Streaks page; the streak chip beside Search calls it.
+  final VoidCallback? onOpenStreaks;
 
   @override
   State<HomeScreen> createState() => _HomeScreenState();
@@ -63,7 +70,18 @@ class _HomeScreenState extends State<HomeScreen> {
         return ListView(
           padding: const EdgeInsets.fromLTRB(20, 60, 20, 140),
           children: [
-            _Header(now: now, tokens: tokens, onSearchTap: widget.onSearchTap),
+            StreakBuilder(
+              repository: widget.repository,
+              settings: widget.settings,
+              now: widget.now,
+              builder: (context, streak) => _Header(
+                now: now,
+                tokens: tokens,
+                onSearchTap: widget.onSearchTap,
+                streak: streak,
+                onStreakTap: widget.onOpenStreaks,
+              ),
+            ),
             const SizedBox(height: 12),
             TypeFilterChips(
               availableTypes: builtLogTypes,
@@ -124,11 +142,19 @@ class _HomeScreenState extends State<HomeScreen> {
 }
 
 class _Header extends StatelessWidget {
-  const _Header({required this.now, required this.tokens, this.onSearchTap});
+  const _Header({
+    required this.now,
+    required this.tokens,
+    this.onSearchTap,
+    this.streak,
+    this.onStreakTap,
+  });
 
   final DateTime now;
   final MomentTokens tokens;
   final VoidCallback? onSearchTap;
+  final StreakSummary? streak;
+  final VoidCallback? onStreakTap;
 
   @override
   Widget build(BuildContext context) {
@@ -156,6 +182,10 @@ class _Header extends StatelessWidget {
           ],
         ),
         const Spacer(),
+        if (streak != null && streak!.current > 0) ...[
+          StreakChip(summary: streak!, onTap: onStreakTap),
+          const SizedBox(width: 8),
+        ],
         Semantics(
           button: true,
           label: 'Search',

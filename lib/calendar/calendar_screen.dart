@@ -10,6 +10,10 @@ import '../design/type_icons.dart';
 import '../domain/log.dart';
 import '../domain/log_type.dart';
 import '../home/type_filter_chips.dart';
+import '../settings/app_settings.dart';
+import '../streaks/streak_builder.dart';
+import '../streaks/streak_card.dart';
+import '../streaks/streak_model.dart';
 import 'calendar_model.dart';
 
 final _monthTitle = DateFormat('MMMM y');
@@ -33,11 +37,18 @@ class CalendarScreen extends StatefulWidget {
     required this.repository,
     DateTime Function()? now,
     this.onOpenLog,
+    this.settings,
+    this.onOpenStreaks,
   }) : now = now ?? DateTime.now;
 
   final LogRepository repository;
   final DateTime Function() now;
   final ValueChanged<Log>? onOpenLog;
+
+  /// Where streaks are switched on and tuned; without it the calendar
+  /// shows no streak card and no band.
+  final AppSettings? settings;
+  final VoidCallback? onOpenStreaks;
 
   @override
   State<CalendarScreen> createState() => _CalendarScreenState();
@@ -73,11 +84,25 @@ class _CalendarScreenState extends State<CalendarScreen> {
     final tokens =
         Theme.of(context).extension<MomentTokens>() ?? MomentTokens.standard;
     final today = _today;
+
+    return StreakBuilder(
+      repository: widget.repository,
+      settings: widget.settings,
+      now: widget.now,
+      builder: (context, streak) => _body(context, tokens, today, streak),
+    );
+  }
+
+  Widget _body(
+    BuildContext context,
+    MomentTokens tokens,
+    DateTime today,
+    StreakSummary? streak,
+  ) {
     final awayFromToday =
         _selected != today ||
         _month.year != today.year ||
         _month.month != today.month;
-
     return StreamBuilder<List<Log>>(
       stream: widget.repository.watchFeed(),
       builder: (context, snapshot) {
@@ -121,6 +146,10 @@ class _CalendarScreenState extends State<CalendarScreen> {
                 ],
               ),
               const SizedBox(height: 14),
+              if (streak != null) ...[
+                StreakCard(summary: streak, onTap: widget.onOpenStreaks),
+                const SizedBox(height: 12),
+              ],
               GlassSurface(
                 variant: GlassVariant.card,
                 borderRadius: 28,
@@ -162,6 +191,7 @@ class _CalendarScreenState extends State<CalendarScreen> {
                                   isToday: day == today,
                                   selected: day == _selected,
                                   logs: days[day] ?? const [],
+                                  band: _bandOf(streak, day),
                                   tokens: tokens,
                                   onTap: () => _select(day),
                                 ),
@@ -298,6 +328,25 @@ class _Dot extends StatelessWidget {
   }
 }
 
+/// How a day sits on the band behind the days of the running streak.
+enum _Band { none, start, middle, end, alone }
+
+/// The band is one strip per week: it starts on the streak's first day or
+/// on a Monday, and ends on its last day or a Sunday.
+_Band _bandOf(StreakSummary? streak, DateTime day) {
+  final start = streak?.currentStart;
+  final end = streak?.currentEnd;
+  if (start == null || end == null || day.isBefore(start) || day.isAfter(end)) {
+    return _Band.none;
+  }
+  final first = day == start || day.weekday == DateTime.monday;
+  final last = day == end || day.weekday == DateTime.sunday;
+  if (first && last) return _Band.alone;
+  if (first) return _Band.start;
+  if (last) return _Band.end;
+  return _Band.middle;
+}
+
 class _DayCell extends StatelessWidget {
   const _DayCell({
     required this.day,
@@ -305,9 +354,12 @@ class _DayCell extends StatelessWidget {
     required this.isToday,
     required this.selected,
     required this.logs,
+    required this.band,
     required this.tokens,
     required this.onTap,
   });
+
+  final _Band band;
 
   final DateTime day;
   final bool inMonth;
@@ -331,58 +383,100 @@ class _DayCell extends StatelessWidget {
       selected: selected,
       label:
           '${_dayTitle.format(day)}${isToday ? ', today' : ''}, $count'
+          '${band == _Band.none ? '' : ', in the current streak'}'
           '${selected ? ', selected' : ''}',
       onTap: onTap,
       excludeSemantics: true,
       child: GestureDetector(
         onTap: onTap,
         behavior: HitTestBehavior.opaque,
-        child: Container(
-          height: 52 + extraTextHeight(context, 15),
-          margin: const EdgeInsets.all(1),
-          decoration: BoxDecoration(
-            color: selected ? tokens.ink.withValues(alpha: 0.07) : null,
-            borderRadius: BorderRadius.circular(14),
-            border: selected
-                ? Border.all(color: tokens.ink, width: 1.5)
-                : isToday
-                ? Border.all(color: tokens.ink.withValues(alpha: 0.3))
-                : null,
-          ),
-          child: Column(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              Text(
-                '${day.day}',
-                style: TextStyle(
-                  fontSize: 15,
-                  fontWeight: isToday ? FontWeight.w700 : FontWeight.w500,
-                  color: inMonth
-                      ? tokens.ink
-                      : tokens.secondary.withValues(alpha: 0.75),
+        child: _BandBehind(
+          band: band,
+          tokens: tokens,
+          dayKey: key,
+          child: Container(
+            height: 52 + extraTextHeight(context, 15),
+            margin: const EdgeInsets.all(1),
+            decoration: BoxDecoration(
+              color: selected ? tokens.ink.withValues(alpha: 0.07) : null,
+              borderRadius: BorderRadius.circular(14),
+              border: selected
+                  ? Border.all(color: tokens.ink, width: 1.5)
+                  : isToday
+                  ? Border.all(color: tokens.ink.withValues(alpha: 0.3))
+                  : null,
+            ),
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                Text(
+                  '${day.day}',
+                  style: TextStyle(
+                    fontSize: 15,
+                    fontWeight: isToday ? FontWeight.w700 : FontWeight.w500,
+                    color: inMonth
+                        ? tokens.ink
+                        : tokens.secondary.withValues(alpha: 0.75),
+                  ),
                 ),
-              ),
-              const SizedBox(height: 3),
-              // Two rows of three, as in the mockup, so six types fit.
-              SizedBox(
-                height: 13,
-                child: Wrap(
-                  alignment: WrapAlignment.center,
-                  spacing: 2,
-                  runSpacing: 2,
-                  children: [
-                    for (final type in types)
-                      _Dot(
-                        key: ValueKey('calendar-dot-$key-${type.name}'),
-                        color: tokens.colorFor(type),
-                      ),
-                  ],
+                const SizedBox(height: 3),
+                // Two rows of three, as in the mockup, so six types fit.
+                SizedBox(
+                  height: 13,
+                  child: Wrap(
+                    alignment: WrapAlignment.center,
+                    spacing: 2,
+                    runSpacing: 2,
+                    children: [
+                      for (final type in types)
+                        _Dot(
+                          key: ValueKey('calendar-dot-$key-${type.name}'),
+                          color: tokens.colorFor(type),
+                        ),
+                    ],
+                  ),
                 ),
-              ),
-            ],
+              ],
+            ),
           ),
         ),
       ),
+    );
+  }
+}
+
+/// The soft strip behind the days of the running streak, drawn full width
+/// so neighbouring days join up. Rounded where a week's strip begins or
+/// ends.
+class _BandBehind extends StatelessWidget {
+  const _BandBehind({
+    required this.band,
+    required this.tokens,
+    required this.dayKey,
+    required this.child,
+  });
+
+  final _Band band;
+  final MomentTokens tokens;
+  final String dayKey;
+  final Widget child;
+
+  @override
+  Widget build(BuildContext context) {
+    if (band == _Band.none) return child;
+    const round = Radius.circular(18);
+    final left = band == _Band.start || band == _Band.alone;
+    final right = band == _Band.end || band == _Band.alone;
+    return DecoratedBox(
+      key: ValueKey('calendar-band-$dayKey'),
+      decoration: BoxDecoration(
+        color: tokens.streakAccent.withValues(alpha: 0.16),
+        borderRadius: BorderRadius.horizontal(
+          left: left ? round : Radius.zero,
+          right: right ? round : Radius.zero,
+        ),
+      ),
+      child: child,
     );
   }
 }
