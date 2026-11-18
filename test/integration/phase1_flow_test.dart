@@ -28,6 +28,11 @@ import '../location/location_fakes.dart';
 import '../video/video_fakes.dart';
 import 'shell_harness.dart' show NoReminders;
 
+// A fixed day, not the real one: under the Ahem test font a long weekday name
+// ("Wednesday") is wider than the Home header, so reading the real clock
+// failed this test every Wednesday.
+DateTime _day() => DateTime(2026, 11, 7, 10);
+
 class _FakePinStorage implements PinStorage {
   String? stored;
 
@@ -132,7 +137,7 @@ void main() {
       final tempDir = Directory.systemTemp.createTempSync('phase1_flow_test_');
       addTearDown(() => tempDir.deleteSync(recursive: true));
       final db = AppDatabase(NativeDatabase.memory());
-      final repo = LogRepository(db);
+      final repo = LogRepository(db, clock: _day);
       final lockController = AppLockController(_FakePinStorage());
       final mediaStore = MediaStore(
         root: Directory(p.join(tempDir.path, 'app_support')),
@@ -154,6 +159,7 @@ void main() {
             locationProvider: FakeLocationProvider(),
             placeNames: FakePlaceNameLookup(),
             settings: AppSettings.inMemory(),
+            now: _day,
             reminders: NoReminders(),
             backups: BackupCoordinator(
               service: BackupService(
