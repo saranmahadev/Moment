@@ -43,7 +43,7 @@ Before a chunk merges into `main`:
 
 Android only installs an update over an app signed with the same key. Until a release key is configured, the Release workflow signs with a throwaway debug key that is different on every run, so a new release will not install over the old one (back up in the app, uninstall, install, restore).
 
-To fix that once, create a key and give it to the repository as secrets (Settings → Secrets and variables → Actions). The key itself never goes in git; keep a copy somewhere safe, because losing it means no more in-place updates.
+To fix that once, run `bash tool/make_release_key.sh` on your own computer. It makes the key (outside the repository), prints the four secret values, and prints `gh secret set` commands if you use the GitHub CLI. The key itself never goes in git; keep a copy of `moment-release.jks` and its password somewhere safe, because losing either means no more in-place updates. The commands it wraps, if you prefer to do it by hand:
 
 ```
 keytool -genkeypair -v -keystore moment-release.jks -alias moment \
@@ -57,6 +57,8 @@ base64 -w0 moment-release.jks   # macOS: base64 -i moment-release.jks
 | `ANDROID_KEYSTORE_PASSWORD` | the keystore password you chose |
 | `ANDROID_KEY_ALIAS` | `moment` |
 | `ANDROID_KEY_PASSWORD` | the key password (leave unset if it is the same as the keystore's) |
+
+An update also needs a higher build number than the installed app: the number after the `+` in `pubspec.yaml` (`0.4.4+7`) goes up by one at every release, or Android refuses the install. The first release signed with the key still needs one uninstall (back up in the app first), because the phone has the old throwaway-key app; every release after that installs over the last.
 
 ## Never in git
 
