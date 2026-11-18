@@ -1,0 +1,127 @@
+// Copied into an old release's checkout by tool/fixtures/make_fixtures.sh
+// and run there with `flutter test`, so the database, backup and settings
+// it writes come from that release's own code. Lines between
+// `//>TIER` and `//<TIER` markers are kept only for releases that have
+// that feature.
+import 'dart:convert';
+import 'dart:io';
+
+import 'package:drift/native.dart';
+import 'package:flutter_test/flutter_test.dart';
+import 'package:moment/data/database.dart';
+import 'package:moment/data/log_repository.dart';
+//>BACKUP
+import 'package:moment/backup/backup_cipher.dart';
+import 'package:moment/backup/backup_service.dart';
+//<BACKUP
+//>SETTINGS
+import 'package:flutter/material.dart' show ThemeMode, TimeOfDay;
+import 'package:moment/settings/app_settings.dart';
+//<SETTINGS
+import 'package:path/path.dart' as p;
+
+void main() {
+  test('write the fixture', () async {
+    final out = Directory(Platform.environment['FIXTURE_OUT']!)
+      ..createSync(recursive: true);
+    // Everything the old phone holds lives under one root, as on a device.
+    final root = Directory(p.join(out.path, 'phone'))..createSync();
+    final dbFile = File(p.join(out.path, 'moment.db'));
+    final db = AppDatabase(NativeDatabase(dbFile));
+    final now = DateTime.utc(2026, 3, 14, 9, 30);
+    var n = 0;
+    final repo = LogRepository(
+      db,
+      clock: () => now,
+      generateId: () => 'log-${(n++).toString().padLeft(2, '0')}',
+    );
+
+    // Text: one plain, one edited, one backdated to 23:50 on another day
+    // in a +05:30 zone (the process runs with TZ=Asia/Kolkata).
+    await repo.createText(body: 'First entry, before any upgrade.');
+    final edited = await repo.createText(body: 'Draft');
+    await repo.updateText(edited, body: 'Edited after writing it');
+    await repo.createText(
+      body: 'Late night, backdated',
+      createdAt: DateTime(2026, 3, 10, 23, 50),
+    );
+    // Emoji: one kept, one in Trash.
+    await repo.createEmoji(emoji: '😌', label: 'Calm', strength: 4);
+    final trashed = await repo.createEmoji(emoji: '😴', strength: 2);
+    await repo.softDelete(trashed);
+
+    final media = Directory(p.join(root.path, 'media', '2026-03'))
+      ..createSync(recursive: true);
+    File file(String name, int size) => File(p.join(media.path, name))
+      ..writeAsBytesSync(List.generate(size, (i) => (i * 31 + name.length) % 256));
+    // Keep `file` used in every tier.
+    file('.keep', 1);
+
+//>MEDIA
+    await repo.createPhoto(
+      path: file('photo.jpg', 2048).path,
+      thumbnailPath: file('photo-thumb.jpg', 512).path,
+      caption: 'Lake at dawn',
+    );
+    await repo.createAudio(
+      path: file('voice.m4a', 4096).path,
+      duration: const Duration(seconds: 42),
+      peaks: const [0.1, 0.5, 0.9, 0.3],
+      title: 'Voice note',
+    );
+//<MEDIA
+//>VIDEO
+    await repo.createVideo(
+      path: file('walk.mp4', 8192).path,
+      posterPath: file('walk-poster.jpg', 512).path,
+      duration: const Duration(seconds: 48),
+      caption: 'Walk to the station',
+    );
+    await repo.createLocation(
+      latitude: 12.91227,
+      longitude: 77.7165,
+      accuracyMeters: 12,
+      name: 'Favourite bench',
+      note: 'by the lake',
+    );
+//<VIDEO
+
+//>BACKUP
+    final backup = BackupService(
+      db: db,
+      mediaRoot: root,
+      cipher: BackupCipher(kdfIterations: 1000),
+      clock: () => now,
+    );
+    await backup.exportTo(
+      File(p.join(out.path, 'library.moment')),
+      passphrase: 'fixture passphrase',
+    );
+//<BACKUP
+
+//>SETTINGS
+    final settings = await AppSettings.load(
+      FileSettingsStore(File(p.join(out.path, 'settings.json'))),
+    );
+    await settings.setLookUpPlaceNames(true);
+//<SETTINGS
+//>THEMES
+    await settings.setThemeMode(ThemeMode.dark);
+    await settings.setReduceTransparency(true);
+    await settings.setReminderOn(true);
+    await settings.setReminderTime(const TimeOfDay(hour: 21, minute: 15));
+//<THEMES
+//>STREAKS
+    await settings.setShowStreaks(false);
+    await settings.setGraceDays(3);
+//<STREAKS
+//>WIDGET
+    await settings.setWidgetShowsStreak(false);
+//<WIDGET
+
+    await db.close();
+    File(p.join(out.path, 'expected.json')).writeAsStringSync(
+      const JsonEncoder.withIndent('  ').convert({'logs': n, 'mediaRoot': root.path}),
+    );
+  });
+}
