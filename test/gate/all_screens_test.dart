@@ -102,16 +102,27 @@ void main() {
     for (final screen in screenCases) {
       for (final brightness in Brightness.values) {
         testWidgets('${screen.name}, ${brightness.name}', (tester) async {
-          final fixture = await pumpScreenCase(
-            tester,
-            screen,
-            brightness: brightness,
-          );
-
-          await expectLater(
-            find.byKey(screenBoundaryKey),
-            matchesGoldenFile('goldens/${screen.name}_${brightness.name}.png'),
-          );
+          // Soft shadows, as a phone draws them: tests draw them hard
+          // unless told otherwise.
+          debugDisableShadows = false;
+          final ScreenFixture fixture;
+          try {
+            fixture = await pumpScreenCase(
+              tester,
+              screen,
+              brightness: brightness,
+            );
+            await expectLater(
+              find.byKey(screenBoundaryKey),
+              matchesGoldenFile(
+                'goldens/${screen.name}_${brightness.name}.png',
+              ),
+            );
+          } finally {
+            // Flutter checks this is back to its test default before any
+            // tear-down runs.
+            debugDisableShadows = true;
+          }
 
           await closeScreenCase(tester, fixture);
         });
