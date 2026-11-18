@@ -48,6 +48,12 @@ jobs:
           arch: x86_64
           target: google_apis
           profile: pixel_6
+          # The default 2 GB is too little for 20,000 logs in memory plus
+          # the test machinery; the emulator was killed mid-run.
+          ram-size: 4096M
+          heap-size: 512M
+          cores: 4
+          disk-size: 6000M
           disable-animations: true
           emulator-options: -no-window -gpu swiftshader_indirect -noaudio -no-boot-anim -no-snapshot
           script: flutter drive --profile --no-dds --driver=test_driver/frame_budget_driver.dart --target=integration_test/frame_budget_test.dart

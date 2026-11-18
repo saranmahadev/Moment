@@ -140,7 +140,7 @@ Future<void> _seed(
 ) async {
   final images = <(String, String)>[];
   for (var i = 0; i < 12; i++) {
-    final picture = img.Image(width: 1600, height: 1200);
+    final picture = img.Image(width: 1200, height: 900);
     img.fill(picture, color: img.ColorRgb8(40 + i * 15, 120, 200 - i * 10));
     final full = File(p.join(dir.path, 'photo$i.jpg'))
       ..writeAsBytesSync(img.encodeJpg(picture, quality: 80));
