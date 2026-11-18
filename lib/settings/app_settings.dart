@@ -185,6 +185,14 @@ class AppSettings extends ChangeNotifier {
     return _set('graceDays', days, graceDays);
   }
 
+  /// Whether the home screen widget shows the streak (with the Quick add
+  /// buttons) or only the buttons. The streak is the one thing from the
+  /// journal that the widget is ever given.
+  bool get widgetShowsStreak => _read('widgetShowsStreak', true);
+
+  Future<void> setWidgetShowsStreak(bool value) =>
+      _set('widgetShowsStreak', value, true);
+
   static const _defaultGraceDays = 1;
 
   T _read<T>(String key, T fallback) {

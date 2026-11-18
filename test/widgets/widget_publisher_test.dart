@@ -27,6 +27,7 @@ class FakeWidgetBridge implements WidgetBridge {
 DateTime d(int day) => DateTime.utc(2026, 11, day);
 
 void main() {
+  TestWidgetsFlutterBinding.ensureInitialized();
   group('AppSettings.widgetShowsStreak', () {
     test('is on by default and survives a restart', () async {
       final store = MemorySettingsStore();
@@ -219,15 +220,18 @@ void main() {
       expect(calls.single.method, 'requestPin');
     });
 
-    test('with no platform behind it, nothing happens and pin is false', () async {
-      TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger
-          .setMockMethodCallHandler(channel, null);
+    test(
+      'with no platform behind it, nothing happens and pin is false',
+      () async {
+        TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger
+            .setMockMethodCallHandler(channel, null);
 
-      await const DeviceWidgetBridge().publish(
-        WidgetSnapshot.build(days: {}, today: d(18), grace: 1, show: true),
-      );
-      expect(await const DeviceWidgetBridge().requestPin(), isFalse);
-    });
+        await const DeviceWidgetBridge().publish(
+          WidgetSnapshot.build(days: {}, today: d(18), grace: 1, show: true),
+        );
+        expect(await const DeviceWidgetBridge().requestPin(), isFalse);
+      },
+    );
   });
 }
 
