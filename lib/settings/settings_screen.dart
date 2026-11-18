@@ -6,6 +6,7 @@ import '../data/log_repository.dart';
 import '../design/glass_surface.dart';
 import '../design/tokens.dart';
 import '../domain/log.dart';
+import '../streaks/streak_settings_screen.dart';
 import 'about_screen.dart';
 import 'app_settings.dart';
 import 'media_quality.dart';
@@ -370,6 +371,33 @@ class _SettingsScreenState extends State<SettingsScreen> {
                   children: [
                     Text(
                       settings.mediaQuality.label,
+                      style: TextStyle(fontSize: 15, color: tokens.secondary),
+                    ),
+                    const SizedBox(width: 4),
+                    Icon(
+                      Icons.chevron_right,
+                      size: 18,
+                      color: tokens.secondary,
+                    ),
+                  ],
+                ),
+              ),
+              _divider(tokens),
+              _Row(
+                tokens: tokens,
+                title: 'Streaks',
+                subtitle: settings.showStreaks
+                    ? graceLabel(settings.graceDays)
+                    : 'Hidden',
+                onTap: () => _push(
+                  (back) =>
+                      StreakSettingsScreen(settings: settings, onBack: back),
+                ),
+                trailing: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Text(
+                      settings.showStreaks ? 'On' : 'Off',
                       style: TextStyle(fontSize: 15, color: tokens.secondary),
                     ),
                     const SizedBox(width: 4),

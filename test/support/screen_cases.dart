@@ -45,6 +45,8 @@ import 'package:moment/settings/app_settings.dart';
 import 'package:moment/settings/quick_emoji_screen.dart';
 import 'package:moment/settings/settings_screen.dart';
 import 'package:moment/storage/storage_service.dart';
+import 'package:moment/streaks/streak_settings_screen.dart';
+import 'package:moment/streaks/streaks_screen.dart';
 import 'package:moment/text/create_text_screen.dart';
 import 'package:moment/trash/trash_screen.dart';
 import 'package:moment/video/create_video_screen.dart';
@@ -178,8 +180,8 @@ class ScreenCase {
   final bool withOrbs;
 }
 
-/// Every screen in the mockups (01 to 27), plus the two screens Settings
-/// opens. Phase 4's checks run over all of them: light and dark goldens,
+/// Every screen in the mockups (01 to 27), plus the screens Settings
+/// opens and the two Streaks screens. Phase 4's checks run over all of them: light and dark goldens,
 /// Reduce Transparency, tap targets, labels and large text.
 final screenCases = <ScreenCase>[
   ScreenCase(
@@ -407,6 +409,45 @@ final screenCases = <ScreenCase>[
     (f) async => TrashScreen(repository: f.repo, now: () => f.now),
   ),
   ScreenCase('settings_about', (f) async => AboutScreen(onBack: () {})),
+  // The Streaks page and its settings (0.5.0), with a few more days logged
+  // before 6 November so the heatmap and the milestones have something to
+  // show: a run from 27 October, one forgiven day on the 2nd.
+  ScreenCase('streaks', (f) async {
+    for (final (month, day) in const [
+      (10, 12),
+      (10, 13),
+      (10, 14),
+      (10, 16),
+      (10, 17),
+      (10, 20),
+      (10, 21),
+      (10, 22),
+      (10, 23),
+      (10, 24),
+      (10, 27),
+      (10, 28),
+      (10, 29),
+      (10, 30),
+      (10, 31),
+      (11, 1),
+    ]) {
+      await f.repo.createText(
+        body: 'Day $month-$day',
+        createdAt: DateTime.utc(2026, month, day, 12),
+      );
+    }
+    return StreaksScreen(
+      repository: f.repo,
+      settings: f.settings,
+      now: () => f.now,
+      onBack: () {},
+      onOpenSettings: () {},
+    );
+  }),
+  ScreenCase(
+    'streak_settings',
+    (f) async => StreakSettingsScreen(settings: f.settings, onBack: () {}),
+  ),
   ScreenCase(
     'settings_quick_emoji',
     (f) async => QuickEmojiScreen(settings: f.settings, onBack: () {}),
