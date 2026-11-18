@@ -37,6 +37,7 @@ class StreakCard extends StatelessWidget {
     final text = streakCardText(summary);
 
     return Semantics(
+      container: true,
       button: true,
       label: '${text.title}. ${text.subtitle}',
       onTap: onTap,

@@ -41,6 +41,8 @@ import '../privacy/privacy_screen.dart';
 import '../section/section_screen.dart';
 import '../settings/settings_screen.dart';
 import '../text/create_text_screen.dart';
+import '../streaks/streak_settings_screen.dart';
+import '../streaks/streaks_screen.dart';
 import '../trash/trash_screen.dart';
 import '../video/player_screen_control.dart';
 import '../video/video_frames.dart';
@@ -301,6 +303,31 @@ class _AppShellState extends State<AppShell> {
     );
   }
 
+  void _openStreaks() {
+    Navigator.of(context).push(
+      MaterialPageRoute<void>(
+        builder: (_) => StreaksScreen(
+          repository: widget.repository,
+          settings: widget.settings,
+          now: widget.now,
+          onBack: () => Navigator.of(context).pop(),
+          onOpenSettings: _openStreakSettings,
+        ),
+      ),
+    );
+  }
+
+  void _openStreakSettings() {
+    Navigator.of(context).push(
+      MaterialPageRoute<void>(
+        builder: (_) => StreakSettingsScreen(
+          settings: widget.settings,
+          onBack: () => Navigator.of(context).pop(),
+        ),
+      ),
+    );
+  }
+
   void _openSearch() {
     Navigator.of(context).push(
       MaterialPageRoute<void>(
@@ -400,6 +427,7 @@ class _AppShellState extends State<AppShell> {
                 now: widget.now,
                 onOpenLog: _openDetail,
                 onSearchTap: _openSearch,
+                onOpenStreaks: _openStreaks,
               ),
               ListenableBuilder(
                 listenable: _filters,
@@ -416,6 +444,8 @@ class _AppShellState extends State<AppShell> {
                 repository: widget.repository,
                 now: widget.now,
                 onOpenLog: _openDetail,
+                settings: widget.settings,
+                onOpenStreaks: _openStreaks,
               ),
               SettingsScreen(
                 repository: widget.repository,

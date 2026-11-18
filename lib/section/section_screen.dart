@@ -61,6 +61,7 @@ class SectionScreen extends StatelessWidget {
                     Row(
                       children: [
                         Semantics(
+                          container: true,
                           button: true,
                           label: 'Back to Library',
                           onTap: onBack,

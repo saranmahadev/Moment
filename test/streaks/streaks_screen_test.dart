@@ -115,8 +115,8 @@ void main() {
 
     testWidgets('the week strip names each day', (tester) async {
       await seed();
-      await pump(tester);
       final handle = tester.ensureSemantics();
+      await pump(tester);
 
       expect(
         find.bySemanticsLabel('Monday 2 November, logged'),
@@ -228,9 +228,9 @@ void main() {
       tester,
     ) async {
       await seed();
+      final handle = tester.ensureSemantics();
       await pump(tester);
       await show(tester, heatmap());
-      final handle = tester.ensureSemantics();
 
       expect(
         tester.getSemantics(heatmap()),
@@ -240,12 +240,14 @@ void main() {
           isSlider: true,
           hasIncreaseAction: false,
           hasDecreaseAction: true,
-          increasedValue: '',
           decreasedValue: 'Thursday 5 November, grace day',
         ),
       );
 
-      tester.semantics.performAction(heatmap(), SemanticsAction.decrease);
+      tester.semantics.performAction(
+        find.semantics.byLabel('Activity'),
+        SemanticsAction.decrease,
+      );
       await tester.pump();
       expect(
         text(const ValueKey('streaks-selected-day'), 'Thu 5 Nov'),
@@ -290,9 +292,9 @@ void main() {
       tester,
     ) async {
       await seed();
+      final handle = tester.ensureSemantics();
       await pump(tester);
       await show(tester, find.byKey(const ValueKey('milestone-7')));
-      final handle = tester.ensureSemantics();
 
       expect(find.text('1 of 8'), findsOneWidget);
       expect(text(const ValueKey('milestone-3'), '4 Nov 2026'), findsOneWidget);

@@ -161,27 +161,34 @@ class _Header extends StatelessWidget {
     return Row(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text(
-              _weekdayFormat.format(now),
-              style: TextStyle(
-                fontFamily: 'Newsreader',
-                fontWeight: FontWeight.w500,
-                fontSize: 38,
-                letterSpacing: -0.38,
-                height: 1.15,
-                color: tokens.ink,
+        // Takes what the chip and Search leave, and the weekday shrinks to
+        // fit it rather than overflow.
+        Expanded(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              FittedBox(
+                fit: BoxFit.scaleDown,
+                alignment: Alignment.centerLeft,
+                child: Text(
+                  _weekdayFormat.format(now),
+                  style: TextStyle(
+                    fontFamily: 'Newsreader',
+                    fontWeight: FontWeight.w500,
+                    fontSize: 38,
+                    letterSpacing: -0.38,
+                    height: 1.15,
+                    color: tokens.ink,
+                  ),
+                ),
               ),
-            ),
-            Text(
-              _dateFormat.format(now),
-              style: TextStyle(fontSize: 14.5, color: tokens.secondary),
-            ),
-          ],
+              Text(
+                _dateFormat.format(now),
+                style: TextStyle(fontSize: 14.5, color: tokens.secondary),
+              ),
+            ],
+          ),
         ),
-        const Spacer(),
         if (streak != null && streak!.current > 0) ...[
           StreakChip(summary: streak!, onTap: onStreakTap),
           const SizedBox(width: 8),

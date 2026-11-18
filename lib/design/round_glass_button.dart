@@ -26,6 +26,7 @@ class RoundGlassButton extends StatelessWidget {
     final tokens =
         Theme.of(context).extension<MomentTokens>() ?? MomentTokens.standard;
     return Semantics(
+      container: true,
       button: true,
       label: label,
       onTap: onTap,

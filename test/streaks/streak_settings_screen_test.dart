@@ -54,8 +54,8 @@ void main() {
   testWidgets('choosing grace days saves them and marks the choice', (
     tester,
   ) async {
-    final settings = await pump(tester);
     final handle = tester.ensureSemantics();
+    final settings = await pump(tester);
     expect(
       tester.getSemantics(find.byKey(const ValueKey('grace-1'))),
       matchesSemantics(
@@ -90,7 +90,7 @@ void main() {
     expect(
       find.text(
         'A streak survives 1 missed day in any 7 days. Forgiven days show as '
-        'dashed squares and count in the total.',
+        'outlined squares and count in the total.',
       ),
       findsOneWidget,
     );
@@ -116,7 +116,7 @@ void main() {
   ) async {
     await pump(tester);
 
-    expect(find.text('How a day is counted'), findsOneWidget);
+    expect(find.text('HOW A DAY IS COUNTED'), findsOneWidget);
     expect(find.textContaining('midnight to midnight'), findsOneWidget);
     expect(find.textContaining('never mentions streaks'), findsOneWidget);
     expect(find.textContaining('Nothing is stored or sent'), findsOneWidget);
@@ -124,10 +124,12 @@ void main() {
 
   testWidgets('Back calls onBack', (tester) async {
     var back = 0;
+    final handle = tester.ensureSemantics();
     await pump(tester, onBack: () => back++);
 
     await tester.tap(find.bySemanticsLabel('Back'));
 
     expect(back, 1);
+    handle.dispose();
   });
 }
