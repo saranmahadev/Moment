@@ -55,118 +55,126 @@ class PhotoSectionScreen extends StatelessWidget {
               builder: (context, snapshot) {
                 final logs = snapshot.data ?? const [];
                 final shown = filter.apply(logs, today: filterToday(now()));
-                return ListView(
-                  padding: const EdgeInsets.fromLTRB(20, 16, 20, 20),
-                  children: [
-                    Row(
-                      children: [
-                        Semantics(
-                          button: true,
-                          onTap: onBack,
-                          label: 'Back to Library',
-                          excludeSemantics: true,
-                          child: GestureDetector(
-                            key: const ValueKey('photo-section-back'),
-                            onTap: onBack,
-                            child: SizedBox(
-                              width: 44,
-                              height: 44,
-                              child: GlassSurface(
-                                variant: GlassVariant.card,
-                                borderRadius: 22,
+                // Slivers, so the grid builds only the rows on screen.
+                return CustomScrollView(
+                  slivers: [
+                    SliverPadding(
+                      padding: const EdgeInsets.fromLTRB(20, 16, 20, 0),
+                      sliver: SliverList.list(
+                        children: [
+                          Row(
+                            children: [
+                              Semantics(
+                                button: true,
+                                onTap: onBack,
+                                label: 'Back to Library',
+                                excludeSemantics: true,
+                                child: GestureDetector(
+                                  key: const ValueKey('photo-section-back'),
+                                  onTap: onBack,
+                                  child: SizedBox(
+                                    width: 44,
+                                    height: 44,
+                                    child: GlassSurface(
+                                      variant: GlassVariant.card,
+                                      borderRadius: 22,
+                                      child: Icon(
+                                        Icons.chevron_left,
+                                        color: tokens.ink,
+                                      ),
+                                    ),
+                                  ),
+                                ),
+                              ),
+                              const Spacer(),
+                            ],
+                          ),
+                          const SizedBox(height: 16),
+                          Row(
+                            children: [
+                              Container(
+                                width: 48,
+                                height: 48,
+                                decoration: BoxDecoration(
+                                  color: tokens.tintFor(LogType.photo),
+                                  shape: BoxShape.circle,
+                                ),
                                 child: Icon(
-                                  Icons.chevron_left,
-                                  color: tokens.ink,
+                                  momentIconFor(LogType.photo),
+                                  color: color,
+                                ),
+                              ),
+                              const SizedBox(width: 12),
+                              Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  Text(
+                                    momentLabelFor(LogType.photo),
+                                    style: TextStyle(
+                                      fontFamily: 'Newsreader',
+                                      fontWeight: FontWeight.w500,
+                                      fontSize: 34,
+                                      color: tokens.ink,
+                                    ),
+                                  ),
+                                  Text(
+                                    '${logs.length} '
+                                    '${logs.length == 1 ? 'log' : 'logs'}',
+                                    style: TextStyle(
+                                      fontSize: 14,
+                                      color: tokens.secondary,
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ],
+                          ),
+                          const SizedBox(height: 16),
+                          ...filterNotice(
+                            filter: filter,
+                            total: logs.length,
+                            shown: shown.length,
+                            tokens: tokens,
+                            onClear: onClearFilter,
+                          ),
+                        ],
+                      ),
+                    ),
+                    SliverPadding(
+                      padding: const EdgeInsets.fromLTRB(20, 0, 20, 20),
+                      sliver: SliverGrid.builder(
+                        gridDelegate:
+                            const SliverGridDelegateWithFixedCrossAxisCount(
+                              crossAxisCount: 3,
+                              mainAxisSpacing: 10,
+                              crossAxisSpacing: 10,
+                              childAspectRatio: 1,
+                            ),
+                        itemCount: shown.length,
+                        itemBuilder: (context, index) {
+                          final log = shown[index] as PhotoLog;
+                          final caption = log.caption;
+                          return Semantics(
+                            button: true,
+                            label:
+                                'Photo, ${_tileDate.format(log.localMoment)}'
+                                '${caption == null ? '' : ', $caption'}',
+                            onTap: () => onOpenLog?.call(log),
+                            excludeSemantics: true,
+                            child: GestureDetector(
+                              key: ValueKey('photo-tile-${log.id}'),
+                              onTap: () => onOpenLog?.call(log),
+                              child: ClipRRect(
+                                borderRadius: BorderRadius.circular(16),
+                                child: Image.file(
+                                  File(log.thumbnailPath),
+                                  fit: BoxFit.cover,
                                 ),
                               ),
                             ),
-                          ),
-                        ),
-                        const Spacer(),
-                      ],
-                    ),
-                    const SizedBox(height: 16),
-                    Row(
-                      children: [
-                        Container(
-                          width: 48,
-                          height: 48,
-                          decoration: BoxDecoration(
-                            color: tokens.tintFor(LogType.photo),
-                            shape: BoxShape.circle,
-                          ),
-                          child: Icon(
-                            momentIconFor(LogType.photo),
-                            color: color,
-                          ),
-                        ),
-                        const SizedBox(width: 12),
-                        Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Text(
-                              momentLabelFor(LogType.photo),
-                              style: TextStyle(
-                                fontFamily: 'Newsreader',
-                                fontWeight: FontWeight.w500,
-                                fontSize: 34,
-                                color: tokens.ink,
-                              ),
-                            ),
-                            Text(
-                              '${logs.length} '
-                              '${logs.length == 1 ? 'log' : 'logs'}',
-                              style: TextStyle(
-                                fontSize: 14,
-                                color: tokens.secondary,
-                              ),
-                            ),
-                          ],
-                        ),
-                      ],
-                    ),
-                    const SizedBox(height: 16),
-                    ...filterNotice(
-                      filter: filter,
-                      total: logs.length,
-                      shown: shown.length,
-                      tokens: tokens,
-                      onClear: onClearFilter,
-                    ),
-                    GridView.builder(
-                      shrinkWrap: true,
-                      physics: const NeverScrollableScrollPhysics(),
-                      gridDelegate:
-                          const SliverGridDelegateWithFixedCrossAxisCount(
-                            crossAxisCount: 3,
-                            mainAxisSpacing: 10,
-                            crossAxisSpacing: 10,
-                            childAspectRatio: 1,
-                          ),
-                      itemCount: shown.length,
-                      itemBuilder: (context, index) {
-                        final log = shown[index] as PhotoLog;
-                        final caption = log.caption;
-                        return Semantics(
-                          button: true,
-                          label:
-                              'Photo, ${_tileDate.format(log.localMoment)}'
-                              '${caption == null ? '' : ', $caption'}',
-                          onTap: () => onOpenLog?.call(log),
-                          excludeSemantics: true,
-                          child: GestureDetector(
-                            key: ValueKey('photo-tile-${log.id}'),
-                            onTap: () => onOpenLog?.call(log),
-                            child: ClipRRect(
-                              borderRadius: BorderRadius.circular(16),
-                              child: Image.file(
-                                File(log.thumbnailPath),
-                                fit: BoxFit.cover,
-                              ),
-                            ),
-                          ),
-                        );
-                      },
+                          );
+                        },
+                      ),
                     ),
                   ],
                 );

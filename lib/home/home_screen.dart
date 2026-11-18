@@ -52,7 +52,46 @@ class HomeScreen extends StatefulWidget {
 }
 
 class _HomeScreenState extends State<HomeScreen> {
+  /// How many logs one page of the feed holds; more load as you scroll.
+  static const _page = 60;
+
   LogType? _selectedType;
+  int _limit = _page;
+  bool _loadingMore = false;
+
+  Stream<List<Log>>? _feed;
+  (LogType?, int)? _feedFor;
+
+  /// One query per filter and page size, not one per build.
+  Stream<List<Log>> get _stream {
+    final key = (_selectedType, _limit);
+    if (_feed == null || _feedFor != key) {
+      _feedFor = key;
+      _feed = widget.repository.watchFeed(
+        types: _selectedType == null ? null : {_selectedType!},
+        limit: _limit,
+      );
+    }
+    return _feed!;
+  }
+
+  void _select(LogType? type) => setState(() {
+    _selectedType = type;
+    _limit = _page;
+  });
+
+  /// Asks for the next page once the end of this one is being built.
+  void _loadMore() {
+    if (_loadingMore) return;
+    _loadingMore = true;
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!mounted) return;
+      setState(() {
+        _limit += _page;
+        _loadingMore = false;
+      });
+    });
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -61,80 +100,88 @@ class _HomeScreenState extends State<HomeScreen> {
     final now = widget.now();
 
     return StreamBuilder<List<Log>>(
-      stream: widget.repository.watchFeed(
-        types: _selectedType == null ? null : {_selectedType!},
-      ),
+      stream: _stream,
       builder: (context, snapshot) {
-        final sections = groupFeedByDay(snapshot.data ?? const [], now: now);
+        final logs = snapshot.data ?? const <Log>[];
+        // A full page means there may be more beyond it.
+        final more = logs.length >= _limit;
+        final sections = groupFeedByDay(logs, now: now);
 
-        return ListView(
-          padding: const EdgeInsets.fromLTRB(20, 60, 20, 140),
-          children: [
-            StreakBuilder(
-              repository: widget.repository,
-              settings: widget.settings,
-              now: widget.now,
-              builder: (context, streak) => _Header(
-                now: now,
-                tokens: tokens,
-                onSearchTap: widget.onSearchTap,
-                streak: streak,
-                onStreakTap: widget.onOpenStreaks,
+        final items = <Widget>[
+          StreakBuilder(
+            repository: widget.repository,
+            settings: widget.settings,
+            now: widget.now,
+            builder: (context, streak) => _Header(
+              now: now,
+              tokens: tokens,
+              onSearchTap: widget.onSearchTap,
+              streak: streak,
+              onStreakTap: widget.onOpenStreaks,
+            ),
+          ),
+          const SizedBox(height: 12),
+          TypeFilterChips(
+            availableTypes: builtLogTypes,
+            selected: _selectedType,
+            onSelected: _select,
+          ),
+          const SizedBox(height: 12),
+          ListenableBuilder(
+            listenable: widget.settings ?? const _NoSettings(),
+            builder: (context, _) => MoodRow(
+              emoji: widget.settings?.quickEmoji ?? defaultQuickEmoji,
+              onMoodTapped: (emoji) => widget.repository.createEmoji(
+                emoji: emoji,
+                label: moodLabel(emoji),
+                strength: quickEmojiStrength,
               ),
             ),
-            const SizedBox(height: 12),
-            TypeFilterChips(
-              availableTypes: builtLogTypes,
-              selected: _selectedType,
-              onSelected: (type) => setState(() => _selectedType = type),
-            ),
-            const SizedBox(height: 12),
-            ListenableBuilder(
-              listenable: widget.settings ?? const _NoSettings(),
-              builder: (context, _) => MoodRow(
-                emoji: widget.settings?.quickEmoji ?? defaultQuickEmoji,
-                onMoodTapped: (emoji) => widget.repository.createEmoji(
-                  emoji: emoji,
-                  label: moodLabel(emoji),
-                  strength: quickEmojiStrength,
+          ),
+          if (sections.isEmpty)
+            Padding(
+              padding: const EdgeInsets.only(top: 48),
+              child: Center(
+                child: Text(
+                  'Your day is unwritten.',
+                  style: TextStyle(fontSize: 15, color: tokens.secondary),
                 ),
               ),
-            ),
-            if (sections.isEmpty)
+            )
+          else
+            for (final section in sections) ...[
               Padding(
-                padding: const EdgeInsets.only(top: 48),
-                child: Center(
-                  child: Text(
-                    'Your day is unwritten.',
-                    style: TextStyle(fontSize: 15, color: tokens.secondary),
+                padding: const EdgeInsets.fromLTRB(4, 12, 4, 0),
+                child: Text(
+                  section.label,
+                  style: TextStyle(
+                    fontSize: 12,
+                    fontWeight: FontWeight.w600,
+                    letterSpacing: 0.96,
+                    color: tokens.secondary,
                   ),
                 ),
-              )
-            else
-              for (final section in sections) ...[
+              ),
+              for (final log in section.logs)
                 Padding(
-                  padding: const EdgeInsets.fromLTRB(4, 12, 4, 0),
-                  child: Text(
-                    section.label,
-                    style: TextStyle(
-                      fontSize: 12,
-                      fontWeight: FontWeight.w600,
-                      letterSpacing: 0.96,
-                      color: tokens.secondary,
-                    ),
+                  padding: const EdgeInsets.only(top: 10),
+                  child: FeedCard(
+                    key: ValueKey('feed-card-${log.id}'),
+                    log: log,
+                    onTap: () => widget.onOpenLog?.call(log),
                   ),
                 ),
-                for (final log in section.logs)
-                  Padding(
-                    padding: const EdgeInsets.only(top: 10),
-                    child: FeedCard(
-                      key: ValueKey('feed-card-${log.id}'),
-                      log: log,
-                      onTap: () => widget.onOpenLog?.call(log),
-                    ),
-                  ),
-              ],
-          ],
+            ],
+        ];
+
+        // Built lazily: only the cards on screen exist.
+        return ListView.builder(
+          padding: const EdgeInsets.fromLTRB(20, 60, 20, 140),
+          itemCount: items.length,
+          itemBuilder: (context, index) {
+            if (more && index >= items.length - 8) _loadMore();
+            return items[index];
+          },
         );
       },
     );
