@@ -438,6 +438,7 @@ class _Preview extends StatelessWidget {
           child: Padding(
             padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
             child: TextField(
+              enableIMEPersonalizedLearning: false,
               controller: captionController,
               style: TextStyle(fontSize: 15, color: tokens.ink),
               decoration: InputDecoration(

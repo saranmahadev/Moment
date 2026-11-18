@@ -206,6 +206,7 @@ class _CreateAudioScreenState extends State<CreateAudioScreen> {
                         vertical: 4,
                       ),
                       child: TextField(
+                        enableIMEPersonalizedLearning: false,
                         controller: _titleController,
                         style: TextStyle(fontSize: 15, color: tokens.ink),
                         decoration: InputDecoration(
