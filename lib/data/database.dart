@@ -21,13 +21,14 @@ class AppDatabase extends _$AppDatabase {
   AppDatabase(super.executor);
 
   @override
-  int get schemaVersion => 5;
+  int get schemaVersion => 6;
 
   @override
   MigrationStrategy get migration => MigrationStrategy(
     onCreate: (migrator) async {
       await migrator.createAll();
       await _createSearchIndex();
+      await _createFeedIndexes();
     },
     onUpgrade: (migrator, from, to) async {
       if (from < 2) {
@@ -43,6 +44,9 @@ class AppDatabase extends _$AppDatabase {
       if (from < 5) {
         await _createSearchIndex();
         await rebuildSearchIndex();
+      }
+      if (from < 6) {
+        await _createFeedIndexes();
       }
     },
     beforeOpen: (details) async {
@@ -95,6 +99,21 @@ class AppDatabase extends _$AppDatabase {
         'DELETE FROM log_search WHERE log_id = old.log_id; END',
       );
     }
+  }
+
+  /// Indexes in the order every feed reads logs (newest first, ties by
+  /// id), so a page of the newest logs is read straight off the index
+  /// instead of sorting the whole table. Not Drift tables, so not in
+  /// backups; a restore writes rows and SQLite keeps these current.
+  Future<void> _createFeedIndexes() async {
+    await customStatement(
+      'CREATE INDEX IF NOT EXISTS log_feed_order '
+      'ON log (deleted_at_ms, created_at_ms DESC, id DESC)',
+    );
+    await customStatement(
+      'CREATE INDEX IF NOT EXISTS log_type_feed_order '
+      'ON log (type, deleted_at_ms, created_at_ms DESC, id DESC)',
+    );
   }
 
   /// Empties the full-text index and fills it again from the logs. Used
