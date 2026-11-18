@@ -4,6 +4,7 @@ import 'package:intl/intl.dart';
 import '../data/log_repository.dart';
 import '../design/glass_surface.dart';
 import '../library/filter_strip.dart';
+import '../section/month_groups.dart';
 import '../library/log_filter.dart';
 import '../design/orb_field.dart';
 import '../design/tokens.dart';
@@ -35,6 +36,7 @@ class VideoSectionScreen extends StatelessWidget {
   /// The Library filter for this type, and how to clear it.
   final LogFilter filter;
   final VoidCallback? onClearFilter;
+
   final DateTime Function() now;
 
   @override
@@ -141,28 +143,31 @@ class VideoSectionScreen extends StatelessWidget {
                         ],
                       ),
                     ),
-                    SliverPadding(
-                      padding: const EdgeInsets.fromLTRB(20, 0, 20, 20),
-                      sliver: SliverGrid.builder(
-                        gridDelegate:
-                            const SliverGridDelegateWithFixedCrossAxisCount(
-                              crossAxisCount: 2,
-                              mainAxisSpacing: 12,
-                              crossAxisSpacing: 12,
-                              childAspectRatio: 1.25,
-                            ),
-                        itemCount: shown.length,
-                        itemBuilder: (context, index) {
-                          final log = shown[index] as VideoLog;
-                          return _VideoTile(
-                            key: ValueKey('video-tile-${log.id}'),
-                            log: log,
-                            tokens: tokens,
-                            onTap: () => onOpenLog?.call(log),
-                          );
-                        },
+                    for (final group in groupByMonth(shown)) ...[
+                      MonthHeading(group.label),
+                      SliverPadding(
+                        padding: const EdgeInsets.fromLTRB(20, 0, 20, 16),
+                        sliver: SliverGrid.builder(
+                          gridDelegate:
+                              const SliverGridDelegateWithFixedCrossAxisCount(
+                                crossAxisCount: 2,
+                                mainAxisSpacing: 12,
+                                crossAxisSpacing: 12,
+                                childAspectRatio: 1.25,
+                              ),
+                          itemCount: group.logs.length,
+                          itemBuilder: (context, index) {
+                            final log = group.logs[index] as VideoLog;
+                            return _VideoTile(
+                              key: ValueKey('video-tile-${log.id}'),
+                              log: log,
+                              tokens: tokens,
+                              onTap: () => onOpenLog?.call(log),
+                            );
+                          },
+                        ),
                       ),
-                    ),
+                    ],
                   ],
                 );
               },

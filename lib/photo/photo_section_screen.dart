@@ -6,6 +6,7 @@ import 'package:intl/intl.dart';
 import '../data/log_repository.dart';
 import '../design/glass_surface.dart';
 import '../library/filter_strip.dart';
+import '../section/month_groups.dart';
 import '../library/log_filter.dart';
 import '../design/orb_field.dart';
 import '../design/tokens.dart';
@@ -36,6 +37,7 @@ class PhotoSectionScreen extends StatelessWidget {
   /// The Library filter for this type, and how to clear it.
   final LogFilter filter;
   final VoidCallback? onClearFilter;
+
   final DateTime Function() now;
 
   @override
@@ -142,42 +144,45 @@ class PhotoSectionScreen extends StatelessWidget {
                         ],
                       ),
                     ),
-                    SliverPadding(
-                      padding: const EdgeInsets.fromLTRB(20, 0, 20, 20),
-                      sliver: SliverGrid.builder(
-                        gridDelegate:
-                            const SliverGridDelegateWithFixedCrossAxisCount(
-                              crossAxisCount: 3,
-                              mainAxisSpacing: 10,
-                              crossAxisSpacing: 10,
-                              childAspectRatio: 1,
-                            ),
-                        itemCount: shown.length,
-                        itemBuilder: (context, index) {
-                          final log = shown[index] as PhotoLog;
-                          final caption = log.caption;
-                          return Semantics(
-                            button: true,
-                            label:
-                                'Photo, ${_tileDate.format(log.localMoment)}'
-                                '${caption == null ? '' : ', $caption'}',
-                            onTap: () => onOpenLog?.call(log),
-                            excludeSemantics: true,
-                            child: GestureDetector(
-                              key: ValueKey('photo-tile-${log.id}'),
+                    for (final group in groupByMonth(shown)) ...[
+                      MonthHeading(group.label),
+                      SliverPadding(
+                        padding: const EdgeInsets.fromLTRB(20, 0, 20, 16),
+                        sliver: SliverGrid.builder(
+                          gridDelegate:
+                              const SliverGridDelegateWithFixedCrossAxisCount(
+                                crossAxisCount: 3,
+                                mainAxisSpacing: 10,
+                                crossAxisSpacing: 10,
+                                childAspectRatio: 1,
+                              ),
+                          itemCount: group.logs.length,
+                          itemBuilder: (context, index) {
+                            final log = group.logs[index] as PhotoLog;
+                            final caption = log.caption;
+                            return Semantics(
+                              button: true,
+                              label:
+                                  'Photo, ${_tileDate.format(log.localMoment)}'
+                                  '${caption == null ? '' : ', $caption'}',
                               onTap: () => onOpenLog?.call(log),
-                              child: ClipRRect(
-                                borderRadius: BorderRadius.circular(16),
-                                child: Image.file(
-                                  File(log.thumbnailPath),
-                                  fit: BoxFit.cover,
+                              excludeSemantics: true,
+                              child: GestureDetector(
+                                key: ValueKey('photo-tile-${log.id}'),
+                                onTap: () => onOpenLog?.call(log),
+                                child: ClipRRect(
+                                  borderRadius: BorderRadius.circular(16),
+                                  child: Image.file(
+                                    File(log.thumbnailPath),
+                                    fit: BoxFit.cover,
+                                  ),
                                 ),
                               ),
-                            ),
-                          );
-                        },
+                            );
+                          },
+                        ),
                       ),
-                    ),
+                    ],
                   ],
                 );
               },
