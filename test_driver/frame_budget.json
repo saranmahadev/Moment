@@ -1,6 +1,6 @@
 {
-  "_about": "Frame budget per traced action, in milliseconds, checked by test_driver/frame_budget_driver.dart. Build is the UI thread's work per frame. Measured on the CI emulator, which is no phone: these catch regressions; how it feels is checked on a real device. Tighten them from a run's summary once it is known.",
-  "home_feed": { "p90_build_ms": 12, "worst_build_ms": 120, "missed_build_share": 0.08 },
-  "photo_grid": { "p90_build_ms": 12, "worst_build_ms": 120, "missed_build_share": 0.08 },
-  "calendar": { "p90_build_ms": 16, "worst_build_ms": 160, "missed_build_share": 0.12 }
+  "_about": "Frame budget per traced action, in milliseconds, checked by test_driver/frame_budget_driver.dart. Build is the UI thread's work per frame. Measured on the CI emulator (API 30, software drawing, Reduce Transparency), which is no phone: these catch regressions; how it feels is checked on a real device. First passing run, 1.0.0-rc.1: home 3.5 ms p90 / 89 worst / 4.0% over 16 ms; photo grid 3.8 / 49 / 1.7%; calendar 1.7 / 120 / 2.9%. The limits are about twice that; the worst frame (a page load, a month change) is noisy, so it has the most room.",
+  "home_feed": { "p90_build_ms": 8, "worst_build_ms": 200, "missed_build_share": 0.08 },
+  "photo_grid": { "p90_build_ms": 8, "worst_build_ms": 150, "missed_build_share": 0.06 },
+  "calendar": { "p90_build_ms": 6, "worst_build_ms": 250, "missed_build_share": 0.08 }
 }
