@@ -6,6 +6,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:moment/audio/audio_detail_screen.dart';
 import 'package:moment/audio/audio_playback_controller.dart';
+import 'package:moment/audio/player_waveform.dart';
 import 'package:moment/data/database.dart';
 import 'package:moment/data/log_repository.dart';
 import 'package:moment/design/theme.dart';
@@ -19,6 +20,8 @@ class _FakeAudioPlaybackController implements AudioPlaybackController {
   bool played = false;
   bool paused = false;
   Duration? lastSeek;
+  bool? loop;
+  double? speed;
   bool disposed = false;
 
   @override
@@ -49,7 +52,13 @@ class _FakeAudioPlaybackController implements AudioPlaybackController {
   }
 
   @override
-  Future<void> setSpeed(double speed) async {}
+  Future<void> setSpeed(double speed) async => this.speed = speed;
+
+  @override
+  Future<void> setLoop(bool on) async => loop = on;
+
+  /// The recording reached its end.
+  void ended() => _playing.add(false);
 
   @override
   Future<void> dispose() async {
@@ -202,7 +211,7 @@ void main() {
     await close(tester);
   });
 
-  testWidgets('Edit lets the title and note be changed, Save stores them', (
+  testWidgets('Edit lets the title be changed, Save stores it', (
     tester,
   ) async {
     final playback = _FakeAudioPlaybackController();
@@ -211,20 +220,101 @@ void main() {
     await tester.tap(find.bySemanticsLabel('Edit'));
     await tester.pump();
 
-    final fields = find.byType(TextField);
-    expect(fields, findsNWidgets(2));
-    await tester.enterText(fields.first, 'Morning thoughts');
-    await tester.enterText(fields.last, 'Remember to call back');
+    expect(find.byType(TextField), findsOneWidget);
+    await tester.enterText(find.byType(TextField), 'Morning thoughts');
     await tester.tap(find.bySemanticsLabel('Save'));
     await tester.pump();
     await tester.pump();
 
     expect(find.text('Morning thoughts'), findsOneWidget);
-    expect(find.text('Remember to call back'), findsOneWidget);
 
     final updated = await repo.getById(log.id) as AudioLog;
     expect(updated.title, 'Morning thoughts');
-    expect(updated.note, 'Remember to call back');
+
+    await close(tester);
+  });
+
+  testWidgets('shows no note: nothing is transcribed, so there is no text '
+      'under the player', (tester) async {
+    await repo.updateAudio(log.id, title: 'Voice note', note: 'old note');
+    final withNote = await repo.getById(log.id) as AudioLog;
+    final playback = _FakeAudioPlaybackController();
+    await pump(tester, playback: playback, log_: withNote);
+
+    expect(find.text('old note'), findsNothing);
+
+    await close(tester);
+  });
+
+  testWidgets('when the recording ends the button offers Play again', (
+    tester,
+  ) async {
+    final playback = _FakeAudioPlaybackController();
+    await pump(tester, playback: playback);
+
+    await tester.tap(find.byIcon(Icons.play_arrow));
+    await tester.pump(const Duration(milliseconds: 1));
+    expect(find.byIcon(Icons.pause), findsOneWidget);
+
+    playback.ended();
+    await tester.pump(const Duration(milliseconds: 1));
+
+    expect(find.byIcon(Icons.play_arrow), findsOneWidget);
+    expect(find.bySemanticsLabel('Play'), findsOneWidget);
+
+    await close(tester);
+  });
+
+  testWidgets('Loop is off until asked for, then on, then off', (
+    tester,
+  ) async {
+    final playback = _FakeAudioPlaybackController();
+    await pump(tester, playback: playback);
+
+    await tester.tap(find.bySemanticsLabel('Loop off'));
+    await tester.pump();
+    expect(playback.loop, isTrue);
+    expect(find.bySemanticsLabel('Loop on'), findsOneWidget);
+
+    await tester.tap(find.bySemanticsLabel('Loop on'));
+    await tester.pump();
+    expect(playback.loop, isFalse);
+
+    await close(tester);
+  });
+
+  testWidgets('the speed chip steps 1x, 1.25x, 1.5x, 2x, 0.75x and round', (
+    tester,
+  ) async {
+    final playback = _FakeAudioPlaybackController();
+    await pump(tester, playback: playback);
+
+    final seen = <double>[];
+    for (var i = 0; i < 5; i++) {
+      await tester.tap(find.textContaining('×'));
+      await tester.pump();
+      seen.add(playback.speed!);
+    }
+
+    expect(seen, [1.25, 1.5, 2.0, 0.75, 1.0]);
+    expect(find.text('1×'), findsOneWidget);
+
+    await close(tester);
+  });
+
+  testWidgets('the waveform is a slider and scrubbing it seeks', (
+    tester,
+  ) async {
+    final playback = _FakeAudioPlaybackController();
+    await pump(tester, playback: playback);
+
+    final rect = tester.getRect(find.byType(PlayerWaveform));
+    final gesture = await tester.startGesture(rect.centerLeft + const Offset(4, 0));
+    await gesture.moveTo(rect.center);
+    await gesture.up();
+    await tester.pump();
+
+    expect(playback.lastSeek!.inSeconds, inInclusiveRange(18, 24)); // about half of 42 s
 
     await close(tester);
   });
