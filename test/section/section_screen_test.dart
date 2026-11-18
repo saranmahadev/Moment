@@ -8,6 +8,7 @@ import 'package:moment/design/theme.dart';
 import 'package:moment/design/tokens.dart';
 import 'package:moment/domain/log.dart';
 import 'package:moment/domain/log_type.dart';
+import 'package:moment/library/log_filter.dart';
 import 'package:moment/section/section_screen.dart';
 
 void main() {
@@ -20,6 +21,8 @@ void main() {
     VoidCallback? onBack,
     VoidCallback? onSearch,
     ValueChanged<Log>? onOpenLog,
+    LogFilter filter = const LogFilter(),
+    VoidCallback? onClearFilter,
   }) async {
     await tester.binding.setSurfaceSize(const Size(390, 844));
     addTearDown(() => tester.binding.setSurfaceSize(null));
@@ -32,6 +35,9 @@ void main() {
           onBack: onBack,
           onSearch: onSearch,
           onOpenLog: onOpenLog,
+          filter: filter,
+          onClearFilter: onClearFilter,
+          now: () => now,
         ),
       ),
     );
@@ -49,8 +55,7 @@ void main() {
     expect(find.text('Text'), findsWidgets);
     expect(find.text('2 logs'), findsOneWidget);
 
-    final sortLabel = tester.widget<Text>(find.text('Newest first'));
-    expect(sortLabel.style?.color, MomentTokens.standard.ink);
+    expect(find.text('Newest first'), findsNothing);
     expect(find.byType(OrbField), findsOneWidget);
 
     await tester.pumpWidget(const SizedBox());
@@ -165,5 +170,96 @@ void main() {
     await tester.pumpWidget(const SizedBox());
     await tester.pumpAndSettle();
     await db.close();
+  });
+
+  group('with a filter', () {
+    testWidgets('shows only what matches, and says how many of how many', (
+      tester,
+    ) async {
+      final db = AppDatabase(NativeDatabase.memory());
+      final repo = LogRepository(db, clock: () => now);
+      await repo.createEmoji(emoji: '😌', label: 'Calm', strength: 5);
+      await repo.createEmoji(emoji: '😐', label: 'Meh', strength: 2);
+      await repo.createEmoji(emoji: '😄', label: 'Happy', strength: 5);
+
+      await pump(
+        tester,
+        repo,
+        LogType.emoji,
+        filter: const LogFilter(strengths: {5}),
+      );
+      await tester.pump();
+
+      expect(find.text('Calm'), findsOneWidget);
+      expect(find.text('Happy'), findsOneWidget);
+      expect(find.text('Meh'), findsNothing);
+      expect(find.text('Showing 2 of 3'), findsOneWidget);
+
+      await tester.pumpWidget(const SizedBox());
+      await tester.pumpAndSettle();
+      await db.close();
+    });
+
+    testWidgets('Clear filter calls back', (tester) async {
+      final db = AppDatabase(NativeDatabase.memory());
+      final repo = LogRepository(db, clock: () => now);
+      await repo.createText(body: 'one');
+      var cleared = 0;
+
+      await pump(
+        tester,
+        repo,
+        LogType.text,
+        filter: const LogFilter(oldestFirst: true),
+        onClearFilter: () => cleared++,
+      );
+      await tester.pump();
+      await tester.tap(find.bySemanticsLabel('Clear filter'));
+
+      expect(cleared, 1);
+
+      await tester.pumpWidget(const SizedBox());
+      await tester.pumpAndSettle();
+      await db.close();
+    });
+
+    testWidgets('with none, there is no strip', (tester) async {
+      final db = AppDatabase(NativeDatabase.memory());
+      final repo = LogRepository(db, clock: () => now);
+      await repo.createText(body: 'one');
+
+      await pump(tester, repo, LogType.text);
+      await tester.pump();
+
+      expect(find.textContaining('Showing'), findsNothing);
+      expect(find.bySemanticsLabel('Clear filter'), findsNothing);
+
+      await tester.pumpWidget(const SizedBox());
+      await tester.pumpAndSettle();
+      await db.close();
+    });
+
+    testWidgets('a filter that matches nothing says so, and offers to clear', (
+      tester,
+    ) async {
+      final db = AppDatabase(NativeDatabase.memory());
+      final repo = LogRepository(db, clock: () => now);
+      await repo.createEmoji(emoji: '😐', label: 'Meh', strength: 2);
+
+      await pump(
+        tester,
+        repo,
+        LogType.emoji,
+        filter: const LogFilter(strengths: {5}),
+      );
+      await tester.pump();
+
+      expect(find.text('Nothing matches this filter.'), findsOneWidget);
+      expect(find.text('Showing 0 of 1'), findsOneWidget);
+
+      await tester.pumpWidget(const SizedBox());
+      await tester.pumpAndSettle();
+      await db.close();
+    });
   });
 }
