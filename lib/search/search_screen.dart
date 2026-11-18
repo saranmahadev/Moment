@@ -198,14 +198,6 @@ class _SearchScreenState extends State<SearchScreen> {
   }
 
   List<Widget> _body(MomentTokens tokens) {
-    final footer = Padding(
-      padding: const EdgeInsets.only(left: 4, top: 6),
-      child: Text(
-        'Search runs on this device. Nothing is sent anywhere.',
-        style: TextStyle(fontSize: 13.5, color: tokens.secondary),
-      ),
-    );
-
     if (_query.isEmpty) {
       final recent = widget.settings.recentSearches;
       return [
@@ -266,7 +258,6 @@ class _SearchScreenState extends State<SearchScreen> {
             ),
           const SizedBox(height: 8),
         ],
-        footer,
       ];
     }
 
@@ -281,7 +272,6 @@ class _SearchScreenState extends State<SearchScreen> {
             style: TextStyle(fontSize: 15, color: tokens.ink),
           ),
         ),
-        footer,
       ];
     }
 
@@ -312,7 +302,6 @@ class _SearchScreenState extends State<SearchScreen> {
           ],
           const SizedBox(height: 8),
         ],
-      footer,
     ];
   }
 }

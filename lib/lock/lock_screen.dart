@@ -102,10 +102,6 @@ class _LockScreenState extends State<LockScreen> {
                     color: tokens.ink,
                   ),
                 ),
-                Text(
-                  'Everything stays on this device',
-                  style: TextStyle(fontSize: 14.5, color: tokens.secondary),
-                ),
                 const SizedBox(height: 20),
                 _PinDots(
                   entered: _entered.length,

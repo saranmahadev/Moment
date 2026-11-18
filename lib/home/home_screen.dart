@@ -112,15 +112,6 @@ class _HomeScreenState extends State<HomeScreen> {
                     ),
                   ),
               ],
-            if (sections.isNotEmpty)
-              Padding(
-                padding: const EdgeInsets.only(top: 28),
-                child: Text(
-                  'Older logs live in Library.',
-                  textAlign: TextAlign.center,
-                  style: TextStyle(fontSize: 13, color: tokens.secondary),
-                ),
-              ),
           ],
         );
       },
