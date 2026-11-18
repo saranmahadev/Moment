@@ -21,6 +21,7 @@ import '../emoji/create_emoji_screen.dart';
 import '../home/add_sheet.dart';
 import '../home/home_screen.dart';
 import '../library/library_screen.dart';
+import '../location/map/map_source.dart';
 import '../location/create_location_screen.dart';
 import '../location/location_detail_screen.dart';
 import '../location/location_provider.dart';
@@ -65,6 +66,7 @@ class AppShell extends StatefulWidget {
     required this.createVideoPlayback,
     required this.locationProvider,
     required this.placeNames,
+    this.mapSource,
     required this.settings,
     required this.reminders,
     required this.backups,
@@ -87,6 +89,9 @@ class AppShell extends StatefulWidget {
   /// Reaches the place-name service. Only handed to a screen while
   /// [AppSettings.lookUpPlaceNames] is on.
   final PlaceNameLookup placeNames;
+
+  /// The bundled map behind Location previews; null shows the plain tile.
+  final MapSource? mapSource;
   final AppSettings settings;
   final ReminderScheduler reminders;
   final BackupCoordinator backups;
@@ -189,6 +194,7 @@ class _AppShellState extends State<AppShell> {
             builder: (_) => CreateLocationScreen(
               repository: widget.repository,
               provider: widget.locationProvider,
+              mapSource: widget.mapSource,
               placeNames: widget.settings.lookUpPlaceNames
                   ? widget.placeNames
                   : null,
@@ -244,6 +250,7 @@ class _AppShellState extends State<AppShell> {
         log: log,
         repository: widget.repository,
         provider: widget.locationProvider,
+        mapSource: widget.mapSource,
         now: widget.now,
         onBack: () => Navigator.of(context).pop(),
       ),

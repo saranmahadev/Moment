@@ -11,6 +11,9 @@ abstract interface class AudioPlaybackController {
   Future<void> pause();
   Future<void> seek(Duration position);
   Future<void> setSpeed(double speed);
+
+  /// Plays the recording again from the start each time it ends.
+  Future<void> setLoop(bool on);
   Future<void> dispose();
 }
 
@@ -53,6 +56,11 @@ class DeviceAudioPlaybackController implements AudioPlaybackController {
 
   @override
   Future<void> setSpeed(double speed) => _player.setSpeed(speed);
+
+  @override
+  Future<void> setLoop(bool on) => _player.setLoopMode(
+    on ? just_audio.LoopMode.one : just_audio.LoopMode.off,
+  );
 
   @override
   Future<void> dispose() => _player.dispose();

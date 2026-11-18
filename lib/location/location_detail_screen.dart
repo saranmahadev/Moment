@@ -12,6 +12,8 @@ import '../domain/log_type.dart';
 import 'coordinates.dart';
 import 'location_provider.dart';
 import 'location_widgets.dart';
+import 'map/map_source.dart';
+import 'place_map.dart';
 import 'stylised_map.dart';
 
 final _dateFormat = DateFormat('EEEE d MMMM');
@@ -26,6 +28,7 @@ class LocationDetailScreen extends StatefulWidget {
     required this.log,
     required this.repository,
     required this.provider,
+    this.mapSource,
     DateTime Function()? now,
     this.onBack,
   }) : now = now ?? DateTime.now;
@@ -33,6 +36,9 @@ class LocationDetailScreen extends StatefulWidget {
   final LocationLog log;
   final LogRepository repository;
   final LocationProvider provider;
+
+  /// The bundled map to show the place on. Without one, the plain tile.
+  final MapSource? mapSource;
   final DateTime Function() now;
   final VoidCallback? onBack;
 
@@ -206,12 +212,19 @@ class _LocationDetailScreenState extends State<LocationDetailScreen> {
                   const SizedBox(height: 16),
                   ClipRRect(
                     borderRadius: BorderRadius.circular(28),
-                    child: const SizedBox(
+                    child: SizedBox(
                       height: 250,
-                      child: StylisedMap(
-                        pins: [Offset(0.5, 0.55)],
-                        pinSize: 48,
-                      ),
+                      child: widget.mapSource == null
+                          ? const StylisedMap(
+                              pins: [Offset(0.5, 0.55)],
+                              pinSize: 48,
+                            )
+                          : PlaceMap(
+                              source: widget.mapSource!,
+                              latitude: _log.latitude,
+                              longitude: _log.longitude,
+                              zoomable: true,
+                            ),
                     ),
                   ),
                   const SizedBox(height: 16),

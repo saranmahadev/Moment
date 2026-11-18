@@ -12,6 +12,8 @@ import 'coordinates.dart';
 import 'location_provider.dart';
 import 'location_widgets.dart';
 import 'place_name_lookup.dart';
+import 'map/map_source.dart';
+import 'place_map.dart';
 import 'stylised_map.dart';
 
 final _whenFormat = DateFormat('EEE d MMM · HH:mm');
@@ -30,6 +32,7 @@ class CreateLocationScreen extends StatefulWidget {
     required this.repository,
     required this.provider,
     this.placeNames,
+    this.mapSource,
     DateTime Function()? now,
     required this.onSaved,
     required this.onClose,
@@ -38,6 +41,9 @@ class CreateLocationScreen extends StatefulWidget {
   final LogRepository repository;
   final LocationProvider provider;
   final PlaceNameLookup? placeNames;
+
+  /// The bundled map to show the spot on. Without one, the plain tile.
+  final MapSource? mapSource;
   final DateTime Function() now;
   final ValueChanged<String> onSaved;
   final VoidCallback onClose;
@@ -177,11 +183,18 @@ class _CreateLocationScreenState extends State<CreateLocationScreen> {
       body: Stack(
         children: [
           Positioned.fill(
-            child: StylisedMap(
-              pins: _pin == null ? const [] : const [Offset(0.5, 0.36)],
-              showHalo: _pin != null && !_typed,
-              pinSize: 48,
-            ),
+            child: _pin != null && widget.mapSource != null
+                ? PlaceMap(
+                    source: widget.mapSource!,
+                    latitude: _pin!.latitude,
+                    longitude: _pin!.longitude,
+                    pinAt: const Offset(0.5, 0.36),
+                  )
+                : StylisedMap(
+                    pins: _pin == null ? const [] : const [Offset(0.5, 0.36)],
+                    showHalo: _pin != null && !_typed,
+                    pinSize: 48,
+                  ),
           ),
           SafeArea(
             child: Padding(

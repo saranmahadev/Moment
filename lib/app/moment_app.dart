@@ -19,6 +19,7 @@ import '../video/video_probe.dart';
 import '../data/log_repository.dart';
 import '../data/media_store.dart';
 import '../data/secure_database.dart';
+import '../location/map/map_source.dart';
 import '../location/location_provider.dart';
 import '../location/nominatim_place_names.dart';
 import '../settings/app_settings.dart';
@@ -117,6 +118,7 @@ class _MomentAppState extends State<MomentApp> with WidgetsBindingObserver {
   /// spacing and its memory of spots already asked about hold. It is only
   /// handed to a screen while "Look up place names" is on.
   final _placeNames = NominatimPlaceNameLookup();
+  final _mapSource = AssetMapSource();
 
   final _reminders = DeviceReminderScheduler();
   AppLockController? _lockController;
@@ -182,6 +184,7 @@ class _MomentAppState extends State<MomentApp> with WidgetsBindingObserver {
               createVideoPlayback: DeviceVideoPlaybackController.new,
               locationProvider: DeviceLocationProvider(),
               placeNames: _placeNames,
+              mapSource: _mapSource,
               settings: resources.settings,
               reminders: _reminders,
               backups: resources.backups,

@@ -99,6 +99,9 @@ class SilentAudioPlayback implements AudioPlaybackController {
   Future<void> setSpeed(double speed) async {}
 
   @override
+  Future<void> setLoop(bool on) async {}
+
+  @override
   Future<void> dispose() async {}
 }
 

@@ -1,5 +1,22 @@
 # Changelog
 
+## Unreleased
+
+- **Audio player**, redesigned as a small music player: artwork card, a
+  fine waveform you can drag (a time bubble follows your finger and the
+  seek happens when you let go), big play and pause, 15-second skips,
+  loop and a speed chip (1x, 1.25x, 1.5x, 2x, 0.75x). It works as one
+  slider for screen readers. There is no text under the player: nothing
+  is transcribed. A note written in an older version is kept in the
+  database and backups but no longer shown on this screen.
+
+- **Place maps**: a Location log now shows a small map of the place in
+  the app's own colours, instead of a plain tile. It is drawn from Natural
+  Earth data (public domain) bundled in the app, so nothing is fetched.
+  Three zoom steps, Region, Area and City, with the width shown. The data
+  has city outlines, main highways, rivers and state lines but no streets,
+  so City (about 60 km across) is as close as it goes.
+
 ## 0.4.1 — Fixes
 
 - **Photo and video**: Save shows progress on photos too, and a screen
