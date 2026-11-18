@@ -18,7 +18,10 @@ void main() {
     });
 
     test('ignores case and a trailing slash', () {
-      expect((parseAppLink('Moment://Add/PHOTO/') as AddLink).type, LogType.photo);
+      expect(
+        (parseAppLink('Moment://Add/PHOTO/') as AddLink).type,
+        LogType.photo,
+      );
     });
 
     test('ignores anything else', () {
