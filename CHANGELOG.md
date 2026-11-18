@@ -1,5 +1,34 @@
 # Changelog
 
+## 0.4.4 — Fixes, a filter and no automatic backup
+
+- **Library filter**: each card in the Library has a filter button. The
+  popup chooses when (all time, today, last 7 or 30 days, this year),
+  newest or oldest first, emoji strengths, and "only with a caption, a
+  title or a name" for photos, videos, audio and places. The type's page
+  shows what matches, says "Showing 3 of 12" and has Clear filter. Filters
+  last until the app closes. The "Newest first" pill, which did nothing,
+  is gone.
+- **Audio**: when a recording ends the waveform now fills all the way. The
+  saved length could run a little longer than the audio itself; the player
+  now uses the length it finds in the file.
+- **Quick emoji** on Home log at full strength (5).
+- **Fewer notes**: the "stored on this device" and "search runs on this
+  device" notes are gone from Home, Search, Lock, Photo, Location and New
+  Location. About and Privacy still explain how the app treats your data.
+  The photo's quality and storage bar is gone.
+- **Your data stays in the app**: Android's automatic cloud backup and
+  phone-to-phone transfer are switched off, so photos, videos, audio and
+  the database are no longer copied to a Google account. The only way data
+  leaves is a backup or export file you make. Keyboards are asked not to
+  learn from what you type in the journal's fields.
+- **Smaller downloads**: the release now comes as one APK per CPU type
+  (arm64 for nearly every phone, about a third of the size) and a common
+  one that works everywhere.
+- **Updates**: releases are meant to install over the last one. This needs
+  a one-time release key (`tool/make_release_key.sh`); the first release
+  signed with it still needs one uninstall.
+
 ## 0.4.3 — Place maps and new players
 
 - **Video player**, redesigned like the audio player: the picture with mute
