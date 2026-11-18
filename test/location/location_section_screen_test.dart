@@ -5,6 +5,7 @@ import 'package:moment/data/database.dart';
 import 'package:moment/data/log_repository.dart';
 import 'package:moment/design/theme.dart';
 import 'package:moment/domain/log.dart';
+import 'package:moment/library/log_filter.dart';
 import 'package:moment/location/location_section_screen.dart';
 import 'package:moment/location/stylised_map.dart';
 
@@ -22,6 +23,7 @@ void main() {
     WidgetTester tester, {
     VoidCallback? onBack,
     ValueChanged<Log>? onOpenLog,
+    LogFilter filter = const LogFilter(),
   }) async {
     await tester.binding.setSurfaceSize(const Size(390, 844));
     addTearDown(() => tester.binding.setSurfaceSize(null));
@@ -32,6 +34,7 @@ void main() {
           repository: repo,
           onBack: onBack,
           onOpenLog: onOpenLog,
+          filter: filter,
         ),
       ),
     );
@@ -52,6 +55,24 @@ void main() {
 
     expect(find.text('Location'), findsOneWidget);
     expect(find.text('2 logs'), findsOneWidget);
+
+    await close(tester);
+  });
+
+  testWidgets('a filter keeps only the named places, on the map too', (
+    tester,
+  ) async {
+    await repo.createLocation(latitude: 1, longitude: 2, name: 'Bench');
+    await repo.createLocation(latitude: 3, longitude: 4);
+
+    await pump(tester, filter: const LogFilter(onlyNamed: true));
+
+    expect(find.text('Bench'), findsOneWidget);
+    expect(find.text('Showing 1 of 2'), findsOneWidget);
+    expect(
+      tester.widget<StylisedMap>(find.byType(StylisedMap)).pins,
+      hasLength(1),
+    );
 
     await close(tester);
   });

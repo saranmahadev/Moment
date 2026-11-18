@@ -24,6 +24,8 @@ import 'package:moment/emoji/create_emoji_screen.dart';
 import 'package:moment/export/export_coordinator.dart';
 import 'package:moment/export/export_service.dart';
 import 'package:moment/home/add_sheet.dart';
+import 'package:moment/library/log_filter.dart';
+import 'package:moment/library/log_filter_sheet.dart';
 import 'package:moment/home/home_screen.dart';
 import 'package:moment/library/library_screen.dart';
 import 'package:moment/location/create_location_screen.dart';
@@ -408,6 +410,23 @@ final screenCases = <ScreenCase>[
   ScreenCase(
     'settings_quick_emoji',
     (f) async => QuickEmojiScreen(settings: f.settings, onBack: () {}),
+  ),
+  // The popup a Library card opens: Emoji has the most to choose from.
+  ScreenCase(
+    'library_filter_emoji',
+    (f) async => Scaffold(
+      body: Align(
+        alignment: Alignment.bottomCenter,
+        child: LogFilterSheet(
+          type: LogType.emoji,
+          initial: const LogFilter(
+            window: FilterWindow.last7,
+            strengths: {4, 5},
+          ),
+          onApply: (_) {},
+        ),
+      ),
+    ),
   ),
 ];
 

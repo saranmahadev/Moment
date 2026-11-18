@@ -8,6 +8,7 @@ import '../design/tokens.dart';
 import '../design/type_icons.dart';
 import '../domain/log.dart';
 import '../domain/log_type.dart';
+import 'log_filter.dart';
 
 final _lastDateFormat = DateFormat('d MMM');
 
@@ -21,12 +22,19 @@ class LibraryScreen extends StatelessWidget {
     DateTime Function()? now,
     this.onOpenType,
     this.onOpenTrash,
+    this.filters = const {},
+    this.onFilter,
   }) : now = now ?? DateTime.now;
 
   final LogRepository repository;
   final DateTime Function() now;
   final ValueChanged<LogType>? onOpenType;
   final VoidCallback? onOpenTrash;
+
+  /// The filter in force for each type (none: no entry), and what to do
+  /// when a card's filter button is pressed.
+  final Map<LogType, LogFilter> filters;
+  final ValueChanged<LogType>? onFilter;
 
   @override
   Widget build(BuildContext context) {
@@ -87,6 +95,8 @@ class LibraryScreen extends StatelessWidget {
                     today: today,
                     tokens: tokens,
                     onTap: () => onOpenType?.call(type),
+                    filter: filters[type] ?? const LogFilter(),
+                    onFilter: () => onFilter?.call(type),
                   ),
               ],
             ),
@@ -110,6 +120,8 @@ class _TypeTile extends StatelessWidget {
     required this.today,
     required this.tokens,
     required this.onTap,
+    required this.filter,
+    required this.onFilter,
   });
 
   final LogType type;
@@ -117,6 +129,8 @@ class _TypeTile extends StatelessWidget {
   final DateTime today;
   final MomentTokens tokens;
   final VoidCallback onTap;
+  final LogFilter filter;
+  final VoidCallback onFilter;
 
   @override
   Widget build(BuildContext context) {
@@ -132,48 +146,135 @@ class _TypeTile extends StatelessWidget {
 
         return GestureDetector(
           onTap: onTap,
-          child: GlassSurface(
-            variant: GlassVariant.card,
-            child: Padding(
-              padding: const EdgeInsets.all(16),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  Container(
-                    width: 48,
-                    height: 48,
-                    decoration: BoxDecoration(
-                      color: tokens.tintFor(type),
-                      shape: BoxShape.circle,
-                    ),
-                    child: Icon(
-                      momentIconFor(type),
-                      color: tokens.colorFor(type),
+          child: Stack(
+            children: [
+              Positioned.fill(
+                child: GlassSurface(
+                  variant: GlassVariant.card,
+                  child: Padding(
+                    padding: const EdgeInsets.all(16),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Container(
+                          width: 48,
+                          height: 48,
+                          decoration: BoxDecoration(
+                            color: tokens.tintFor(type),
+                            shape: BoxShape.circle,
+                          ),
+                          child: Icon(
+                            momentIconFor(type),
+                            color: tokens.colorFor(type),
+                          ),
+                        ),
+                        const SizedBox(height: 12),
+                        Text(
+                          momentLabelFor(type),
+                          style: TextStyle(
+                            fontFamily: 'Newsreader',
+                            fontSize: 26,
+                            color: tokens.ink,
+                          ),
+                        ),
+                        const SizedBox(height: 4),
+                        Text(
+                          lastLabel,
+                          maxLines: 2,
+                          overflow: TextOverflow.ellipsis,
+                          style: TextStyle(
+                            fontSize: 13,
+                            color: tokens.secondary,
+                          ),
+                        ),
+                      ],
                     ),
                   ),
-                  const SizedBox(height: 12),
-                  Text(
-                    momentLabelFor(type),
-                    style: TextStyle(
-                      fontFamily: 'Newsreader',
-                      fontSize: 26,
-                      color: tokens.ink,
-                    ),
-                  ),
-                  const SizedBox(height: 4),
-                  Text(
-                    lastLabel,
-                    maxLines: 2,
-                    overflow: TextOverflow.ellipsis,
-                    style: TextStyle(fontSize: 13, color: tokens.secondary),
-                  ),
-                ],
+                ),
               ),
-            ),
+              Positioned(
+                top: 4,
+                right: 4,
+                child: _FilterButton(
+                  type: type,
+                  filter: filter,
+                  tokens: tokens,
+                  onTap: onFilter,
+                ),
+              ),
+            ],
           ),
         );
       },
+    );
+  }
+}
+
+/// The filter button on a card: 44 pt, with the number of choices in force.
+class _FilterButton extends StatelessWidget {
+  const _FilterButton({
+    required this.type,
+    required this.filter,
+    required this.tokens,
+    required this.onTap,
+  });
+
+  final LogType type;
+  final LogFilter filter;
+  final MomentTokens tokens;
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    final active = filter.activeCount;
+    final name = momentLabelFor(type);
+    return Semantics(
+      button: true,
+      label: active == 0 ? 'Filter $name' : 'Filter $name, $active active',
+      onTap: onTap,
+      excludeSemantics: true,
+      child: GestureDetector(
+        behavior: HitTestBehavior.opaque,
+        onTap: onTap,
+        child: SizedBox(
+          width: 44,
+          height: 44,
+          child: Stack(
+            alignment: Alignment.center,
+            children: [
+              Icon(
+                Icons.tune,
+                size: 20,
+                color: active == 0 ? tokens.secondary : tokens.colorFor(type),
+              ),
+              if (active > 0)
+                Positioned(
+                  top: 6,
+                  right: 4,
+                  child: Container(
+                    constraints: const BoxConstraints(minWidth: 16),
+                    height: 16,
+                    padding: const EdgeInsets.symmetric(horizontal: 4),
+                    decoration: BoxDecoration(
+                      color: tokens.ink,
+                      borderRadius: BorderRadius.circular(8),
+                    ),
+                    alignment: Alignment.center,
+                    child: Text(
+                      '$active',
+                      style: TextStyle(
+                        fontSize: 10,
+                        fontWeight: FontWeight.w700,
+                        color: tokens.onInk,
+                      ),
+                    ),
+                  ),
+                ),
+            ],
+          ),
+        ),
+      ),
     );
   }
 }

@@ -5,7 +5,6 @@ import 'package:moment/data/database.dart';
 import 'package:moment/data/log_repository.dart';
 import 'package:moment/design/orb_field.dart';
 import 'package:moment/design/theme.dart';
-import 'package:moment/design/tokens.dart';
 import 'package:moment/domain/log.dart';
 import 'package:moment/domain/log_type.dart';
 import 'package:moment/library/log_filter.dart';

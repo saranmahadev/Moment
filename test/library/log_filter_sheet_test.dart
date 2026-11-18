@@ -50,13 +50,13 @@ void main() {
 
   testWidgets('Text has nothing extra to choose', (tester) async {
     await pump(tester, LogType.text);
-    expect(find.text('Strength'), findsNothing);
+    expect(find.text('STRENGTH'), findsNothing);
     expect(find.textContaining('Only with'), findsNothing);
   });
 
   testWidgets('Emoji offers strengths 1 to 5', (tester) async {
     await pump(tester, LogType.emoji);
-    expect(find.text('Strength'), findsOneWidget);
+    expect(find.text('STRENGTH'), findsOneWidget);
     for (var i = 1; i <= 5; i++) {
       expect(find.bySemanticsLabel('Strength $i'), findsOneWidget);
     }
