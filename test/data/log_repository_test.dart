@@ -861,4 +861,66 @@ void main() {
       expect(await repo.getById(id), isNull);
     });
   });
+
+  group('watchActiveDays', () {
+    test('is empty for an empty journal', () async {
+      expect(await repo.watchActiveDays().first, isEmpty);
+    });
+
+    test('lists each day once, however many logs it has', () async {
+      await repo.createText(body: 'a', createdAt: DateTime.utc(2026, 1, 14, 9));
+      await repo.createText(
+        body: 'b',
+        createdAt: DateTime.utc(2026, 1, 14, 21),
+      );
+      await repo.createEmoji(
+        emoji: '😌',
+        strength: 3,
+        createdAt: DateTime.utc(2026, 1, 15, 8),
+      );
+
+      expect(await repo.watchActiveDays().first, {
+        DateTime.utc(2026, 1, 14),
+        DateTime.utc(2026, 1, 15),
+      });
+    });
+
+    test('uses the day in the zone the log was made in', () async {
+      final id = await repo.createText(
+        body: 'late',
+        createdAt: DateTime.utc(2026, 1, 14, 23, 50),
+      );
+      await db.customStatement(
+        'UPDATE log SET tz_offset_minutes = 330 WHERE id = ?',
+        [id],
+      );
+
+      expect(await repo.watchActiveDays().first, {DateTime.utc(2026, 1, 15)});
+    });
+
+    test('leaves out logs in Trash and brings them back on restore', () async {
+      final id = await repo.createText(body: 'gone');
+
+      await repo.softDelete(id);
+      expect(await repo.watchActiveDays().first, isEmpty);
+
+      await repo.restore(id);
+      expect(await repo.watchActiveDays().first, {DateTime.utc(2026, 1, 15)});
+    });
+
+    test('follows a log moved to another day', () async {
+      final id = await repo.createText(body: 'move me');
+      final days = repo.watchActiveDays();
+      final seen = expectLater(
+        days,
+        emitsInOrder([
+          {DateTime.utc(2026, 1, 15)},
+          {DateTime.utc(2026, 1, 10)},
+        ]),
+      );
+
+      await repo.setCreatedAt(id, DateTime.utc(2026, 1, 10, 12));
+      await seen;
+    });
+  });
 }
