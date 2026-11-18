@@ -18,6 +18,10 @@ final _dateFormat = DateFormat('d MMMM y');
 
 /// Home: today's date, type filter chips, the one-tap mood row, and the
 /// feed grouped by day. Matches design/mockups/Main.dc.html.
+/// A tap on the Home row logs the emoji at full strength; the New Emoji
+/// screen is where a lighter feeling is chosen.
+const quickEmojiStrength = 5;
+
 class HomeScreen extends StatefulWidget {
   const HomeScreen({
     super.key,
@@ -74,7 +78,7 @@ class _HomeScreenState extends State<HomeScreen> {
                 onMoodTapped: (emoji) => widget.repository.createEmoji(
                   emoji: emoji,
                   label: moodLabel(emoji),
-                  strength: 3,
+                  strength: quickEmojiStrength,
                 ),
               ),
             ),
