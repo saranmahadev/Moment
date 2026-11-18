@@ -1,5 +1,36 @@
 # Changelog
 
+## 0.5.0 — Streaks
+
+- **Streaks**: the number of days in a row you logged something, of any
+  type. A day runs from midnight to midnight, in the time zone the log
+  was made in, so a log at 23:50 stays on its day after travel. Streaks
+  are worked out on the phone from your logs: nothing new is stored,
+  backed up or sent, and a restored backup shows the right streak by
+  itself. Logs in Trash do not count; backdating a log can fill a gap.
+- **Home** has a flame chip beside Search with the count. It is a solid
+  pill once you have logged today, an outlined pill with a small dot
+  until then, and says Grace when yesterday was missed and forgiven. With
+  no streak it is not shown.
+- **Streaks page**, opened from the chip or from a card at the top of
+  Calendar: the running streak and this week, the longest streak and
+  totals, an Activity heatmap like a commit graph (a square a day, shaded
+  by how many logs, for 3 months, 6 months or a year; tap or drag to read
+  a day) and eight milestones (3, 7, 14, 30, 60, 100, 200 and 365 days)
+  with the day each was reached. No pop-ups.
+- **Calendar** shows the days of the running streak on a soft band.
+- **Grace days**: Settings → Streaks forgives 0 to 3 missed days in any
+  seven, so one bad day does not end a long streak. Forgiven days are
+  outlined, count in the total and are never the first or last day of a
+  streak. The default is 1. Streaks can also be switched off entirely.
+- The evening reminder says nothing about streaks.
+- **Accessibility**: the heatmap is one slider for a screen reader that
+  steps a day at a time. Round header buttons (Back and the like) are now
+  their own items for a screen reader instead of being read together with
+  the title beside them.
+- **Home** header: the weekday shrinks to fit beside the chip instead of
+  overflowing at large text sizes.
+
 ## 0.4.4 — Fixes, a filter and no automatic backup
 
 - **Library filter**: each card in the Library has a filter button. The
