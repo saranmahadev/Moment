@@ -4,8 +4,10 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:moment/data/database.dart';
 import 'package:moment/data/log_repository.dart';
 import 'package:moment/design/theme.dart';
+import 'package:moment/design/type_icons.dart';
 import 'package:moment/domain/log_type.dart';
 import 'package:moment/library/library_screen.dart';
+import 'package:moment/library/log_filter.dart';
 
 void main() {
   final now = DateTime.utc(2026, 11, 6, 21, 50);
@@ -15,6 +17,8 @@ void main() {
     LogRepository repo, {
     ValueChanged<LogType>? onOpenType,
     VoidCallback? onOpenTrash,
+    Map<LogType, LogFilter> filters = const {},
+    ValueChanged<LogType>? onFilter,
   }) async {
     await tester.binding.setSurfaceSize(const Size(390, 844));
     addTearDown(() => tester.binding.setSurfaceSize(null));
@@ -26,6 +30,8 @@ void main() {
           now: () => now,
           onOpenType: onOpenType,
           onOpenTrash: onOpenTrash,
+          filters: filters,
+          onFilter: onFilter,
         ),
       ),
     );
@@ -164,6 +170,56 @@ void main() {
     await tester.tap(find.text('Trash'));
 
     expect(opened, isTrue);
+
+    await tester.pumpWidget(const SizedBox());
+    await tester.pumpAndSettle();
+    await db.close();
+  });
+
+  testWidgets('every type card has a filter button that opens its filter', (
+    tester,
+  ) async {
+    final db = AppDatabase(NativeDatabase.memory());
+    final repo = LogRepository(db, clock: () => now);
+    final asked = <LogType>[];
+
+    await pump(tester, repo, onFilter: asked.add);
+    await tester.pump();
+
+    for (final type in builtLogTypes) {
+      expect(
+        find.bySemanticsLabel(RegExp('^Filter ${momentLabelFor(type)}')),
+        findsOneWidget,
+      );
+    }
+    await tester.tap(find.bySemanticsLabel(RegExp('^Filter Emoji')));
+    expect(asked, [LogType.emoji]);
+
+    final size = tester.getSize(find.bySemanticsLabel(RegExp('^Filter Text')));
+    expect(size.shortestSide, greaterThanOrEqualTo(44));
+
+    await tester.pumpWidget(const SizedBox());
+    await tester.pumpAndSettle();
+    await db.close();
+  });
+
+  testWidgets('a card with a filter in force says so, and how many', (
+    tester,
+  ) async {
+    final db = AppDatabase(NativeDatabase.memory());
+    final repo = LogRepository(db, clock: () => now);
+
+    await pump(
+      tester,
+      repo,
+      filters: const {
+        LogType.emoji: LogFilter(strengths: {5}, window: FilterWindow.last7),
+      },
+    );
+    await tester.pump();
+
+    expect(find.bySemanticsLabel('Filter Emoji, 2 active'), findsOneWidget);
+    expect(find.bySemanticsLabel('Filter Text'), findsOneWidget);
 
     await tester.pumpWidget(const SizedBox());
     await tester.pumpAndSettle();

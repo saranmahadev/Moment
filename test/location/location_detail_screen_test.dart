@@ -8,6 +8,9 @@ import 'package:moment/design/theme.dart';
 import 'package:moment/domain/log.dart';
 import 'package:moment/location/location_detail_screen.dart';
 import 'package:moment/location/location_provider.dart';
+import 'package:moment/location/place_map.dart';
+import 'package:moment/location/stylised_map.dart';
+import 'map/fake_map_source.dart';
 
 import 'location_fakes.dart';
 
@@ -35,6 +38,7 @@ void main() {
     FakeLocationProvider? provider,
     LocationLog? log_,
     VoidCallback? onBack,
+    FakeMapSource? mapSource,
   }) async {
     await tester.binding.setSurfaceSize(const Size(390, 844));
     addTearDown(() => tester.binding.setSurfaceSize(null));
@@ -47,6 +51,7 @@ void main() {
           provider: provider ?? FakeLocationProvider(),
           now: () => now,
           onBack: onBack ?? () {},
+          mapSource: mapSource,
         ),
       ),
     );
@@ -71,7 +76,32 @@ void main() {
     expect(find.text('Favourite bench'), findsOneWidget);
     expect(find.text('12.97160° N, 77.59456° E'), findsOneWidget);
     expect(find.text('Accuracy ±12 m'), findsOneWidget);
-    expect(find.text('Coordinates stored on this device'), findsOneWidget);
+    expect(find.text('Coordinates stored on this device'), findsNothing);
+
+    await close(tester);
+  });
+
+  testWidgets('shows the place on the bundled map, with zoom buttons', (
+    tester,
+  ) async {
+    final source = FakeMapSource();
+    await pump(tester, mapSource: source);
+
+    final map = tester.widget<PlaceMap>(find.byType(PlaceMap));
+    expect(map.latitude, log.latitude);
+    expect(map.longitude, log.longitude);
+    expect(map.zoomable, isTrue);
+    expect(find.byType(StylisedMap), findsNothing);
+    expect(find.bySemanticsLabel('Zoom to City'), findsOneWidget);
+
+    await close(tester);
+  });
+
+  testWidgets('without a map source it keeps the plain tile', (tester) async {
+    await pump(tester);
+
+    expect(find.byType(StylisedMap), findsOneWidget);
+    expect(find.byType(PlaceMap), findsNothing);
 
     await close(tester);
   });

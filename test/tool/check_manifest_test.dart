@@ -6,6 +6,39 @@ import 'package:path/path.dart' as p;
 import '../../tool/check_manifest.dart';
 
 void main() {
+  group('allowsCloudBackup', () {
+    test('Android backs an app up unless it says no', () {
+      expect(
+        allowsCloudBackup(
+          '<manifest><application android:label="x"/></manifest>',
+        ),
+        isTrue,
+      );
+    });
+
+    test('an explicit yes is a leak too', () {
+      expect(
+        allowsCloudBackup(
+          '<manifest><application android:allowBackup="true"/></manifest>',
+        ),
+        isTrue,
+      );
+    });
+
+    test('allowBackup false is clean', () {
+      expect(
+        allowsCloudBackup(
+          '<manifest><application android:allowBackup="false" android:label="x"/></manifest>',
+        ),
+        isFalse,
+      );
+    });
+
+    test('a manifest with no application (a library) says nothing', () {
+      expect(allowsCloudBackup('<manifest/>'), isFalse);
+    });
+  });
+
   group('findForbiddenPermissions', () {
     test('the internet is allowed: the place-name lookup needs it', () {
       const manifest = '''
@@ -202,6 +235,14 @@ void main() {
     test('returns 1 when a manifest declares a forbidden permission', () {
       File(p.join(tempDir.path, 'AndroidManifest.xml')).writeAsStringSync('''
 <manifest><uses-permission android:name="android.permission.ACCESS_BACKGROUND_LOCATION"/></manifest>
+''');
+
+      expect(run([tempDir.path]), 1);
+    });
+
+    test('returns 1 when the app lets Android back its files up', () {
+      File(p.join(tempDir.path, 'AndroidManifest.xml')).writeAsStringSync('''
+<manifest><application android:label="x"/></manifest>
 ''');
 
       expect(run([tempDir.path]), 1);

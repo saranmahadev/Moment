@@ -99,6 +99,12 @@ class SilentAudioPlayback implements AudioPlaybackController {
   Future<void> setSpeed(double speed) async {}
 
   @override
+  Future<void> setLoop(bool on) async {}
+
+  @override
+  Stream<Duration?> get durationStream => const Stream.empty();
+
+  @override
   Future<void> dispose() async {}
 }
 
@@ -155,7 +161,10 @@ class ShellHarness {
     final tempDir = Directory.systemTemp.createTempSync('shell_harness_');
     addTearDown(() => tempDir.deleteSync(recursive: true));
     final db = AppDatabase(NativeDatabase.memory());
-    final clock = now ?? DateTime.now;
+    // A fixed day, not the real one: the tests run with Flutter's Ahem test
+    // font, where a long weekday name ("Wednesday") is wider than the Home
+    // header, so a flow test that read the real clock failed every Wednesday.
+    final clock = now ?? () => DateTime(2026, 11, 7, 10);
     final repo = LogRepository(db, clock: clock);
     final support = Directory(p.join(tempDir.path, 'app_support'))
       ..createSync();

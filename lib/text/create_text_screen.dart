@@ -259,6 +259,7 @@ class _CreateTextScreenState extends State<CreateTextScreen> {
                           children: [
                             Expanded(
                               child: TextField(
+                                enableIMEPersonalizedLearning: false,
                                 controller: _controller,
                                 autofocus: true,
                                 maxLines: null,

@@ -29,6 +29,20 @@ List<String> findForbiddenPermissions(String manifestXml) {
       .toList();
 }
 
+/// Whether the app in [manifestXml] lets Android copy its files to the
+/// cloud or another phone. Android does, unless `android:allowBackup` is
+/// `"false"`. A manifest with no `<application>` (a library's) says nothing.
+bool allowsCloudBackup(String manifestXml) {
+  final application = RegExp(
+    r'<application\b[^>]*>?',
+    dotAll: true,
+  ).firstMatch(manifestXml);
+  if (application == null) return false;
+  return !RegExp(
+    r'android:allowBackup\s*=\s*"false"',
+  ).hasMatch(application.group(0)!);
+}
+
 /// Every permission [manifestXml] asks for, once each, in order of first
 /// appearance.
 List<String> listPermissions(String manifestXml) {
@@ -69,7 +83,11 @@ class ManifestViolation {
 List<ManifestViolation> checkManifests(String path) {
   final violations = <ManifestViolation>[];
   for (final manifest in findAndroidManifests(path)) {
-    final forbidden = findForbiddenPermissions(manifest.readAsStringSync());
+    final xml = manifest.readAsStringSync();
+    final forbidden = [
+      ...findForbiddenPermissions(xml),
+      if (allowsCloudBackup(xml)) 'android:allowBackup is not "false"',
+    ];
     if (forbidden.isNotEmpty) {
       violations.add(ManifestViolation(manifest.path, forbidden));
     }

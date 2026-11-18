@@ -10,6 +10,9 @@ import 'package:moment/domain/log.dart';
 import 'package:moment/location/create_location_screen.dart';
 import 'package:moment/location/location_provider.dart';
 
+import 'map/fake_map_source.dart';
+import 'package:moment/location/place_map.dart';
+import 'package:moment/location/stylised_map.dart';
 import 'location_fakes.dart';
 
 void main() {
@@ -28,6 +31,7 @@ void main() {
     ValueChanged<String>? onSaved,
     VoidCallback? onClose,
     FakePlaceNameLookup? placeNames,
+    FakeMapSource? mapSource,
   }) async {
     await tester.binding.setSurfaceSize(const Size(390, 844));
     addTearDown(() => tester.binding.setSurfaceSize(null));
@@ -38,6 +42,7 @@ void main() {
           repository: repo,
           provider: provider,
           placeNames: placeNames,
+          mapSource: mapSource,
           now: () => now,
           onSaved: onSaved ?? (_) {},
           onClose: onClose ?? () {},
@@ -57,6 +62,30 @@ void main() {
   Future<LocationLog> savedLog(String id) async =>
       await repo.getById(id) as LocationLog;
 
+  group('the map', () {
+    testWidgets('shows the locked-on spot on the bundled map', (tester) async {
+      await pump(tester, FakeLocationProvider(), mapSource: FakeMapSource());
+
+      final map = tester.widget<PlaceMap>(find.byType(PlaceMap));
+      expect(map.latitude, isNotNull);
+      expect(map.zoomable, isFalse);
+      expect(find.byType(StylisedMap), findsNothing);
+
+      await close(tester);
+    });
+
+    testWidgets('before there is a spot, or with no source, the plain tile', (
+      tester,
+    ) async {
+      await pump(tester, FakeLocationProvider(), mapSource: null);
+
+      expect(find.byType(PlaceMap), findsNothing);
+      expect(find.byType(StylisedMap), findsOneWidget);
+
+      await close(tester);
+    });
+  });
+
   group('with location access', () {
     testWidgets('locks on to the current position when it opens', (
       tester,
@@ -69,10 +98,7 @@ void main() {
       expect(find.text('Pin this spot'), findsOneWidget);
       expect(find.text('Locked on'), findsOneWidget);
       expect(find.text('Accuracy ±12 m · Sat 7 Nov · 10:00'), findsOneWidget);
-      expect(
-        find.text('Place names are typed by you. Nothing is looked up online.'),
-        findsOneWidget,
-      );
+      expect(find.textContaining('Nothing is looked up online'), findsNothing);
       expect(find.text('Move pin'), findsOneWidget);
       expect(find.text('Save location'), findsOneWidget);
 
@@ -210,10 +236,7 @@ void main() {
       expect(provider.requests, 0);
       expect(provider.fixes, 0);
       expect(
-        find.text(
-          'Moment uses your location only to pin this spot. '
-          'It stays on this device.',
-        ),
+        find.text('Moment uses your location only to pin this spot.'),
         findsOneWidget,
       );
       expect(find.text('Save location'), findsNothing);

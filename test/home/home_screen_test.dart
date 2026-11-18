@@ -73,6 +73,7 @@ void main() {
     expect(find.text('TODAY · FRI 6 NOV'), findsOneWidget);
     expect(find.text('Quiet evening.'), findsOneWidget);
     expect(find.text('Calm'), findsOneWidget);
+    expect(find.text('Older logs live in Library.'), findsNothing);
 
     await db.close();
   });
@@ -91,6 +92,12 @@ void main() {
 
     // One in the mood row itself, one in the new feed card it created.
     expect(find.text('😌'), findsNWidgets(2));
+
+    // A quick tap logs the emoji at full strength.
+    final logged = (await tester.runAsync(
+      () => repo.watchFeed().first,
+    ))!.whereType<EmojiLog>().single;
+    expect(logged.strength, 5);
 
     await tester.pumpWidget(const SizedBox());
     await tester.pumpAndSettle();
@@ -192,5 +199,110 @@ void main() {
     await tester.pumpWidget(const SizedBox());
     await tester.pumpAndSettle();
     await db.close();
+  });
+
+  group('streak chip', () {
+    Future<void> logDays(LogRepository repo, Iterable<int> days) async {
+      for (final day in days) {
+        await repo.createText(
+          body: 'day $day',
+          createdAt: DateTime.utc(2026, 11, day, 12),
+        );
+      }
+    }
+
+    testWidgets('shows the running streak beside Search', (tester) async {
+      final db = AppDatabase(NativeDatabase.memory());
+      final repo = LogRepository(db, clock: () => now);
+      await logDays(repo, [4, 5, 6]);
+
+      await pump(tester, repo, settings: AppSettings.inMemory());
+      await tester.pump();
+      await tester.pump();
+
+      expect(find.byKey(const ValueKey('streak-chip')), findsOneWidget);
+      expect(
+        find.bySemanticsLabel('3-day streak, logged today'),
+        findsOneWidget,
+      );
+
+      await db.close();
+    });
+
+    testWidgets('is hidden with no streak', (tester) async {
+      final db = AppDatabase(NativeDatabase.memory());
+      final repo = LogRepository(db, clock: () => now);
+      await logDays(repo, [1]);
+
+      await pump(tester, repo, settings: AppSettings.inMemory());
+      await tester.pump();
+      await tester.pump();
+
+      expect(find.byKey(const ValueKey('streak-chip')), findsNothing);
+
+      await db.close();
+    });
+
+    testWidgets('is hidden when streaks are turned off', (tester) async {
+      final db = AppDatabase(NativeDatabase.memory());
+      final repo = LogRepository(db, clock: () => now);
+      await logDays(repo, [5, 6]);
+      final settings = AppSettings.inMemory({'showStreaks': false});
+
+      await pump(tester, repo, settings: settings);
+      await tester.pump();
+      await tester.pump();
+
+      expect(find.byKey(const ValueKey('streak-chip')), findsNothing);
+
+      await db.close();
+    });
+
+    testWidgets('follows the setting and the grace days at once', (
+      tester,
+    ) async {
+      final db = AppDatabase(NativeDatabase.memory());
+      final repo = LogRepository(db, clock: () => now);
+      await logDays(repo, [1, 3, 4, 5, 6]);
+      final settings = AppSettings.inMemory({'graceDays': 0});
+
+      await pump(tester, repo, settings: settings);
+      await tester.pump();
+      await tester.pump();
+      expect(find.bySemanticsLabel('4-day streak, logged today'), findsOne);
+
+      await settings.setGraceDays(1);
+      await tester.pump();
+      await tester.pump();
+      expect(find.bySemanticsLabel('6-day streak, logged today'), findsOne);
+
+      await db.close();
+    });
+
+    testWidgets('a tap opens the streaks page', (tester) async {
+      final db = AppDatabase(NativeDatabase.memory());
+      final repo = LogRepository(db, clock: () => now);
+      await logDays(repo, [5, 6]);
+      var opened = 0;
+
+      await tester.pumpWidget(
+        MaterialApp(
+          theme: momentTheme(),
+          home: HomeScreen(
+            repository: repo,
+            settings: AppSettings.inMemory(),
+            now: () => now,
+            onOpenStreaks: () => opened++,
+          ),
+        ),
+      );
+      await tester.pump();
+      await tester.pump();
+      await tester.tap(find.byKey(const ValueKey('streak-chip')));
+
+      expect(opened, 1);
+
+      await db.close();
+    });
   });
 }

@@ -17,7 +17,7 @@ Releases: Phase 1 = 0.1.0 (Foundation, Text and Emoji), 2 = 0.2.0 (Photo, Audio,
 
 ## State
 
-Phases 1 to 4 are released (`v0.3.0` and `v0.4.0` are published with their APKs; the owner decided not to tag 0.1.0 and 0.2.0 after the fact). Every screen in the mockups exists, in light and dark. `CHANGELOG.md` has the detail per release. Next is Phase 5 (polish and hardening, 1.0.0) in `docs/ROADMAP.md`; the owner wants the release signing key and other production setup done at the end of it. CI pins Flutter 3.47.9; develop and verify on that version. First time setup is in `README.md` (`flutter create` for platform folders, then `build_runner`).
+Phases 1 to 4 are released (`v0.3.0` and `v0.4.0` are published with their APKs; the owner decided not to tag 0.1.0 and 0.2.0 after the fact). 0.5.0 added Streaks (see the Streaks decisions); Phase 5 (1.0.0) is still ahead. Every screen in the mockups exists, in light and dark. `CHANGELOG.md` has the detail per release. Next is Phase 5 (polish and hardening, 1.0.0) in `docs/ROADMAP.md`; the owner wants the release signing key and other production setup done at the end of it. CI pins Flutter 3.47.9; develop and verify on that version. First time setup is in `README.md` (`flutter create` for platform folders, then `build_runner`).
 
 Tags are never pushed by hand: the **Release** workflow (`.github/workflows/release.yml`, run with a version and optionally a commit) checks, builds, tags and publishes the APK in one go. See `docs/WORKFLOW.md`, "Releases".
 
@@ -89,6 +89,42 @@ Screens in Phase 1: Lock, Home, Add, Library, New text, New emoji, Text section,
 - Photo quality: `MediaStore(photoQuality:)` scales the long edge to 2560 or 1600 px; videos are never re-encoded.
 - Accessibility: a labelled button written as `Semantics(excludeSemantics: true, child: GestureDetector)` must also pass `onTap` to the `Semantics` (the exclusion hides the child's tap from screen readers); `test/gate/semantics_source_test.dart` enforces it. Fixed-shape layouts grow with the text size through `lib/design/text_growth.dart`.
 - Every-screen checks: `test/support/screen_cases.dart` lists all 27 mockup screens plus About and the quick-emoji editor; `test/gate/all_screens_test.dart` runs each through Reduce Transparency (no blur, both themes), labels, 44 pt targets, text at 200 %, and light and dark goldens drawn with the app's real fonts. Add a new screen to that list.
+
+## Place map decisions (owner-approved after a proof of concept, after 0.4.1)
+
+- The Location preview is `PlaceMap` (`lib/location/place_map.dart`) over `lib/location/map/`: `MapWindow` (zoom, aspect, pin position, longitude scaled by cos(latitude)), `MapTile`/`MapScene` (decode and cull), `MapSource` (`AssetMapSource` reads `assets/map/`; tests use `FakeMapSource`), `MapPainter` (colours from the tokens, no fixed colours, no blur).
+- Data: Natural Earth 1:10m (public domain), built by `tool/build_map_data.py` into 10 x 10 degree JSON tiles (`assets/map/<south>_<west>.json`, thousandths of a degree, delta-encoded). Regenerate with that script; the tiles are committed. About 15 MB raw, about 5.5 MB inside the APK.
+- Zoom steps Region (about 460 km across), Area (170), City (60). No closer: the data has no streets. The span is always shown.
+- Screens take an optional `mapSource`; without one they keep `StylisedMap` (all older tests). `AppShell` passes `AssetMapSource` from `moment_app.dart`. The Location section (many pins) still uses `StylisedMap`.
+- Goldens for the Bengaluru proof-of-concept point (12.91227 N, 77.71650 E) are in `test/goldens/goldens/place_map_*`.
+- Flow tests use a fixed clock: with the Ahem test font "Wednesday" overflows the Home header, so reading the real clock failed every Wednesday.
+
+## Audio player decisions (owner-approved design, after 0.4.1)
+
+- `AudioDetailScreen` is a music-style player: `_Artwork` card, `PlayerWaveform` (`lib/audio/player_waveform.dart`: 56 bars from `resamplePeaks`, glow at the playhead, drag to scrub with a time bubble, seek on release, one slider for TalkBack; no `LayoutBuilder` inside, because the screen sizes itself with `IntrinsicHeight`), play/pause, 15 s skips, Loop (`AudioPlaybackController.setLoop`) and a Speed chip cycling 1, 1.25, 1.5, 2, 0.75.
+- The ended recording counts as stopped (`isAudibleState`), so the button shows Play and Play restarts it.
+- No note under the player (nothing is transcribed). `AudioLog.note` stays in the schema and backups; the screen just does not show or edit it.
+- No mini player, no background or lock-screen playback, no bookmarks, no clip sharing (owner declined).
+
+## Video player decisions (owner-approved design, after 0.4.1)
+
+- `VideoDetailScreen` (portrait) and `FullscreenVideoPlayer` share one `VideoPlayerModel` (position, playing, started, ended, mute, loop, speed 1/1.25/1.5/2/0.5; the screen that made the `VideoPlaybackController` still disposes it). Fakes: `FakeVideoPlaybackController`, `FakePlayerScreenControl`.
+- `FrameStripScrubber` is the scrubber (frames, dimmed unplayed part, playhead, drag shows the nearest frame and its time, seek on release, one slider for TalkBack; no `LayoutBuilder` inside, same reason as `PlayerWaveform`).
+- Frames: `VideoFrameStrip` makes 12 small JPEGs per video through `VideoProbe.writeFrame` (fc_native_video_thumbnail `at:`), into the app cache (`video-frames/<logId>/`), most recent 40 videos kept, never backed up, regenerated when missing.
+- `PlayerScreenControl` (`DevicePlayerScreenControl`: SystemChrome fullscreen and orientation, `wakelock_plus` for keeping the screen on) sits behind an interface; wide clips go landscape, tall ones portrait.
+- Controls over footage use two fixed colours in `lib/video/overlay_colours.dart` (a dark film, white marks); everything else comes from the tokens.
+- A `VideoPlayerModel` or timer created in a `setUp` of a widget test runs on the wrong clock: create them inside the test.
+- Not built (owner declined for now): mini player, picture-in-picture, background playback, captions.
+
+## Streaks decisions (owner-approved design, 0.5.0)
+
+- A streak is derived, never stored: `streakOf(days, today, grace:)` in `lib/streaks/streak_model.dart` is a pure function of the set of `Log.localDay` values (midnight to midnight in the zone the log was made in), so Trash, restore, backdating and backups need nothing. No schema or manifest change.
+- Grace days (`AppSettings.graceDays`, 0 to 3, default 1; `showStreaks`, default on): a missed day does not break a streak while no more than `grace` days were missed in any seven in a row. A streak starts and ends on a logged day; today is not counted as missed until it is over. Forgiven days count in the total (a 12-day streak can be 11 logged plus 1 forgiven) and show as outlined squares.
+- Data: `LogRepository.watchActiveDays()` and `watchDayCounts()` read one number per log with SQL (the day is `created_at_ms` plus the stored offset), not whole logs. `StreakBuilder` hands `StreakSummary?` to a screen (null while loading, with no settings, or when streaks are off).
+- Screens: Home `StreakChip` (only when a streak exists), Calendar `StreakCard` (always, "Start a streak" when none, so the page stays reachable) and a band behind the running streak, `StreaksScreen` (hero and week, stats, Activity heatmap, milestones), `StreakSettingsScreen`, and a Streaks row in Settings. The evening reminder text is unchanged and never mentions streaks.
+- The heatmap (`lib/streaks/heatmap_model.dart`, `streak_heatmap.dart`) is one painted surface, not hundreds of buttons: tap or drag picks a day, and a single slider is exposed to screen readers. A year is wider than the card and scrolls. Colours come from `MomentTokens.streakRamp` and `streakAccent`.
+- Accessibility lesson: a labelled `Semantics` without `container: true` merges with its neighbours into one node (a Back button read together with the title; `find.bySemanticsLabel` then returns the whole row). Give separate controls `container: true`; `RoundGlassButton` now does.
+- Design review page for the feature: https://claude.ai/artifact/Gz2G5sxJxSZaud9Q6bvCkz (not needed to build anything).
 
 ## Logo, site, film and open-source files (before Phase 5)
 

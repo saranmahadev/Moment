@@ -166,6 +166,27 @@ class AppSettings extends ChangeNotifier {
   Future<void> clearRecentSearches() =>
       _setList('recentSearches', const [], recentSearches);
 
+  /// Whether the streak chip, the Calendar card and the Streaks page are
+  /// shown at all.
+  bool get showStreaks => _read('showStreaks', true);
+
+  Future<void> setShowStreaks(bool value) => _set('showStreaks', value, true);
+
+  /// How many missed days a week a streak forgives, 0 to 3.
+  int get graceDays {
+    final value = _read('graceDays', _defaultGraceDays);
+    return value >= 0 && value <= 3 ? value : _defaultGraceDays;
+  }
+
+  Future<void> setGraceDays(int days) {
+    if (days < 0 || days > 3) {
+      throw ArgumentError.value(days, 'days', 'must be 0 to 3');
+    }
+    return _set('graceDays', days, graceDays);
+  }
+
+  static const _defaultGraceDays = 1;
+
   T _read<T>(String key, T fallback) {
     final value = _values[key];
     return value is T ? value : fallback;

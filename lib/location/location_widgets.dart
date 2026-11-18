@@ -8,9 +8,7 @@ import 'location_provider.dart';
 /// What to tell the user when the device's position cannot be read.
 String locationAccessMessage(LocationAccess access) => switch (access) {
   LocationAccess.granted => '',
-  LocationAccess.denied =>
-    'Moment uses your location only to pin this spot. '
-        'It stays on this device.',
+  LocationAccess.denied => 'Moment uses your location only to pin this spot.',
   LocationAccess.deniedForever =>
     'Location access is turned off for Moment. Turn it on in '
         'Settings, or enter coordinates instead.',
@@ -136,6 +134,7 @@ class _CoordinatesEntryState extends State<CoordinatesEntry> {
           child: Padding(
             padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
             child: TextField(
+              enableIMEPersonalizedLearning: false,
               key: const ValueKey('coordinates-field'),
               controller: _controller,
               keyboardType: TextInputType.text,
@@ -184,7 +183,7 @@ class _CoordinatesEntryState extends State<CoordinatesEntry> {
   }
 }
 
-/// The small rounded label used for accuracy and "stored on this device".
+/// The small rounded label used for accuracy.
 class LocationPill extends StatelessWidget {
   const LocationPill({
     super.key,

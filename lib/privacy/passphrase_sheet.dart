@@ -205,6 +205,7 @@ class _Field extends StatelessWidget {
       child: Padding(
         padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
         child: TextField(
+          enableIMEPersonalizedLearning: false,
           controller: controller,
           obscureText: true,
           autocorrect: false,

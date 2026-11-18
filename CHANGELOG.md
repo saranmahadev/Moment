@@ -1,5 +1,101 @@
 # Changelog
 
+## 0.5.0 — Streaks
+
+- **Streaks**: the number of days in a row you logged something, of any
+  type. A day runs from midnight to midnight, in the time zone the log
+  was made in, so a log at 23:50 stays on its day after travel. Streaks
+  are worked out on the phone from your logs: nothing new is stored,
+  backed up or sent, and a restored backup shows the right streak by
+  itself. Logs in Trash do not count; backdating a log can fill a gap.
+- **Home** has a flame chip beside Search with the count. It is a solid
+  pill once you have logged today, an outlined pill with a small dot
+  until then, and says Grace when yesterday was missed and forgiven. With
+  no streak it is not shown.
+- **Streaks page**, opened from the chip or from a card at the top of
+  Calendar: the running streak and this week, the longest streak and
+  totals, an Activity heatmap like a commit graph (a square a day, shaded
+  by how many logs, for 3 months, 6 months or a year; tap or drag to read
+  a day) and eight milestones (3, 7, 14, 30, 60, 100, 200 and 365 days)
+  with the day each was reached. No pop-ups.
+- **Calendar** shows the days of the running streak on a soft band.
+- **Grace days**: Settings → Streaks forgives 0 to 3 missed days in any
+  seven, so one bad day does not end a long streak. Forgiven days are
+  outlined, count in the total and are never the first or last day of a
+  streak. The default is 1. Streaks can also be switched off entirely.
+- The evening reminder says nothing about streaks.
+- **Accessibility**: the heatmap is one slider for a screen reader that
+  steps a day at a time. Round header buttons (Back and the like) are now
+  their own items for a screen reader instead of being read together with
+  the title beside them.
+- **Home** header: the weekday shrinks to fit beside the chip instead of
+  overflowing at large text sizes.
+
+## 0.4.4 — Fixes, a filter and no automatic backup
+
+- **Library filter**: each card in the Library has a filter button. The
+  popup chooses when (all time, today, last 7 or 30 days, this year),
+  newest or oldest first, emoji strengths, and "only with a caption, a
+  title or a name" for photos, videos, audio and places. The type's page
+  shows what matches, says "Showing 3 of 12" and has Clear filter. Filters
+  last until the app closes. The "Newest first" pill, which did nothing,
+  is gone.
+- **Audio**: when a recording ends the waveform now fills all the way. The
+  saved length could run a little longer than the audio itself; the player
+  now uses the length it finds in the file.
+- **Quick emoji** on Home log at full strength (5).
+- **Fewer notes**: the "stored on this device" and "search runs on this
+  device" notes are gone from Home, Search, Lock, Photo, Location and New
+  Location. About and Privacy still explain how the app treats your data.
+  The photo's quality and storage bar is gone.
+- **Your data stays in the app**: Android's automatic cloud backup and
+  phone-to-phone transfer are switched off, so photos, videos, audio and
+  the database are no longer copied to a Google account. The only way data
+  leaves is a backup or export file you make. Keyboards are asked not to
+  learn from what you type in the journal's fields.
+- **Smaller downloads**: the release now comes as one APK per CPU type
+  (arm64 for nearly every phone, about a third of the size) and a common
+  one that works everywhere.
+- **Updates**: releases are meant to install over the last one. This needs
+  a one-time release key (`tool/make_release_key.sh`); the first release
+  signed with it still needs one uninstall.
+
+## 0.4.3 — Place maps and new players
+
+- **Video player**, redesigned like the audio player: the picture with mute
+  and fullscreen on it, a strip of frames to scrub along (a preview of the
+  frame and its time follows your finger; the seek lands when you let go),
+  play with Replay at the end, 15-second skips, loop and speed (1x, 1.25x,
+  1.5x, 2x, 0.5x). Fullscreen turns the phone to suit the clip, hides its
+  controls after three seconds, jumps 10 seconds on a double-tap of either
+  half and pinches to zoom. The screen stays on while a video plays. The
+  frames are made the first time you open a video and kept in the cache,
+  never in a backup. "Stored on this device" is gone from this screen.
+
+- **Audio player**, redesigned as a small music player: artwork card, a
+  fine waveform you can drag (a time bubble follows your finger and the
+  seek happens when you let go), big play and pause, 15-second skips,
+  loop and a speed chip (1x, 1.25x, 1.5x, 2x, 0.75x). It works as one
+  slider for screen readers. There is no text under the player: nothing
+  is transcribed. A note written in an older version is kept in the
+  database and backups but no longer shown on this screen.
+
+- **Place maps**: a Location log now shows a small map of the place in
+  the app's own colours, instead of a plain tile. It is drawn from Natural
+  Earth data (public domain) bundled in the app, so nothing is fetched.
+  Three zoom steps, Region, Area and City, with the width shown. The data
+  has city outlines, main highways, rivers and state lines but no streets,
+  so City (about 60 km across) is as close as it goes.
+
+## 0.4.1 — Fixes
+
+- **Photo and video**: Save shows progress on photos too, and a screen
+  you leave while saving no longer tries to close itself afterwards.
+  Errors while saving put Save back instead of leaving it spinning.
+- **Audio**: when a recording ends the button changes from Pause back to
+  Play, and Play starts it again from the beginning.
+- The launcher icon is Moment's logo (checked at every Android density).
+
 ## 0.4.0 — Calendar, Search and Settings
 
 Every screen in the mockups now exists, in light and dark.

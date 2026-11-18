@@ -8,6 +8,9 @@ import '../design/glass_surface.dart';
 import '../design/tokens.dart';
 import '../domain/log.dart';
 import '../domain/log_type.dart';
+import '../streaks/streak_builder.dart';
+import '../streaks/streak_chip.dart';
+import '../streaks/streak_model.dart';
 import 'feed_card.dart';
 import 'feed_grouping.dart';
 import 'mood_row.dart';
@@ -18,6 +21,10 @@ final _dateFormat = DateFormat('d MMMM y');
 
 /// Home: today's date, type filter chips, the one-tap mood row, and the
 /// feed grouped by day. Matches design/mockups/Main.dc.html.
+/// A tap on the Home row logs the emoji at full strength; the New Emoji
+/// screen is where a lighter feeling is chosen.
+const quickEmojiStrength = 5;
+
 class HomeScreen extends StatefulWidget {
   const HomeScreen({
     super.key,
@@ -26,6 +33,7 @@ class HomeScreen extends StatefulWidget {
     DateTime Function()? now,
     this.onOpenLog,
     this.onSearchTap,
+    this.onOpenStreaks,
   }) : now = now ?? DateTime.now;
 
   final LogRepository repository;
@@ -35,6 +43,9 @@ class HomeScreen extends StatefulWidget {
   final DateTime Function() now;
   final ValueChanged<Log>? onOpenLog;
   final VoidCallback? onSearchTap;
+
+  /// Opens the Streaks page; the streak chip beside Search calls it.
+  final VoidCallback? onOpenStreaks;
 
   @override
   State<HomeScreen> createState() => _HomeScreenState();
@@ -59,7 +70,18 @@ class _HomeScreenState extends State<HomeScreen> {
         return ListView(
           padding: const EdgeInsets.fromLTRB(20, 60, 20, 140),
           children: [
-            _Header(now: now, tokens: tokens, onSearchTap: widget.onSearchTap),
+            StreakBuilder(
+              repository: widget.repository,
+              settings: widget.settings,
+              now: widget.now,
+              builder: (context, streak) => _Header(
+                now: now,
+                tokens: tokens,
+                onSearchTap: widget.onSearchTap,
+                streak: streak,
+                onStreakTap: widget.onOpenStreaks,
+              ),
+            ),
             const SizedBox(height: 12),
             TypeFilterChips(
               availableTypes: builtLogTypes,
@@ -74,7 +96,7 @@ class _HomeScreenState extends State<HomeScreen> {
                 onMoodTapped: (emoji) => widget.repository.createEmoji(
                   emoji: emoji,
                   label: moodLabel(emoji),
-                  strength: 3,
+                  strength: quickEmojiStrength,
                 ),
               ),
             ),
@@ -112,15 +134,6 @@ class _HomeScreenState extends State<HomeScreen> {
                     ),
                   ),
               ],
-            if (sections.isNotEmpty)
-              Padding(
-                padding: const EdgeInsets.only(top: 28),
-                child: Text(
-                  'Older logs live in Library.',
-                  textAlign: TextAlign.center,
-                  style: TextStyle(fontSize: 13, color: tokens.secondary),
-                ),
-              ),
           ],
         );
       },
@@ -129,38 +142,57 @@ class _HomeScreenState extends State<HomeScreen> {
 }
 
 class _Header extends StatelessWidget {
-  const _Header({required this.now, required this.tokens, this.onSearchTap});
+  const _Header({
+    required this.now,
+    required this.tokens,
+    this.onSearchTap,
+    this.streak,
+    this.onStreakTap,
+  });
 
   final DateTime now;
   final MomentTokens tokens;
   final VoidCallback? onSearchTap;
+  final StreakSummary? streak;
+  final VoidCallback? onStreakTap;
 
   @override
   Widget build(BuildContext context) {
     return Row(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text(
-              _weekdayFormat.format(now),
-              style: TextStyle(
-                fontFamily: 'Newsreader',
-                fontWeight: FontWeight.w500,
-                fontSize: 38,
-                letterSpacing: -0.38,
-                height: 1.15,
-                color: tokens.ink,
+        // Takes what the chip and Search leave, and the weekday shrinks to
+        // fit it rather than overflow.
+        Expanded(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              FittedBox(
+                fit: BoxFit.scaleDown,
+                alignment: Alignment.centerLeft,
+                child: Text(
+                  _weekdayFormat.format(now),
+                  style: TextStyle(
+                    fontFamily: 'Newsreader',
+                    fontWeight: FontWeight.w500,
+                    fontSize: 38,
+                    letterSpacing: -0.38,
+                    height: 1.15,
+                    color: tokens.ink,
+                  ),
+                ),
               ),
-            ),
-            Text(
-              _dateFormat.format(now),
-              style: TextStyle(fontSize: 14.5, color: tokens.secondary),
-            ),
-          ],
+              Text(
+                _dateFormat.format(now),
+                style: TextStyle(fontSize: 14.5, color: tokens.secondary),
+              ),
+            ],
+          ),
         ),
-        const Spacer(),
+        if (streak != null && streak!.current > 0) ...[
+          StreakChip(summary: streak!, onTap: onStreakTap),
+          const SizedBox(width: 8),
+        ],
         Semantics(
           button: true,
           label: 'Search',

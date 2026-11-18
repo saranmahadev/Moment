@@ -14,6 +14,8 @@ void main() {
     // A video plays on black, and its scrubber thumb is white, whatever
     // the theme.
     'lib/video/video_detail_screen.dart',
+    // Controls over footage: a dark film and white marks in both themes.
+    'lib/video/overlay_colours.dart',
   };
 
   test('screens take their colours from the tokens', () {

@@ -21,6 +21,9 @@ import '../emoji/create_emoji_screen.dart';
 import '../home/add_sheet.dart';
 import '../home/home_screen.dart';
 import '../library/library_screen.dart';
+import '../library/log_filter.dart';
+import '../library/log_filter_sheet.dart';
+import '../location/map/map_source.dart';
 import '../location/create_location_screen.dart';
 import '../location/location_detail_screen.dart';
 import '../location/location_provider.dart';
@@ -38,7 +41,11 @@ import '../privacy/privacy_screen.dart';
 import '../section/section_screen.dart';
 import '../settings/settings_screen.dart';
 import '../text/create_text_screen.dart';
+import '../streaks/streak_settings_screen.dart';
+import '../streaks/streaks_screen.dart';
 import '../trash/trash_screen.dart';
+import '../video/player_screen_control.dart';
+import '../video/video_frames.dart';
 import '../video/create_video_screen.dart';
 import '../video/video_detail_screen.dart';
 import '../video/video_picker.dart';
@@ -65,6 +72,9 @@ class AppShell extends StatefulWidget {
     required this.createVideoPlayback,
     required this.locationProvider,
     required this.placeNames,
+    this.mapSource,
+    this.videoFrames,
+    this.playerScreen,
     required this.settings,
     required this.reminders,
     required this.backups,
@@ -87,6 +97,14 @@ class AppShell extends StatefulWidget {
   /// Reaches the place-name service. Only handed to a screen while
   /// [AppSettings.lookUpPlaceNames] is on.
   final PlaceNameLookup placeNames;
+
+  /// The bundled map behind Location previews; null shows the plain tile.
+  final MapSource? mapSource;
+
+  /// Frames for the video scrubber, and fullscreen control; without them the
+  /// video player has a plain strip and no fullscreen effects.
+  final VideoFrameStrip? videoFrames;
+  final PlayerScreenControl? playerScreen;
   final AppSettings settings;
   final ReminderScheduler reminders;
   final BackupCoordinator backups;
@@ -100,6 +118,24 @@ class AppShell extends StatefulWidget {
 
 class _AppShellState extends State<AppShell> {
   _Tab _tab = _Tab.home;
+
+  /// What the Library filters currently show, per type. In memory only.
+  final _filters = LibraryFilters();
+
+  @override
+  void dispose() {
+    _filters.dispose();
+    super.dispose();
+  }
+
+  Future<void> _openFilter(LogType type) async {
+    final chosen = await showLogFilterSheet(
+      context,
+      type: type,
+      initial: _filters.of(type),
+    );
+    if (chosen != null) _filters.set(type, chosen);
+  }
 
   Future<void> _openAddSheet() async {
     final tokens =
@@ -189,6 +225,7 @@ class _AppShellState extends State<AppShell> {
             builder: (_) => CreateLocationScreen(
               repository: widget.repository,
               provider: widget.locationProvider,
+              mapSource: widget.mapSource,
               placeNames: widget.settings.lookUpPlaceNames
                   ? widget.placeNames
                   : null,
@@ -237,6 +274,8 @@ class _AppShellState extends State<AppShell> {
         picker: widget.videoPicker,
         probe: widget.videoProbe,
         playback: widget.createVideoPlayback(),
+        frames: widget.videoFrames,
+        screen: widget.playerScreen,
         now: widget.now,
         onBack: () => Navigator.of(context).pop(),
       ),
@@ -244,6 +283,7 @@ class _AppShellState extends State<AppShell> {
         log: log,
         repository: widget.repository,
         provider: widget.locationProvider,
+        mapSource: widget.mapSource,
         now: widget.now,
         onBack: () => Navigator.of(context).pop(),
       ),
@@ -257,6 +297,31 @@ class _AppShellState extends State<AppShell> {
         builder: (_) => TrashScreen(
           repository: widget.repository,
           now: widget.now,
+          onBack: () => Navigator.of(context).pop(),
+        ),
+      ),
+    );
+  }
+
+  void _openStreaks() {
+    Navigator.of(context).push(
+      MaterialPageRoute<void>(
+        builder: (_) => StreaksScreen(
+          repository: widget.repository,
+          settings: widget.settings,
+          now: widget.now,
+          onBack: () => Navigator.of(context).pop(),
+          onOpenSettings: _openStreakSettings,
+        ),
+      ),
+    );
+  }
+
+  void _openStreakSettings() {
+    Navigator.of(context).push(
+      MaterialPageRoute<void>(
+        builder: (_) => StreakSettingsScreen(
+          settings: widget.settings,
           onBack: () => Navigator.of(context).pop(),
         ),
       ),
@@ -296,30 +361,49 @@ class _AppShellState extends State<AppShell> {
     void back() => Navigator.of(context).pop();
     Navigator.of(context).push(
       MaterialPageRoute<void>(
-        builder: (_) => switch (type) {
-          LogType.photo => PhotoSectionScreen(
-            repository: widget.repository,
-            onBack: back,
-            onOpenLog: _openDetail,
-          ),
-          LogType.video => VideoSectionScreen(
-            repository: widget.repository,
-            onBack: back,
-            onOpenLog: _openDetail,
-          ),
-          LogType.location => LocationSectionScreen(
-            repository: widget.repository,
-            onBack: back,
-            onOpenLog: _openDetail,
-          ),
-          _ => SectionScreen(
-            type: type,
-            repository: widget.repository,
-            onBack: back,
-            onSearch: _openSearch,
-            onOpenLog: _openDetail,
-          ),
-        },
+        builder: (_) => ListenableBuilder(
+          listenable: _filters,
+          builder: (context, _) {
+            final filter = _filters.of(type);
+            void clear() => _filters.clear(type);
+            return switch (type) {
+              LogType.photo => PhotoSectionScreen(
+                repository: widget.repository,
+                onBack: back,
+                onOpenLog: _openDetail,
+                filter: filter,
+                onClearFilter: clear,
+                now: widget.now,
+              ),
+              LogType.video => VideoSectionScreen(
+                repository: widget.repository,
+                onBack: back,
+                onOpenLog: _openDetail,
+                filter: filter,
+                onClearFilter: clear,
+                now: widget.now,
+              ),
+              LogType.location => LocationSectionScreen(
+                repository: widget.repository,
+                onBack: back,
+                onOpenLog: _openDetail,
+                filter: filter,
+                onClearFilter: clear,
+                now: widget.now,
+              ),
+              _ => SectionScreen(
+                type: type,
+                repository: widget.repository,
+                onBack: back,
+                onSearch: _openSearch,
+                onOpenLog: _openDetail,
+                filter: filter,
+                onClearFilter: clear,
+                now: widget.now,
+              ),
+            };
+          },
+        ),
       ),
     );
   }
@@ -343,17 +427,25 @@ class _AppShellState extends State<AppShell> {
                 now: widget.now,
                 onOpenLog: _openDetail,
                 onSearchTap: _openSearch,
+                onOpenStreaks: _openStreaks,
               ),
-              LibraryScreen(
-                repository: widget.repository,
-                now: widget.now,
-                onOpenType: _openSection,
-                onOpenTrash: _openTrash,
+              ListenableBuilder(
+                listenable: _filters,
+                builder: (context, _) => LibraryScreen(
+                  repository: widget.repository,
+                  now: widget.now,
+                  onOpenType: _openSection,
+                  onOpenTrash: _openTrash,
+                  filters: _filters.all,
+                  onFilter: _openFilter,
+                ),
               ),
               CalendarScreen(
                 repository: widget.repository,
                 now: widget.now,
                 onOpenLog: _openDetail,
+                settings: widget.settings,
+                onOpenStreaks: _openStreaks,
               ),
               SettingsScreen(
                 repository: widget.repository,

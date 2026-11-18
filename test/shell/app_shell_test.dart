@@ -126,6 +126,12 @@ class _FakeAudioPlaybackController implements AudioPlaybackController {
   Future<void> setSpeed(double speed) async {}
 
   @override
+  Future<void> setLoop(bool on) async {}
+
+  @override
+  Stream<Duration?> get durationStream => const Stream.empty();
+
+  @override
   Future<void> dispose() async {
     await _position.close();
     await _playing.close();
@@ -1007,7 +1013,7 @@ void main() {
     await tester.pumpAndSettle();
 
     expect(playback.loadedPath, p.join(tempDir.path, 'a.mp4'));
-    expect(find.text('Stored on this device'), findsOneWidget);
+    expect(find.bySemanticsLabel('Fullscreen'), findsOneWidget);
     expect(find.bySemanticsLabel('Forward 15 seconds'), findsOneWidget);
 
     await tester.pumpWidget(const SizedBox());

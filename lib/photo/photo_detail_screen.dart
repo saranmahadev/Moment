@@ -146,46 +146,6 @@ class PhotoDetailScreen extends StatelessWidget {
                       ),
                     ),
                   ],
-                  const SizedBox(height: 10),
-                  GlassSurface(
-                    variant: GlassVariant.card,
-                    child: Padding(
-                      padding: const EdgeInsets.all(14),
-                      child: Row(
-                        children: [
-                          Icon(
-                            Icons.image_outlined,
-                            size: 16,
-                            color: tokens.ink,
-                          ),
-                          const SizedBox(width: 8),
-                          Flexible(
-                            child: Text(
-                              'Original quality',
-                              overflow: TextOverflow.ellipsis,
-                              style: TextStyle(
-                                fontSize: 13.5,
-                                color: tokens.ink,
-                              ),
-                            ),
-                          ),
-                          const Spacer(),
-                          Icon(Icons.lock_outline, size: 16, color: tokens.ink),
-                          const SizedBox(width: 8),
-                          Flexible(
-                            child: Text(
-                              'Stored on this device',
-                              overflow: TextOverflow.ellipsis,
-                              style: TextStyle(
-                                fontSize: 13.5,
-                                color: tokens.ink,
-                              ),
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
-                  ),
                 ],
               ),
             ),

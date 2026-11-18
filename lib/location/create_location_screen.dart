@@ -12,6 +12,8 @@ import 'coordinates.dart';
 import 'location_provider.dart';
 import 'location_widgets.dart';
 import 'place_name_lookup.dart';
+import 'map/map_source.dart';
+import 'place_map.dart';
 import 'stylised_map.dart';
 
 final _whenFormat = DateFormat('EEE d MMM · HH:mm');
@@ -30,6 +32,7 @@ class CreateLocationScreen extends StatefulWidget {
     required this.repository,
     required this.provider,
     this.placeNames,
+    this.mapSource,
     DateTime Function()? now,
     required this.onSaved,
     required this.onClose,
@@ -38,6 +41,9 @@ class CreateLocationScreen extends StatefulWidget {
   final LogRepository repository;
   final LocationProvider provider;
   final PlaceNameLookup? placeNames;
+
+  /// The bundled map to show the spot on. Without one, the plain tile.
+  final MapSource? mapSource;
   final DateTime Function() now;
   final ValueChanged<String> onSaved;
   final VoidCallback onClose;
@@ -127,14 +133,16 @@ class _CreateLocationScreenState extends State<CreateLocationScreen> {
     });
   }
 
-  String get _nameFootnote => switch (_lookup) {
+  /// A line under the name field, only while place names are on or being
+  /// looked up; with them off there is nothing to say.
+  String? get _nameFootnote => switch (_lookup) {
     _Lookup.asking => 'Looking up a name for this place…',
     _Lookup.suggested =>
       'Name suggested by OpenStreetMap. Change it if you like.',
     _Lookup.nothingFound => 'No name was found online. Type one if you like.',
     _Lookup.none =>
       widget.placeNames == null
-          ? 'Place names are typed by you. Nothing is looked up online.'
+          ? null
           : 'Place names are on. This name is yours.',
   };
 
@@ -177,11 +185,18 @@ class _CreateLocationScreenState extends State<CreateLocationScreen> {
       body: Stack(
         children: [
           Positioned.fill(
-            child: StylisedMap(
-              pins: _pin == null ? const [] : const [Offset(0.5, 0.36)],
-              showHalo: _pin != null && !_typed,
-              pinSize: 48,
-            ),
+            child: _pin != null && widget.mapSource != null
+                ? PlaceMap(
+                    source: widget.mapSource!,
+                    latitude: _pin!.latitude,
+                    longitude: _pin!.longitude,
+                    pinAt: const Offset(0.5, 0.36),
+                  )
+                : StylisedMap(
+                    pins: _pin == null ? const [] : const [Offset(0.5, 0.36)],
+                    showHalo: _pin != null && !_typed,
+                    pinSize: 48,
+                  ),
           ),
           SafeArea(
             child: Padding(
@@ -316,6 +331,7 @@ class _CreateLocationScreenState extends State<CreateLocationScreen> {
             child: Padding(
               padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
               child: TextField(
+                enableIMEPersonalizedLearning: false,
                 key: const ValueKey('place-name'),
                 controller: _nameController,
                 style: TextStyle(fontSize: 15, color: tokens.ink),
@@ -332,11 +348,13 @@ class _CreateLocationScreenState extends State<CreateLocationScreen> {
               ),
             ),
           ),
-          const SizedBox(height: 10),
-          Text(
-            _nameFootnote,
-            style: TextStyle(fontSize: 13.5, color: tokens.secondary),
-          ),
+          if (_nameFootnote != null) ...[
+            const SizedBox(height: 10),
+            Text(
+              _nameFootnote!,
+              style: TextStyle(fontSize: 13.5, color: tokens.secondary),
+            ),
+          ],
           const SizedBox(height: 14),
           Row(
             children: [

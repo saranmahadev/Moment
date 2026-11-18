@@ -35,15 +35,15 @@ Before a chunk merges into `main`:
 - Each phase ends with a tag `v0.1.0`, `v0.2.0`, `v0.3.0`, `v0.4.0`, and `v1.0.0` after Phase 5.
 - A tag is created only after CI is green on the release commit and the phase exit gate in the roadmap is met.
 - `CHANGELOG.md` gets one entry per release.
-- Tags are made by the **Release** workflow (`.github/workflows/release.yml`), never by hand: Actions → Release → Run workflow, with the version (and the commit, when it is not the head of `main`). In one run it checks the version against `pubspec.yaml` and the changelog, analyses, tests, builds the release APK, checks the permissions of the release manifest, creates the annotated tag and publishes a GitHub Release with the APK attached. If any step fails, nothing is tagged.
+- Tags are made by the **Release** workflow (`.github/workflows/release.yml`), never by hand: Actions → Release → Run workflow, with the version (and the commit, when it is not the head of `main`). In one run it checks the version against `pubspec.yaml` and the changelog, analyses, tests, builds the release APKs (one per CPU type, and a common one that works on every phone but is about three times larger), checks the permissions of the release manifest, creates the annotated tag and publishes a GitHub Release with all of them attached: `moment-X.Y.Z-arm64-v8a.apk` (nearly every phone), `-armeabi-v7a` (old 32-bit phones), `-x86_64` (emulators) and `moment-X.Y.Z.apk` (common). If any step fails, nothing is tagged.
 - Releasing an older commit (not the head of `main`): GitHub does not let a workflow tag a commit whose workflow files differ from `main`'s. Push that tag by hand (`git tag -a v0.1.0 <commit> -m "Moment 0.1.0" && git push origin v0.1.0`), then run the Release workflow with the same version and commit: it sees the tag, and builds and publishes the release for it.
-- `release-check.yml` builds the same APK without releasing it; it runs automatically when dependencies or the `android/` project change.
+- `release-check.yml` builds the same APKs without releasing them; it runs automatically when dependencies or the `android/` project change.
 
 ### Signing the APK
 
 Android only installs an update over an app signed with the same key. Until a release key is configured, the Release workflow signs with a throwaway debug key that is different on every run, so a new release will not install over the old one (back up in the app, uninstall, install, restore).
 
-To fix that once, create a key and give it to the repository as secrets (Settings → Secrets and variables → Actions). The key itself never goes in git; keep a copy somewhere safe, because losing it means no more in-place updates.
+To fix that once, run `bash tool/make_release_key.sh` on your own computer. It makes the key (outside the repository), prints the four secret values, and prints `gh secret set` commands if you use the GitHub CLI. The key itself never goes in git; keep a copy of `moment-release.jks` and its password somewhere safe, because losing either means no more in-place updates. The commands it wraps, if you prefer to do it by hand:
 
 ```
 keytool -genkeypair -v -keystore moment-release.jks -alias moment \
@@ -57,6 +57,8 @@ base64 -w0 moment-release.jks   # macOS: base64 -i moment-release.jks
 | `ANDROID_KEYSTORE_PASSWORD` | the keystore password you chose |
 | `ANDROID_KEY_ALIAS` | `moment` |
 | `ANDROID_KEY_PASSWORD` | the key password (leave unset if it is the same as the keystore's) |
+
+An update also needs a higher build number than the installed app: the number after the `+` in `pubspec.yaml` (`0.4.4+7`) goes up by one at every release, or Android refuses the install. The first release signed with the key still needs one uninstall (back up in the app first), because the phone has the old throwaway-key app; every release after that installs over the last.
 
 ## Never in git
 

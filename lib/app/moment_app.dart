@@ -13,12 +13,15 @@ import '../backup/last_backup_store.dart';
 import '../export/export_coordinator.dart';
 import '../export/export_service.dart';
 import '../storage/storage_service.dart';
+import '../video/player_screen_control.dart';
+import '../video/video_frames.dart';
 import '../video/video_picker.dart';
 import '../video/video_playback_controller.dart';
 import '../video/video_probe.dart';
 import '../data/log_repository.dart';
 import '../data/media_store.dart';
 import '../data/secure_database.dart';
+import '../location/map/map_source.dart';
 import '../location/location_provider.dart';
 import '../location/nominatim_place_names.dart';
 import '../settings/app_settings.dart';
@@ -43,6 +46,7 @@ class _Resources {
     required this.storage,
     required this.settings,
     required this.hasPin,
+    required this.videoFrames,
   });
 
   final LogRepository repository;
@@ -53,6 +57,7 @@ class _Resources {
   final StorageService storage;
   final AppSettings settings;
   final bool hasPin;
+  final VideoFrameStrip videoFrames;
 }
 
 Future<_Resources> _bootstrap() async {
@@ -73,6 +78,7 @@ Future<_Resources> _bootstrap() async {
     FileSettingsStore(File(p.join(supportDir.path, 'settings.json'))),
   );
   final tempDir = await getTemporaryDirectory();
+  final cacheDir = await getApplicationCacheDirectory();
   final repository = LogRepository(db);
   final gateway = DeviceBackupFileGateway();
   return _Resources(
@@ -98,6 +104,11 @@ Future<_Resources> _bootstrap() async {
     storage: StorageService(repository: repository),
     settings: settings,
     hasPin: hasPin,
+    // The scrubber's frames are a cache, never part of a backup.
+    videoFrames: VideoFrameStrip(
+      probe: DeviceVideoProbe(),
+      cacheRoot: cacheDir,
+    ),
   );
 }
 
@@ -117,6 +128,8 @@ class _MomentAppState extends State<MomentApp> with WidgetsBindingObserver {
   /// spacing and its memory of spots already asked about hold. It is only
   /// handed to a screen while "Look up place names" is on.
   final _placeNames = NominatimPlaceNameLookup();
+  final _mapSource = AssetMapSource();
+  final _playerScreen = DevicePlayerScreenControl();
 
   final _reminders = DeviceReminderScheduler();
   AppLockController? _lockController;
@@ -179,9 +192,12 @@ class _MomentAppState extends State<MomentApp> with WidgetsBindingObserver {
               createAudioPlayback: DeviceAudioPlaybackController.new,
               videoPicker: DeviceVideoPicker(),
               videoProbe: DeviceVideoProbe(),
+              videoFrames: resources.videoFrames,
+              playerScreen: _playerScreen,
               createVideoPlayback: DeviceVideoPlaybackController.new,
               locationProvider: DeviceLocationProvider(),
               placeNames: _placeNames,
+              mapSource: _mapSource,
               settings: resources.settings,
               reminders: _reminders,
               backups: resources.backups,

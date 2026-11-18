@@ -9,8 +9,10 @@ import '../design/type_icons.dart';
 import '../domain/log.dart';
 import '../domain/log_type.dart';
 import '../home/feed_card.dart';
+import '../library/filter_strip.dart';
+import '../library/log_filter.dart';
 
-/// One type's full list, newest first: Library opens this for whichever
+/// One type's full list, newest first unless a filter says otherwise: Library opens this for whichever
 /// type the user taps. Matches design/mockups/png/11-Section-Text.png.
 class SectionScreen extends StatelessWidget {
   const SectionScreen({
@@ -20,13 +22,21 @@ class SectionScreen extends StatelessWidget {
     this.onBack,
     this.onSearch,
     this.onOpenLog,
-  });
+    this.filter = const LogFilter(),
+    this.onClearFilter,
+    DateTime Function()? now,
+  }) : now = now ?? DateTime.now;
 
   final LogType type;
   final LogRepository repository;
   final VoidCallback? onBack;
   final VoidCallback? onSearch;
   final ValueChanged<Log>? onOpenLog;
+
+  /// The Library filter for this type, and how to clear it.
+  final LogFilter filter;
+  final VoidCallback? onClearFilter;
+  final DateTime Function() now;
 
   @override
   Widget build(BuildContext context) {
@@ -44,12 +54,14 @@ class SectionScreen extends StatelessWidget {
               stream: repository.watchFeed(types: {type}),
               builder: (context, snapshot) {
                 final logs = snapshot.data ?? const [];
+                final shown = filter.apply(logs, today: filterToday(now()));
                 return ListView(
                   padding: const EdgeInsets.fromLTRB(20, 16, 20, 20),
                   children: [
                     Row(
                       children: [
                         Semantics(
+                          container: true,
                           button: true,
                           label: 'Back to Library',
                           onTap: onBack,
@@ -115,36 +127,14 @@ class SectionScreen extends StatelessWidget {
                       ],
                     ),
                     const SizedBox(height: 16),
-                    SizedBox(
-                      height: 44,
-                      child: GlassSurface(
-                        variant: GlassVariant.card,
-                        borderRadius: 22,
-                        child: Padding(
-                          padding: const EdgeInsets.symmetric(horizontal: 14),
-                          child: Row(
-                            mainAxisSize: MainAxisSize.min,
-                            children: [
-                              Text(
-                                'Newest first',
-                                style: TextStyle(
-                                  fontSize: 14.5,
-                                  fontWeight: FontWeight.w500,
-                                  color: tokens.ink,
-                                ),
-                              ),
-                              const SizedBox(width: 6),
-                              Icon(
-                                Icons.keyboard_arrow_down,
-                                size: 18,
-                                color: tokens.ink,
-                              ),
-                            ],
-                          ),
-                        ),
-                      ),
+                    ...filterNotice(
+                      filter: filter,
+                      total: logs.length,
+                      shown: shown.length,
+                      tokens: tokens,
+                      onClear: onClearFilter,
                     ),
-                    for (final log in logs)
+                    for (final log in shown)
                       Padding(
                         padding: const EdgeInsets.only(top: 14),
                         child: FeedCard(

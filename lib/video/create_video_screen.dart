@@ -85,6 +85,7 @@ class _CreateVideoScreenState extends State<CreateVideoScreen> {
         editing.id,
         caption: _captionOrNull(),
       );
+      if (!mounted) return;
       widget.onSaved(editing.id);
       return;
     }
@@ -105,13 +106,20 @@ class _CreateVideoScreenState extends State<CreateVideoScreen> {
       });
       return;
     }
-    final id = await widget.repository.createVideo(
-      path: imported.path,
-      posterPath: imported.posterPath,
-      duration: imported.duration,
-      caption: _captionOrNull(),
-      createdAt: widget.now(),
-    );
+    final String id;
+    try {
+      id = await widget.repository.createVideo(
+        path: imported.path,
+        posterPath: imported.posterPath,
+        duration: imported.duration,
+        caption: _captionOrNull(),
+        createdAt: widget.now(),
+      );
+    } catch (_) {
+      if (mounted) setState(() => _saving = false);
+      return;
+    }
+    if (!mounted) return;
     widget.onSaved(id);
   }
 
@@ -430,6 +438,7 @@ class _Preview extends StatelessWidget {
           child: Padding(
             padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
             child: TextField(
+              enableIMEPersonalizedLearning: false,
               controller: captionController,
               style: TextStyle(fontSize: 15, color: tokens.ink),
               decoration: InputDecoration(

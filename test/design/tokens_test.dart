@@ -133,4 +133,33 @@ void main() {
       expect(MomentTokens.dark.solidSurface.a, 1);
     });
   });
+
+  group('streak colours', () {
+    double contrast(Color a, Color b) {
+      final hi = a.computeLuminance() > b.computeLuminance() ? a : b;
+      final lo = identical(hi, a) ? b : a;
+      return (hi.computeLuminance() + 0.05) / (lo.computeLuminance() + 0.05);
+    }
+
+    for (final (name, tokens) in [
+      ('light', MomentTokens.standard),
+      ('dark', MomentTokens.dark),
+    ]) {
+      test('$name ramp has four steps, each stronger than the last', () {
+        final ramp = tokens.streakRamp;
+        expect(ramp, hasLength(4));
+        for (var i = 1; i < ramp.length; i++) {
+          expect(
+            contrast(ramp[i], tokens.ground),
+            greaterThan(contrast(ramp[i - 1], tokens.ground)),
+          );
+        }
+      });
+
+      test('$name accent and strongest step show against the ground', () {
+        expect(contrast(tokens.streakAccent, tokens.ground), greaterThan(3));
+        expect(contrast(tokens.streakRamp.last, tokens.ground), greaterThan(3));
+      });
+    }
+  });
 }

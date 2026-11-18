@@ -3,6 +3,8 @@ import 'package:intl/intl.dart';
 
 import '../data/log_repository.dart';
 import '../design/glass_surface.dart';
+import '../library/filter_strip.dart';
+import '../library/log_filter.dart';
 import '../design/orb_field.dart';
 import '../design/tokens.dart';
 import '../design/type_icons.dart';
@@ -23,11 +25,19 @@ class LocationSectionScreen extends StatelessWidget {
     required this.repository,
     this.onBack,
     this.onOpenLog,
-  });
+    this.filter = const LogFilter(),
+    this.onClearFilter,
+    DateTime Function()? now,
+  }) : now = now ?? DateTime.now;
 
   final LogRepository repository;
   final VoidCallback? onBack;
   final ValueChanged<Log>? onOpenLog;
+
+  /// The Library filter for this type, and how to clear it.
+  final LogFilter filter;
+  final VoidCallback? onClearFilter;
+  final DateTime Function() now;
 
   @override
   Widget build(BuildContext context) {
@@ -45,6 +55,9 @@ class LocationSectionScreen extends StatelessWidget {
               stream: repository.watchFeed(types: {LogType.location}),
               builder: (context, snapshot) {
                 final logs = (snapshot.data ?? const <Log>[])
+                    .cast<LocationLog>();
+                final shown = filter
+                    .apply(logs, today: filterToday(now()))
                     .cast<LocationLog>();
                 return ListView(
                   padding: const EdgeInsets.fromLTRB(20, 16, 20, 20),
@@ -117,20 +130,27 @@ class LocationSectionScreen extends StatelessWidget {
                       ],
                     ),
                     const SizedBox(height: 16),
+                    ...filterNotice(
+                      filter: filter,
+                      total: logs.length,
+                      shown: shown.length,
+                      tokens: tokens,
+                      onClear: onClearFilter,
+                    ),
                     ClipRRect(
                       borderRadius: BorderRadius.circular(28),
                       child: SizedBox(
                         height: 210,
                         child: StylisedMap(
                           pins: projectPins([
-                            for (final log in logs)
+                            for (final log in shown)
                               (log.latitude, log.longitude),
                           ]),
                           pinSize: 30,
                         ),
                       ),
                     ),
-                    for (final log in logs)
+                    for (final log in shown)
                       Padding(
                         padding: const EdgeInsets.only(top: 12),
                         child: _LocationRow(

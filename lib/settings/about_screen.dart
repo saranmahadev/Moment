@@ -12,7 +12,8 @@ const _points = [
     'Everything stays on this device',
     'Your logs, photos, recordings, videos and places are kept in '
         'Moment’s own private storage. There is no cloud copy and no '
-        'server that could hold one.',
+        'server that could hold one. Place maps are drawn from Natural '
+        'Earth data inside the app, so nothing is fetched to show them.',
   ),
   (
     Icons.lock_outline,

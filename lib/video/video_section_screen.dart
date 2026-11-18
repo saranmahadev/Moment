@@ -3,6 +3,8 @@ import 'package:intl/intl.dart';
 
 import '../data/log_repository.dart';
 import '../design/glass_surface.dart';
+import '../library/filter_strip.dart';
+import '../library/log_filter.dart';
 import '../design/orb_field.dart';
 import '../design/tokens.dart';
 import '../design/type_icons.dart';
@@ -21,11 +23,19 @@ class VideoSectionScreen extends StatelessWidget {
     required this.repository,
     this.onBack,
     this.onOpenLog,
-  });
+    this.filter = const LogFilter(),
+    this.onClearFilter,
+    DateTime Function()? now,
+  }) : now = now ?? DateTime.now;
 
   final LogRepository repository;
   final VoidCallback? onBack;
   final ValueChanged<Log>? onOpenLog;
+
+  /// The Library filter for this type, and how to clear it.
+  final LogFilter filter;
+  final VoidCallback? onClearFilter;
+  final DateTime Function() now;
 
   @override
   Widget build(BuildContext context) {
@@ -43,6 +53,7 @@ class VideoSectionScreen extends StatelessWidget {
               stream: repository.watchFeed(types: {LogType.video}),
               builder: (context, snapshot) {
                 final logs = snapshot.data ?? const [];
+                final shown = filter.apply(logs, today: filterToday(now()));
                 return ListView(
                   padding: const EdgeInsets.fromLTRB(20, 16, 20, 20),
                   children: [
@@ -114,6 +125,13 @@ class VideoSectionScreen extends StatelessWidget {
                       ],
                     ),
                     const SizedBox(height: 16),
+                    ...filterNotice(
+                      filter: filter,
+                      total: logs.length,
+                      shown: shown.length,
+                      tokens: tokens,
+                      onClear: onClearFilter,
+                    ),
                     GridView.builder(
                       shrinkWrap: true,
                       physics: const NeverScrollableScrollPhysics(),
@@ -124,9 +142,9 @@ class VideoSectionScreen extends StatelessWidget {
                             crossAxisSpacing: 12,
                             childAspectRatio: 1.25,
                           ),
-                      itemCount: logs.length,
+                      itemCount: shown.length,
                       itemBuilder: (context, index) {
-                        final log = logs[index] as VideoLog;
+                        final log = shown[index] as VideoLog;
                         return _VideoTile(
                           key: ValueKey('video-tile-${log.id}'),
                           log: log,

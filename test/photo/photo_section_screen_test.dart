@@ -7,6 +7,7 @@ import 'package:moment/data/database.dart';
 import 'package:moment/data/log_repository.dart';
 import 'package:moment/design/theme.dart';
 import 'package:moment/domain/log.dart';
+import 'package:moment/library/log_filter.dart';
 import 'package:moment/photo/photo_section_screen.dart';
 import 'package:path/path.dart' as p;
 
@@ -33,6 +34,7 @@ void main() {
     LogRepository repo, {
     VoidCallback? onBack,
     ValueChanged<Log>? onOpenLog,
+    LogFilter filter = const LogFilter(),
   }) async {
     await tester.binding.setSurfaceSize(const Size(390, 844));
     addTearDown(() => tester.binding.setSurfaceSize(null));
@@ -43,6 +45,7 @@ void main() {
           repository: repo,
           onBack: onBack,
           onOpenLog: onOpenLog,
+          filter: filter,
         ),
       ),
     );
@@ -65,6 +68,31 @@ void main() {
 
     expect(find.text('Photo'), findsWidgets);
     expect(find.text('2 logs'), findsOneWidget);
+
+    await tester.pumpWidget(const SizedBox());
+    await tester.pumpAndSettle();
+    await db.close();
+  });
+
+  testWidgets('a filter keeps only the photos with a caption', (tester) async {
+    final db = AppDatabase(NativeDatabase.memory());
+    final repo = LogRepository(db, clock: () => now);
+    final withCaption = await repo.createPhoto(
+      path: fakeThumb('a.jpg').path,
+      thumbnailPath: fakeThumb('a-thumb.jpg').path,
+      caption: 'Lake',
+    );
+    await repo.createPhoto(
+      path: fakeThumb('b.jpg').path,
+      thumbnailPath: fakeThumb('b-thumb.jpg').path,
+    );
+
+    await pump(tester, repo, filter: const LogFilter(onlyNamed: true));
+    await tester.pump();
+
+    expect(find.byKey(ValueKey('photo-tile-$withCaption')), findsOneWidget);
+    expect(find.byType(GridView), findsOneWidget);
+    expect(find.text('Showing 1 of 2'), findsOneWidget);
 
     await tester.pumpWidget(const SizedBox());
     await tester.pumpAndSettle();

@@ -223,4 +223,53 @@ void main() {
       expect(third.recentSearches, isEmpty);
     });
   });
+
+  group('streaks', () {
+    test('streaks are shown by default, with one grace day a week', () async {
+      final settings = await AppSettings.load(MemorySettingsStore());
+
+      expect(settings.showStreaks, isTrue);
+      expect(settings.graceDays, 1);
+    });
+
+    test('both choices are kept across a restart', () async {
+      final first = await AppSettings.load(FileSettingsStore(file));
+      await first.setShowStreaks(false);
+      await first.setGraceDays(3);
+
+      final second = await AppSettings.load(FileSettingsStore(file));
+
+      expect(second.showStreaks, isFalse);
+      expect(second.graceDays, 3);
+    });
+
+    test('grace days are 0 to 3 and nothing else', () async {
+      final settings = await AppSettings.load(MemorySettingsStore());
+
+      await settings.setGraceDays(0);
+      expect(settings.graceDays, 0);
+      expect(() => settings.setGraceDays(4), throwsArgumentError);
+      expect(() => settings.setGraceDays(-1), throwsArgumentError);
+    });
+
+    test('a damaged grace value reads as the default', () async {
+      final settings = await AppSettings.load(
+        MemorySettingsStore({'graceDays': 9, 'showStreaks': 'yes'}),
+      );
+
+      expect(settings.graceDays, 1);
+      expect(settings.showStreaks, isTrue);
+    });
+
+    test('a change tells listeners at once', () async {
+      final settings = await AppSettings.load(MemorySettingsStore());
+      var notified = 0;
+      settings.addListener(() => notified++);
+
+      final saving = settings.setGraceDays(2);
+
+      expect(notified, 1);
+      await saving;
+    });
+  });
 }
