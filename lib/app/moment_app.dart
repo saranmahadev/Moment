@@ -40,7 +40,10 @@ import '../widgets/widget_publisher.dart';
 import '../data/database.dart';
 import '../data/journal_opener.dart';
 import '../data/key_store.dart';
+import 'app_info.dart';
 import 'journal_problem_screen.dart';
+import '../diagnostics/diagnostics_log.dart';
+import '../diagnostics/diagnostics_screen.dart';
 import 'launch_tidy.dart';
 
 class _Resources {
@@ -159,6 +162,9 @@ class _MomentAppState extends State<MomentApp> with WidgetsBindingObserver {
   /// a restore so the old file is only moved aside once.
   AppDatabase? _freshDb;
 
+  /// Launch failed in a way no screen can fix.
+  bool _failed = false;
+
   /// One lookup for the life of the app, so its one-request-a-second
   /// spacing and its memory of spots already asked about hold. It is only
   /// handed to a screen while "Look up place names" is on.
@@ -182,15 +188,24 @@ class _MomentAppState extends State<MomentApp> with WidgetsBindingObserver {
     super.initState();
     WidgetsBinding.instance.addObserver(this);
     WidgetLinkChannel(_deepLinks).start();
-    _start().then((start) {
-      if (!mounted) return;
-      switch (start) {
-        case _Ready(:final resources):
-          _onReady(resources);
-        case _Blocked():
-          setState(() => _blocked = start);
-      }
-    });
+    final log = DiagnosticsLog.shared;
+    log.event('launch', appVersion).ignore();
+    _start().then(
+      (start) {
+        if (!mounted) return;
+        switch (start) {
+          case _Ready(:final resources):
+            _onReady(resources);
+          case _Blocked(:final problem):
+            log.event('journal.blocked', problem.name).ignore();
+            setState(() => _blocked = start);
+        }
+      },
+      onError: (Object error, StackTrace stack) {
+        log.error(error, stack).ignore();
+        if (mounted) setState(() => _failed = true);
+      },
+    );
   }
 
   void _onReady(_Resources resources) {
@@ -249,6 +264,15 @@ class _MomentAppState extends State<MomentApp> with WidgetsBindingObserver {
       settings: _settings,
       home: Builder(
         builder: (context) {
+          if (_failed) {
+            return DiagnosticsScreen(
+              log: DiagnosticsLog.shared,
+              intro:
+                  'Moment couldn’t start. Your journal has not been '
+                  'changed. Sharing what was recorded below helps find out '
+                  'why.',
+            );
+          }
           if (_blocked case final blocked?) {
             return JournalProblemScreen(
               problem: blocked.problem,
