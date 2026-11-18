@@ -541,16 +541,14 @@ class LogRepository {
       .map(
         (rows) => {
           for (final row in rows)
-            if (LogType.values.asNameMap()[row.read<String>('type')]
-                case final type?)
-              type: TypeSummary(
-                count: row.read<int>('n'),
-                newestAt: DateTime.fromMillisecondsSinceEpoch(
-                  row.read<int>('newest'),
-                  isUtc: true,
-                ),
-                newestOffsetMinutes: row.read<int>('tz_offset_minutes'),
+            ?LogType.values.asNameMap()[row.read<String>('type')]: TypeSummary(
+              count: row.read<int>('n'),
+              newestAt: DateTime.fromMillisecondsSinceEpoch(
+                row.read<int>('newest'),
+                isUtc: true,
               ),
+              newestOffsetMinutes: row.read<int>('tz_offset_minutes'),
+            ),
         },
       );
 
