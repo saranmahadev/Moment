@@ -49,6 +49,7 @@ import 'package:moment/streaks/streak_settings_screen.dart';
 import 'package:moment/streaks/streaks_screen.dart';
 import 'package:moment/text/create_text_screen.dart';
 import 'package:moment/trash/trash_screen.dart';
+import 'package:moment/widgets/widget_settings_screen.dart';
 import 'package:moment/video/create_video_screen.dart';
 import 'package:moment/video/video_detail_screen.dart';
 import 'package:moment/video/video_section_screen.dart';
@@ -56,6 +57,7 @@ import 'package:path/path.dart' as p;
 
 import '../integration/shell_harness.dart';
 import '../location/location_fakes.dart';
+import 'fake_widget_bridge.dart';
 import '../video/video_fakes.dart';
 
 class _NoBiometrics implements BiometricAuthenticator {
@@ -447,6 +449,14 @@ final screenCases = <ScreenCase>[
   ScreenCase(
     'streak_settings',
     (f) async => StreakSettingsScreen(settings: f.settings, onBack: () {}),
+  ),
+  ScreenCase(
+    'widget_settings',
+    (f) async => WidgetSettingsScreen(
+      settings: f.settings,
+      bridge: FakeWidgetBridge(),
+      onBack: () {},
+    ),
   ),
   ScreenCase(
     'settings_quick_emoji',

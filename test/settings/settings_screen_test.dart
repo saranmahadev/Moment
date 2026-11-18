@@ -454,4 +454,44 @@ void main() {
       await db.close();
     });
   });
+
+  group('widgets row', () {
+    Future<void> showRow(WidgetTester tester) async {
+      await tester.scrollUntilVisible(find.text('Widgets'), 200);
+      await tester.pump();
+    }
+
+    testWidgets('sits under Streaks and says what the widget shows', (
+      tester,
+    ) async {
+      final db = AppDatabase(NativeDatabase.memory());
+      final settings = AppSettings.inMemory();
+      await pump(tester, LogRepository(db), settings: settings);
+      await showRow(tester);
+      expect(find.text('Streak and Quick add'), findsOneWidget);
+
+      await settings.setWidgetShowsStreak(false);
+      await tester.pump();
+      expect(find.text('Quick add only'), findsOneWidget);
+
+      await tester.pumpWidget(const SizedBox());
+      await tester.pumpAndSettle();
+      await db.close();
+    });
+
+    testWidgets('opens the widget settings', (tester) async {
+      final db = AppDatabase(NativeDatabase.memory());
+      await pump(tester, LogRepository(db));
+      await showRow(tester);
+
+      await tester.tap(find.text('Widgets'));
+      await tester.pumpAndSettle();
+
+      expect(find.text('What the widget shows'.toUpperCase()), findsOneWidget);
+
+      await tester.pumpWidget(const SizedBox());
+      await tester.pumpAndSettle();
+      await db.close();
+    });
+  });
 }

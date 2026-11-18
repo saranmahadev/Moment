@@ -1,4 +1,3 @@
-import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:moment/domain/log_type.dart';
 import 'package:moment/emoji/create_emoji_screen.dart';
