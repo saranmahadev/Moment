@@ -39,26 +39,33 @@ void main() {
         final name =
             '${screen.name}_${brightness.name}${solid ? '_solid' : ''}';
         testWidgets(name, (tester) async {
-          final fixture = await pumpScreenCase(
-            tester,
-            screen,
-            brightness: brightness,
-            reduceTransparency: solid,
-            fontFamilyFallback: hasEmoji ? const ['Preview Emoji'] : null,
-          );
-
-          final boundary = tester.renderObject<RenderRepaintBoundary>(
-            find.byKey(screenBoundaryKey),
-          );
-          await tester.runAsync(() async {
-            final image = await boundary.toImage(pixelRatio: 2);
-            final bytes = await image.toByteData(
-              format: ui.ImageByteFormat.png,
+          // Soft shadows, as a phone draws them (see the goldens).
+          debugDisableShadows = false;
+          final ScreenFixture fixture;
+          try {
+            fixture = await pumpScreenCase(
+              tester,
+              screen,
+              brightness: brightness,
+              reduceTransparency: solid,
+              fontFamilyFallback: hasEmoji ? const ['Preview Emoji'] : null,
             );
-            File(
-              '${out.path}/$name.png',
-            ).writeAsBytesSync(bytes!.buffer.asUint8List());
-          });
+
+            final boundary = tester.renderObject<RenderRepaintBoundary>(
+              find.byKey(screenBoundaryKey),
+            );
+            await tester.runAsync(() async {
+              final image = await boundary.toImage(pixelRatio: 2);
+              final bytes = await image.toByteData(
+                format: ui.ImageByteFormat.png,
+              );
+              File(
+                '${out.path}/$name.png',
+              ).writeAsBytesSync(bytes!.buffer.asUint8List());
+            });
+          } finally {
+            debugDisableShadows = true;
+          }
 
           await closeScreenCase(tester, fixture);
         });
