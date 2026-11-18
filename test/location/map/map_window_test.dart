@@ -39,13 +39,16 @@ void main() {
       expect(w.project(lon + 0.1, lat, size).dx, greaterThan(170));
     });
 
-    test('a degree of longitude is drawn shorter by the cosine of latitude', () {
-      const size = Size(340, 260);
-      final w = window(MapZoom.area);
-      final east = w.project(lon + 0.1, lat, size).dx - 170;
-      final north = 130 - w.project(lon, lat + 0.1, size).dy;
-      expect(east / north, closeTo(math.cos(lat * math.pi / 180), 1e-3));
-    });
+    test(
+      'a degree of longitude is drawn shorter by the cosine of latitude',
+      () {
+        const size = Size(340, 260);
+        final w = window(MapZoom.area);
+        final east = w.project(lon + 0.1, lat, size).dx - 170;
+        final north = 130 - w.project(lon, lat + 0.1, size).dy;
+        expect(east / north, closeTo(math.cos(lat * math.pi / 180), 1e-3));
+      },
+    );
 
     test('each zoom shows about the span the proof of concept did', () {
       expect(window(MapZoom.region).kmAcross, inInclusiveRange(440, 480));
@@ -53,9 +56,12 @@ void main() {
       expect(window(MapZoom.city).kmAcross, inInclusiveRange(60, 66));
     });
 
-    test('the City zoom stays at about 50 km or more across the short side', () {
-      expect(MapZoom.city.halfLatitude * 2 * 111, greaterThan(45));
-    });
+    test(
+      'the City zoom stays at about 50 km or more across the short side',
+      () {
+        expect(MapZoom.city.halfLatitude * 2 * 111, greaterThan(45));
+      },
+    );
 
     test('names the tiles it needs: one for Bengaluru at every zoom', () {
       for (final zoom in MapZoom.values) {

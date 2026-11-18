@@ -42,7 +42,10 @@ void main() {
 
   test('every feature knows its bounds', () {
     final tile = MapTile.fromJson(jsonDecode(json) as Map<String, dynamic>);
-    expect(tile.urban.single.bounds, const Rect.fromLTRB(77.100, 12.100, 77.120, 12.120));
+    expect(
+      tile.urban.single.bounds,
+      const Rect.fromLTRB(77.100, 12.100, 77.120, 12.120),
+    );
   });
 
   group('MapScene.within', () {
@@ -63,11 +66,17 @@ void main() {
 
     test('puts the tiles together', () {
       final both = MapScene([tile, tile]);
-      expect(both.within(const Rect.fromLTRB(76, 11, 78, 13)).land, hasLength(2));
+      expect(
+        both.within(const Rect.fromLTRB(76, 11, 78, 13)).land,
+        hasLength(2),
+      );
     });
 
     test('an empty scene has nothing, which is how open sea looks', () {
-      expect(MapScene.empty.within(const Rect.fromLTRB(0, 0, 1, 1)).land, isEmpty);
+      expect(
+        MapScene.empty.within(const Rect.fromLTRB(0, 0, 1, 1)).land,
+        isEmpty,
+      );
     });
   });
 }

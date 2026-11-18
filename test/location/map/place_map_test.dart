@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:moment/design/theme.dart';
+import 'package:moment/location/map/map_painter.dart';
 import 'package:moment/location/map/map_window.dart';
 import 'package:moment/location/place_map.dart';
 
@@ -75,14 +76,26 @@ void main() {
   testWidgets('choosing City redraws the map closer and updates the span', (
     tester,
   ) async {
-    final source = await pump(tester);
+    await pump(tester);
     final before = tester.widget<Text>(find.textContaining('km across')).data;
 
     await tester.tap(find.bySemanticsLabel('Zoom to City'));
     await tester.pump();
     await tester.pump();
 
-    expect(source.asked.last.zoom, MapZoom.city);
+    expect(
+      tester
+          .widget<CustomPaint>(
+            find.descendant(
+              of: find.byType(PlaceMap),
+              matching: find.byWidgetPredicate(
+                (w) => w is CustomPaint && w.painter is MapPainter,
+              ),
+            ),
+          )
+          .painter,
+      isA<MapPainter>().having((p) => p.window.zoom, 'zoom', MapZoom.city),
+    );
     final after = tester.widget<Text>(find.textContaining('km across')).data;
     expect(after, isNot(before));
   });
@@ -97,7 +110,9 @@ void main() {
   ) async {
     await pump(tester);
     expect(
-      find.bySemanticsLabel(RegExp(r'Map of the area around 12\.912, 77\.717')),
+      find.bySemanticsLabel(
+        RegExp(r'Map of the area around 12\.9123, 77\.7165'),
+      ),
       findsOneWidget,
     );
   });

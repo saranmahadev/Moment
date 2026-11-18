@@ -12,16 +12,19 @@ void main() {
     (f) => f.path.endsWith('.json'),
   );
 
-  test('the tiles are in the repository and named by their south-west corner', () {
-    expect(files, isNotEmpty);
-    for (final f in files) {
-      expect(
-        RegExp(r'^-?\d+_-?\d+\.json$').hasMatch(f.uri.pathSegments.last),
-        isTrue,
-        reason: f.path,
-      );
-    }
-  });
+  test(
+    'the tiles are in the repository and named by their south-west corner',
+    () {
+      expect(files, isNotEmpty);
+      for (final f in files) {
+        expect(
+          RegExp(r'^-?\d+_-?\d+\.json$').hasMatch(f.uri.pathSegments.last),
+          isTrue,
+          reason: f.path,
+        );
+      }
+    },
+  );
 
   test('the whole map stays small enough to ship', () {
     final bytes = files.fold<int>(0, (sum, f) => sum + f.lengthSync());
@@ -30,7 +33,9 @@ void main() {
 
   test('every tile parses', () {
     for (final f in files) {
-      MapTile.fromJson(jsonDecode(f.readAsStringSync()) as Map<String, dynamic>);
+      MapTile.fromJson(
+        jsonDecode(f.readAsStringSync()) as Map<String, dynamic>,
+      );
     }
   });
 
