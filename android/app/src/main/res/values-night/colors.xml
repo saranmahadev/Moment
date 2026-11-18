@@ -1,0 +1,22 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- The same names for the dark tokens. -->
+<resources>
+    <color name="widget_bg">#1A1F2A</color>
+    <color name="widget_ink">#F1F3F8</color>
+    <color name="widget_on_ink">#0F1218</color>
+    <color name="widget_secondary">#B7BECE</color>
+    <color name="widget_accent">#9AA3FF</color>
+    <color name="widget_cell_off">#2A303C</color>
+    <color name="type_text">#8FB1FF</color>
+    <color name="type_emoji">#F2A94E</color>
+    <color name="type_photo">#F58BB6</color>
+    <color name="type_video">#B9A0FA</color>
+    <color name="type_audio">#56CDBF</color>
+    <color name="type_location">#6BCB88</color>
+    <color name="tile_text">#232C4A</color>
+    <color name="tile_emoji">#3B2D1A</color>
+    <color name="tile_photo">#43202F</color>
+    <color name="tile_video">#32294F</color>
+    <color name="tile_audio">#17343A</color>
+    <color name="tile_location">#1B3526</color>
+</resources>
