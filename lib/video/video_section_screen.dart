@@ -54,104 +54,112 @@ class VideoSectionScreen extends StatelessWidget {
               builder: (context, snapshot) {
                 final logs = snapshot.data ?? const [];
                 final shown = filter.apply(logs, today: filterToday(now()));
-                return ListView(
-                  padding: const EdgeInsets.fromLTRB(20, 16, 20, 20),
-                  children: [
-                    Row(
-                      children: [
-                        Semantics(
-                          button: true,
-                          onTap: onBack,
-                          label: 'Back to Library',
-                          excludeSemantics: true,
-                          child: GestureDetector(
-                            key: const ValueKey('video-section-back'),
-                            onTap: onBack,
-                            child: SizedBox(
-                              width: 44,
-                              height: 44,
-                              child: GlassSurface(
-                                variant: GlassVariant.card,
-                                borderRadius: 22,
-                                child: Icon(
-                                  Icons.chevron_left,
-                                  color: tokens.ink,
+                // Slivers, so the grid builds only the rows on screen.
+                return CustomScrollView(
+                  slivers: [
+                    SliverPadding(
+                      padding: const EdgeInsets.fromLTRB(20, 16, 20, 0),
+                      sliver: SliverList.list(
+                        children: [
+                          Row(
+                            children: [
+                              Semantics(
+                                button: true,
+                                onTap: onBack,
+                                label: 'Back to Library',
+                                excludeSemantics: true,
+                                child: GestureDetector(
+                                  key: const ValueKey('video-section-back'),
+                                  onTap: onBack,
+                                  child: SizedBox(
+                                    width: 44,
+                                    height: 44,
+                                    child: GlassSurface(
+                                      variant: GlassVariant.card,
+                                      borderRadius: 22,
+                                      child: Icon(
+                                        Icons.chevron_left,
+                                        color: tokens.ink,
+                                      ),
+                                    ),
+                                  ),
                                 ),
                               ),
-                            ),
+                              const Spacer(),
+                            ],
                           ),
-                        ),
-                        const Spacer(),
-                      ],
-                    ),
-                    const SizedBox(height: 16),
-                    Row(
-                      children: [
-                        Container(
-                          width: 48,
-                          height: 48,
-                          decoration: BoxDecoration(
-                            color: tokens.tintFor(LogType.video),
-                            shape: BoxShape.circle,
-                          ),
-                          child: Icon(
-                            momentIconFor(LogType.video),
-                            color: color,
-                          ),
-                        ),
-                        const SizedBox(width: 12),
-                        Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Text(
-                              momentLabelFor(LogType.video),
-                              style: TextStyle(
-                                fontFamily: 'Newsreader',
-                                fontWeight: FontWeight.w500,
-                                fontSize: 34,
-                                color: tokens.ink,
+                          const SizedBox(height: 16),
+                          Row(
+                            children: [
+                              Container(
+                                width: 48,
+                                height: 48,
+                                decoration: BoxDecoration(
+                                  color: tokens.tintFor(LogType.video),
+                                  shape: BoxShape.circle,
+                                ),
+                                child: Icon(
+                                  momentIconFor(LogType.video),
+                                  color: color,
+                                ),
                               ),
-                            ),
-                            Text(
-                              '${logs.length} '
-                              '${logs.length == 1 ? 'log' : 'logs'}',
-                              style: TextStyle(
-                                fontSize: 14,
-                                color: tokens.secondary,
+                              const SizedBox(width: 12),
+                              Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  Text(
+                                    momentLabelFor(LogType.video),
+                                    style: TextStyle(
+                                      fontFamily: 'Newsreader',
+                                      fontWeight: FontWeight.w500,
+                                      fontSize: 34,
+                                      color: tokens.ink,
+                                    ),
+                                  ),
+                                  Text(
+                                    '${logs.length} '
+                                    '${logs.length == 1 ? 'log' : 'logs'}',
+                                    style: TextStyle(
+                                      fontSize: 14,
+                                      color: tokens.secondary,
+                                    ),
+                                  ),
+                                ],
                               ),
-                            ),
-                          ],
-                        ),
-                      ],
-                    ),
-                    const SizedBox(height: 16),
-                    ...filterNotice(
-                      filter: filter,
-                      total: logs.length,
-                      shown: shown.length,
-                      tokens: tokens,
-                      onClear: onClearFilter,
-                    ),
-                    GridView.builder(
-                      shrinkWrap: true,
-                      physics: const NeverScrollableScrollPhysics(),
-                      gridDelegate:
-                          const SliverGridDelegateWithFixedCrossAxisCount(
-                            crossAxisCount: 2,
-                            mainAxisSpacing: 12,
-                            crossAxisSpacing: 12,
-                            childAspectRatio: 1.25,
+                            ],
                           ),
-                      itemCount: shown.length,
-                      itemBuilder: (context, index) {
-                        final log = shown[index] as VideoLog;
-                        return _VideoTile(
-                          key: ValueKey('video-tile-${log.id}'),
-                          log: log,
-                          tokens: tokens,
-                          onTap: () => onOpenLog?.call(log),
-                        );
-                      },
+                          const SizedBox(height: 16),
+                          ...filterNotice(
+                            filter: filter,
+                            total: logs.length,
+                            shown: shown.length,
+                            tokens: tokens,
+                            onClear: onClearFilter,
+                          ),
+                        ],
+                      ),
+                    ),
+                    SliverPadding(
+                      padding: const EdgeInsets.fromLTRB(20, 0, 20, 20),
+                      sliver: SliverGrid.builder(
+                        gridDelegate:
+                            const SliverGridDelegateWithFixedCrossAxisCount(
+                              crossAxisCount: 2,
+                              mainAxisSpacing: 12,
+                              crossAxisSpacing: 12,
+                              childAspectRatio: 1.25,
+                            ),
+                        itemCount: shown.length,
+                        itemBuilder: (context, index) {
+                          final log = shown[index] as VideoLog;
+                          return _VideoTile(
+                            key: ValueKey('video-tile-${log.id}'),
+                            log: log,
+                            tokens: tokens,
+                            onTap: () => onOpenLog?.call(log),
+                          );
+                        },
+                      ),
                     ),
                   ],
                 );

@@ -134,15 +134,17 @@ class _TypeTile extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return StreamBuilder<List<Log>>(
-      stream: repository.watchFeed(types: {type}),
+    // A count and a date per type, from one small query (Drift shares it
+    // between the cards), not every log of the type.
+    return StreamBuilder<Map<LogType, TypeSummary>>(
+      stream: repository.watchTypeSummaries(),
       builder: (context, snapshot) {
-        final logs = snapshot.data ?? const [];
-        final count = logs.length;
-        final lastLabel = logs.isEmpty
+        final summary = snapshot.data?[type];
+        final count = summary?.count ?? 0;
+        final lastLabel = summary == null
             ? 'No logs yet'
             : '$count ${count == 1 ? 'log' : 'logs'} · Last: '
-                  '${logs.first.localDay == today ? 'Today' : _lastDateFormat.format(logs.first.localMoment)}';
+                  '${summary.newestDay == today ? 'Today' : _lastDateFormat.format(summary.newestMoment)}';
 
         return GestureDetector(
           onTap: onTap,

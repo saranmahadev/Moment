@@ -71,6 +71,25 @@ class _CalendarScreenState extends State<CalendarScreen> {
     _month = DateTime.utc(_selected.year, _selected.month);
   }
 
+  Stream<List<Log>>? _logs;
+  (DateTime, DateTime)? _logsFor;
+
+  /// The logs of the six weeks on screen, and of the selected day if it is
+  /// elsewhere: one window, one query, reused until the window moves.
+  Stream<List<Log>> get _windowLogs {
+    final grid = monthGrid(_month.year, _month.month);
+    var from = grid.first;
+    var to = grid.last.add(const Duration(days: 1));
+    if (_selected.isBefore(from)) from = _selected;
+    if (!_selected.isBefore(to)) to = _selected.add(const Duration(days: 1));
+    final key = (from, to);
+    if (_logs == null || _logsFor != key) {
+      _logsFor = key;
+      _logs = widget.repository.watchFeedBetween(from, to);
+    }
+    return _logs!;
+  }
+
   void _moveMonth(int by) =>
       setState(() => _month = DateTime.utc(_month.year, _month.month + by));
 
@@ -104,7 +123,7 @@ class _CalendarScreenState extends State<CalendarScreen> {
         _month.year != today.year ||
         _month.month != today.month;
     return StreamBuilder<List<Log>>(
-      stream: widget.repository.watchFeed(),
+      stream: _windowLogs,
       builder: (context, snapshot) {
         final days = logsByDay(snapshot.data ?? const [], type: _type);
         final dayLogs = days[_selected] ?? const <Log>[];

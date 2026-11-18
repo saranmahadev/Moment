@@ -91,7 +91,7 @@ void main() {
     await tester.pump();
 
     expect(find.byKey(ValueKey('photo-tile-$withCaption')), findsOneWidget);
-    expect(find.byType(GridView), findsOneWidget);
+    expect(find.byType(SliverGrid), findsOneWidget);
     expect(find.text('Showing 1 of 2'), findsOneWidget);
 
     await tester.pumpWidget(const SizedBox());
