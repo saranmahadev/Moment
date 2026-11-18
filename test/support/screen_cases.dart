@@ -7,6 +7,8 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:moment/app/journal_problem_screen.dart';
 import 'package:moment/audio/audio_detail_screen.dart';
 import 'package:moment/data/journal_opener.dart';
+import 'package:moment/diagnostics/diagnostics_log.dart';
+import 'package:moment/diagnostics/diagnostics_screen.dart';
 import 'package:moment/audio/create_audio_screen.dart';
 import 'package:moment/backup/backup_cipher.dart';
 import 'package:moment/backup/backup_coordinator.dart';
@@ -460,6 +462,21 @@ final screenCases = <ScreenCase>[
       onBack: () {},
     ),
   ),
+  ScreenCase('diagnostics', (f) async {
+    final log = DiagnosticsLog(
+      MemoryDiagnosticsStore(),
+      clock: () => DateTime.utc(2026, 11, 18, 9),
+    );
+    await log.event('launch', '1.0.0');
+    await log.event('backup.made');
+    await log.error(
+      StateError('x'),
+      StackTrace.fromString(
+        '#0 f (package:moment/backup/backup_service.dart:212:7)',
+      ),
+    );
+    return DiagnosticsScreen(log: log, onBack: () {});
+  }),
   ScreenCase(
     'journal_problem',
     (f) async => JournalProblemScreen(

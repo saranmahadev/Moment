@@ -1,6 +1,7 @@
 import 'package:drift/native.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:moment/diagnostics/diagnostics_screen.dart';
 import 'package:moment/app/app_info.dart';
 import 'package:moment/data/database.dart';
 import 'package:moment/data/log_repository.dart';
@@ -392,6 +393,18 @@ void main() {
       await tester.pumpAndSettle();
 
       expect(find.byType(AboutScreen), findsOneWidget);
+
+      await close(tester);
+    });
+
+    testWidgets('Diagnostics opens what the app has recorded', (tester) async {
+      await pump(tester, repo);
+      await show(tester, find.text('Diagnostics'));
+
+      await tester.tap(find.text('Diagnostics'));
+      await tester.pumpAndSettle();
+
+      expect(find.byType(DiagnosticsScreen), findsOneWidget);
 
       await close(tester);
     });

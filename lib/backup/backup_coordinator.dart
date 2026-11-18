@@ -3,6 +3,7 @@ import 'dart:io';
 import 'package:intl/intl.dart';
 import 'package:path/path.dart' as p;
 
+import '../diagnostics/diagnostics_log.dart';
 import 'backup_file_gateway.dart';
 import 'backup_service.dart';
 import 'last_backup_store.dart';
@@ -18,7 +19,9 @@ class BackupCoordinator {
     required LastBackupStore lastBackupStore,
     required Directory scratchDirectory,
     DateTime Function() clock = DateTime.now,
-  }) : _service = service,
+    DiagnosticsLog? diagnostics,
+  }) : _diagnostics = diagnostics ?? DiagnosticsLog.shared,
+       _service = service,
        _gateway = gateway,
        _lastBackupStore = lastBackupStore,
        _scratch = scratchDirectory,
@@ -29,6 +32,7 @@ class BackupCoordinator {
   final LastBackupStore _lastBackupStore;
   final Directory _scratch;
   final DateTime Function() _clock;
+  final DiagnosticsLog _diagnostics;
 
   Future<DateTime?> lastBackup() => _lastBackupStore.read();
 
@@ -40,13 +44,33 @@ class BackupCoordinator {
     final file = File(
       p.join(_scratch.path, 'Moment ${_fileDateFormat.format(now)}.moment'),
     );
-    await _service.exportTo(file, passphrase: passphrase);
+    try {
+      await _service.exportTo(file, passphrase: passphrase);
+    } on Object catch (error) {
+      await _diagnostics.event('backup.failed', '${error.runtimeType}');
+      rethrow;
+    }
+    await _diagnostics.event('backup.made');
     await _gateway.deliver(file);
     await _lastBackupStore.write(now);
   }
 
   Future<File?> pickBackup() => _gateway.pick();
 
-  Future<RestoreSummary> restore(File backup, {required String passphrase}) =>
-      _service.restoreFrom(backup, passphrase: passphrase);
+  Future<RestoreSummary> restore(
+    File backup, {
+    required String passphrase,
+  }) async {
+    try {
+      final summary = await _service.restoreFrom(
+        backup,
+        passphrase: passphrase,
+      );
+      await _diagnostics.event('restore.done', '${summary.logsRestored} logs');
+      return summary;
+    } on Object catch (error) {
+      await _diagnostics.event('restore.failed', '${error.runtimeType}');
+      rethrow;
+    }
+  }
 }

@@ -9,6 +9,8 @@ import '../domain/log.dart';
 import '../streaks/streak_settings_screen.dart';
 import '../widgets/widget_bridge.dart';
 import '../widgets/widget_settings_screen.dart';
+import '../diagnostics/diagnostics_log.dart';
+import '../diagnostics/diagnostics_screen.dart';
 import 'about_screen.dart';
 import 'app_settings.dart';
 import 'media_quality.dart';
@@ -499,6 +501,23 @@ class _SettingsScreenState extends State<SettingsScreen> {
                 tokens: tokens,
                 title: 'How Moment stays local',
                 onTap: () => _push((back) => AboutScreen(onBack: back)),
+                trailing: Icon(
+                  Icons.chevron_right,
+                  size: 18,
+                  color: tokens.secondary,
+                ),
+              ),
+              _divider(tokens),
+              _Row(
+                tokens: tokens,
+                title: 'Diagnostics',
+                subtitle: 'Errors kept on this phone, for you to share',
+                onTap: () => _push(
+                  (back) => DiagnosticsScreen(
+                    log: DiagnosticsLog.shared,
+                    onBack: back,
+                  ),
+                ),
                 trailing: Icon(
                   Icons.chevron_right,
                   size: 18,
