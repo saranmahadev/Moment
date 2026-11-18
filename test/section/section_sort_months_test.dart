@@ -19,8 +19,14 @@ void main() {
   final now = DateTime.utc(2026, 11, 7, 10);
 
   group('groupByMonth', () {
-    TextLog at(DateTime t, [int offset = 0]) =>
-        TextLog(id: '$t', createdAt: t, tzOffsetMinutes: offset, body: 'x');
+    TextLog at(DateTime t, [int offset = 0]) => TextLog(
+      id: '$t',
+      createdAt: t,
+      tzOffsetMinutes: offset,
+      editedAt: null,
+      deletedAt: null,
+      body: 'x',
+    );
 
     test('keeps the order it is given, one group per month', () {
       final groups = groupByMonth([
