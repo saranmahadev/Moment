@@ -73,6 +73,7 @@ void main() {
     expect(find.text('TODAY · FRI 6 NOV'), findsOneWidget);
     expect(find.text('Quiet evening.'), findsOneWidget);
     expect(find.text('Calm'), findsOneWidget);
+    expect(find.text('Older logs live in Library.'), findsNothing);
 
     await db.close();
   });

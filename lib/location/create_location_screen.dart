@@ -133,14 +133,16 @@ class _CreateLocationScreenState extends State<CreateLocationScreen> {
     });
   }
 
-  String get _nameFootnote => switch (_lookup) {
+  /// A line under the name field, only while place names are on or being
+  /// looked up; with them off there is nothing to say.
+  String? get _nameFootnote => switch (_lookup) {
     _Lookup.asking => 'Looking up a name for this place…',
     _Lookup.suggested =>
       'Name suggested by OpenStreetMap. Change it if you like.',
     _Lookup.nothingFound => 'No name was found online. Type one if you like.',
     _Lookup.none =>
       widget.placeNames == null
-          ? 'Place names are typed by you. Nothing is looked up online.'
+          ? null
           : 'Place names are on. This name is yours.',
   };
 
@@ -345,11 +347,13 @@ class _CreateLocationScreenState extends State<CreateLocationScreen> {
               ),
             ),
           ),
-          const SizedBox(height: 10),
-          Text(
-            _nameFootnote,
-            style: TextStyle(fontSize: 13.5, color: tokens.secondary),
-          ),
+          if (_nameFootnote != null) ...[
+            const SizedBox(height: 10),
+            Text(
+              _nameFootnote!,
+              style: TextStyle(fontSize: 13.5, color: tokens.secondary),
+            ),
+          ],
           const SizedBox(height: 14),
           Row(
             children: [

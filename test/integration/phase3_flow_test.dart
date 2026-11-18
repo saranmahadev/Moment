@@ -100,7 +100,7 @@ void main() {
     // View.
     await tester.tap(find.text('Favourite bench'));
     await tester.pumpAndSettle();
-    expect(find.text('Coordinates stored on this device'), findsOneWidget);
+    expect(find.text('Coordinates stored on this device'), findsNothing);
     expect(find.text('Accuracy ±12 m'), findsOneWidget);
 
     // Edit.

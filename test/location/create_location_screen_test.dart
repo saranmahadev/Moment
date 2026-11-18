@@ -98,10 +98,7 @@ void main() {
       expect(find.text('Pin this spot'), findsOneWidget);
       expect(find.text('Locked on'), findsOneWidget);
       expect(find.text('Accuracy ±12 m · Sat 7 Nov · 10:00'), findsOneWidget);
-      expect(
-        find.text('Place names are typed by you. Nothing is looked up online.'),
-        findsOneWidget,
-      );
+      expect(find.textContaining('Nothing is looked up online'), findsNothing);
       expect(find.text('Move pin'), findsOneWidget);
       expect(find.text('Save location'), findsOneWidget);
 
@@ -239,10 +236,7 @@ void main() {
       expect(provider.requests, 0);
       expect(provider.fixes, 0);
       expect(
-        find.text(
-          'Moment uses your location only to pin this spot. '
-          'It stays on this device.',
-        ),
+        find.text('Moment uses your location only to pin this spot.'),
         findsOneWidget,
       );
       expect(find.text('Save location'), findsNothing);

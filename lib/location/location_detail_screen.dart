@@ -298,12 +298,7 @@ class _LocationDetailScreenState extends State<LocationDetailScreen> {
                     ),
                     const SizedBox(height: 8),
                   ],
-                  LocationPill(
-                    label: 'Coordinates stored on this device',
-                    icon: Icons.lock_outline,
-                    tokens: tokens,
-                  ),
-                  const SizedBox(height: 16),
+                  const SizedBox(height: 8),
                   if (_moving)
                     _movePanel(tokens)
                   else

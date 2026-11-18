@@ -97,17 +97,14 @@ void main() {
     );
   }
 
-  testWidgets('opens ready to type, and says search stays on the device', (
+  testWidgets('opens ready to type, with no note about where search runs', (
     tester,
   ) async {
     await pump(tester);
 
     expect(find.byType(TextField), findsOneWidget);
     expect(find.text('Search your logs'), findsOneWidget);
-    expect(
-      find.text('Search runs on this device. Nothing is sent anywhere.'),
-      findsOneWidget,
-    );
+    expect(find.textContaining('Nothing is sent'), findsNothing);
     expect(tester.widget<TextField>(find.byType(TextField)).autofocus, isTrue);
 
     await close(tester);
