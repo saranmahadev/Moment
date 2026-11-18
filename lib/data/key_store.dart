@@ -48,6 +48,14 @@ class KeyStore {
     return key;
   }
 
+  /// Makes, persists and returns a new key, replacing any there was. Only
+  /// for a new journal: an existing one cannot be opened without its key.
+  Future<String> createKey() async {
+    final key = _generateKey();
+    await _storage.write(key);
+    return key;
+  }
+
   String _generateKey() {
     final bytes = List<int>.generate(32, (_) => _random.nextInt(256));
     return bytes.map((b) => b.toRadixString(16).padLeft(2, '0')).join();

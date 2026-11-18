@@ -62,7 +62,7 @@ void main() {
     await tester.tap(find.text('Start an empty journal'));
     await tester.pumpAndSettle();
     expect(freshCalls, 0);
-    expect(find.textContaining('stays on this phone'), findsOneWidget);
+    expect(find.text('Start an empty journal?'), findsOneWidget);
 
     await tester.tap(find.text('Cancel'));
     await tester.pumpAndSettle();
