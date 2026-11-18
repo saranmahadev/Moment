@@ -39,7 +39,7 @@ Moment is a life journal for your phone. It keeps what you write, feel, see, hea
 
 Everything stays on the device, in an encrypted database. There is nothing to sign up for.
 
-> **Status:** version 0.5.0, a preview on the way to 1.0. Every screen exists and the app is usable day to day, but it has had little testing on real phones yet. See [Status and roadmap](#status-and-roadmap).
+> **Status:** version 0.6.0, a preview on the way to 1.0. Every screen exists and the app is usable day to day, but it has had little testing on real phones yet. See [Status and roadmap](#status-and-roadmap).
 
 ## Screens
 
@@ -65,6 +65,7 @@ More on the [website](https://saranmahadev.github.io/Moment/#screens). These are
 - **Home** shows today's logs of every kind in one calm feed, with a one-tap mood row you can customise.
 - **Library** has a section for each kind of log.
 - **Calendar**: a month at a glance with a dot per kind on each day. Days are the ones logs were made on, so travel and daylight saving move nothing.
+- **Widget** (Android): your streak and a button for each log type on the home screen. It never opens the journal; you choose whether it shows the streak at all.
 - **Streaks**: days in a row, a heatmap of your year and milestones, with grace days you set. Worked out on the phone from your logs; nothing extra is stored or sent.
 - **Search**: full-text search as you type across everything you have written, named or captioned, on the device (SQLite FTS5). Fast at 20,000 logs.
 - **Encrypted backup**: one passphrase-protected `.moment` file holds every log and media file. Restore is all or nothing.
@@ -169,6 +170,7 @@ Run the **Release** workflow (Actions → Release → Run workflow) with the ver
 | 0.3 | Video and Location | Released |
 | 0.4 | Calendar, Search, Settings, dark theme | Released |
 | 0.5 | Streaks | Released |
+| 0.6 | Home screen widget (Android) | Released |
 | 1.0 | Polish, hardening, signed releases | Next |
 
 The plan for each phase, with its tests and exit gate, is in [docs/ROADMAP.md](docs/ROADMAP.md).

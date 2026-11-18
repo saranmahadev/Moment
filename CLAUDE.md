@@ -17,7 +17,7 @@ Releases: Phase 1 = 0.1.0 (Foundation, Text and Emoji), 2 = 0.2.0 (Photo, Audio,
 
 ## State
 
-Phases 1 to 4 are released (`v0.3.0` and `v0.4.0` are published with their APKs; the owner decided not to tag 0.1.0 and 0.2.0 after the fact). 0.5.0 added Streaks (see the Streaks decisions); Phase 5 (1.0.0) is still ahead. Every screen in the mockups exists, in light and dark. `CHANGELOG.md` has the detail per release. Next is Phase 5 (polish and hardening, 1.0.0) in `docs/ROADMAP.md`; the owner wants the release signing key and other production setup done at the end of it. CI pins Flutter 3.47.9; develop and verify on that version. First time setup is in `README.md` (`flutter create` for platform folders, then `build_runner`).
+Phases 1 to 4 are released (`v0.3.0` and `v0.4.0` are published with their APKs; the owner decided not to tag 0.1.0 and 0.2.0 after the fact). 0.5.0 added Streaks (see the Streaks decisions) and 0.6.0 the Android home screen widget (see the Widget decisions); Phase 5 (1.0.0) is still ahead. Every screen in the mockups exists, in light and dark. `CHANGELOG.md` has the detail per release. Next is Phase 5 (polish and hardening, 1.0.0) in `docs/ROADMAP.md`; the owner wants the release signing key and other production setup done at the end of it. CI pins Flutter 3.47.9; develop and verify on that version. First time setup is in `README.md` (`flutter create` for platform folders, then `build_runner`).
 
 Tags are never pushed by hand: the **Release** workflow (`.github/workflows/release.yml`, run with a version and optionally a commit) checks, builds, tags and publishes the APK in one go. See `docs/WORKFLOW.md`, "Releases".
 
@@ -125,6 +125,15 @@ Screens in Phase 1: Lock, Home, Add, Library, New text, New emoji, Text section,
 - The heatmap (`lib/streaks/heatmap_model.dart`, `streak_heatmap.dart`) is one painted surface, not hundreds of buttons: tap or drag picks a day, and a single slider is exposed to screen readers. A year is wider than the card and scrolls. Colours come from `MomentTokens.streakRamp` and `streakAccent`.
 - Accessibility lesson: a labelled `Semantics` without `container: true` merges with its neighbours into one node (a Back button read together with the title; `find.bySemanticsLabel` then returns the whole row). Give separate controls `container: true`; `RoundGlassButton` now does.
 - Design review page for the feature: https://claude.ai/artifact/Gz2G5sxJxSZaud9Q6bvCkz (not needed to build anything).
+
+## Widget decisions (owner-approved design, 0.6.0)
+
+- One Android widget, Streak and Quick add (`android/app/src/main/kotlin/app/moment/moment/`, layouts `moment_widget_{small,row,wide,mini}`), chosen from the launcher's size: 2x2, 4x1, 4x2, and a 2x1 mini. No iOS widget yet (it needs a Mac to build; CI is Linux); no lock screen widget.
+- A widget sits outside the app lock, so it never opens the database. `WidgetSnapshot` (`lib/widgets/widget_snapshot.dart`) is the only thing it knows: `show`, `asOf`, `streak`, `endsOn` (the last day the streak is alive if nothing more is logged, from `streakOf`, so Kotlin has no copy of the grace rules), and this week's seven squares. Never any log content, media path, place or emoji. Keep it that way: a new field needs the owner's say.
+- `AppSettings.widgetShowsStreak` (default on) is the one switch ("Streak and Quick add" or "Quick add only"); `showStreaks` off also hides it. A change publishes at once; log changes publish after two seconds (`WidgetPublisher`).
+- Seams: `WidgetBridge` (`DeviceWidgetBridge` is the `app.moment/widget` method channel to `MainActivity`; `FakeWidgetBridge` in tests), `DeepLinkInbox` and `WidgetLinkChannel` for taps. Links are `moment://add/<type>` and `moment://streaks`, carried as an intent extra (not a data URI, so Flutter's own deep link handling is never triggered). They wait in the inbox until `AppShell` exists, so a locked app unlocks first.
+- The widget draws solid colours copied from the tokens into `res/values` and `values-night`; it cannot blur. Taps only open the app; a widget never writes a log.
+- The Kotlin model has a JVM test (`WidgetModelTest`, run by the Release check workflow with `./gradlew :app:testDebugUnitTest`). The native layouts have no golden test; check them on a device.
 
 ## Logo, site, film and open-source files (before Phase 5)
 
