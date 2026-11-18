@@ -1,5 +1,31 @@
 # Changelog
 
+## 0.6.0 — Home screen widget (Android)
+
+- **Widget: Streak and Quick add.** One home screen widget with your
+  streak on one side and a button for each kind of log on the other. A
+  button opens that log's New screen; the streak opens the Streaks page.
+  It comes in four sizes that follow how big you make it: 2 x 2, 4 x 1,
+  4 x 2 and a small 2 x 1. Light and dark follow the phone, with the
+  app's own colours. Android only for now; iOS comes later.
+- **What it shows is your choice.** Settings → Widgets: "Streak and Quick
+  add" (the default) or "Quick add only", which shows nothing from your
+  journal. The widget never opens the encrypted journal. The app hands it
+  a small snapshot (the streak, whether today is logged, this week's
+  seven squares) and nothing else: no words, photos, places or emoji
+  from your entries. Turning streaks off in the app also hides them on
+  the widget.
+- A widget is visible while Moment is locked. Tapping it goes through the
+  lock first, then opens where you tapped. The Widgets screen says so.
+- The widget stays right across midnight without the app running: the
+  snapshot says how long the streak lasts, and the widget compares that
+  with today. A streak at risk shows an outlined "Log today" pill, as on
+  Home.
+- **Add the widget** from Settings → Widgets (it asks the launcher), or by
+  touching and holding the home screen.
+- No new permission, no network. The snapshot stays on the phone, outside
+  backups and cloud backup.
+
 ## 0.5.0 — Streaks
 
 - **Streaks**: the number of days in a row you logged something, of any
