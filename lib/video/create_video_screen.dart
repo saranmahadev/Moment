@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 
 import '../data/log_repository.dart';
 import '../data/media_store.dart';
+import '../design/capture_frame.dart';
 import '../design/glass_surface.dart';
 import '../design/orb_field.dart';
 import '../design/tokens.dart';
@@ -301,85 +302,13 @@ class _PickerChoices extends StatelessWidget {
   final VoidCallback onChooseFromLibrary;
 
   @override
-  Widget build(BuildContext context) {
-    return Center(
-      child: Column(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          if (error != null) ...[
-            Text(
-              error!,
-              textAlign: TextAlign.center,
-              style: TextStyle(fontSize: 14.5, color: tokens.danger),
-            ),
-            const SizedBox(height: 16),
-          ],
-          _ChoiceButton(
-            icon: Icons.videocam_outlined,
-            label: 'Record Video',
-            tokens: tokens,
-            onTap: onRecord,
-          ),
-          const SizedBox(height: 14),
-          _ChoiceButton(
-            icon: Icons.video_library_outlined,
-            label: 'Choose from Library',
-            tokens: tokens,
-            onTap: onChooseFromLibrary,
-          ),
-        ],
-      ),
-    );
-  }
-}
-
-class _ChoiceButton extends StatelessWidget {
-  const _ChoiceButton({
-    required this.icon,
-    required this.label,
-    required this.tokens,
-    required this.onTap,
-  });
-
-  final IconData icon;
-  final String label;
-  final MomentTokens tokens;
-  final VoidCallback onTap;
-
-  @override
-  Widget build(BuildContext context) {
-    return GestureDetector(
-      onTap: onTap,
-      child: SizedBox(
-        height: 56,
-        child: GlassSurface(
-          variant: GlassVariant.card,
-          borderRadius: 28,
-          child: Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 24),
-            child: Row(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                Icon(icon, size: 20, color: tokens.ink),
-                const SizedBox(width: 10),
-                Flexible(
-                  child: Text(
-                    label,
-                    overflow: TextOverflow.ellipsis,
-                    style: TextStyle(
-                      fontSize: 15,
-                      fontWeight: FontWeight.w600,
-                      color: tokens.ink,
-                    ),
-                  ),
-                ),
-              ],
-            ),
-          ),
-        ),
-      ),
-    );
-  }
+  Widget build(BuildContext context) => CaptureFrame(
+    type: LogType.video,
+    captureLabel: 'Record Video',
+    onCapture: onRecord,
+    onChoose: onChooseFromLibrary,
+    message: error,
+  );
 }
 
 class _Preview extends StatelessWidget {
