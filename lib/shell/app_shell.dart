@@ -52,6 +52,7 @@ import '../video/video_picker.dart';
 import '../video/video_playback_controller.dart';
 import '../video/video_probe.dart';
 import '../video/video_section_screen.dart';
+import '../widgets/deep_links.dart';
 
 enum _Tab { home, library, calendar, settings }
 
@@ -80,6 +81,7 @@ class AppShell extends StatefulWidget {
     required this.backups,
     required this.exports,
     required this.storage,
+    this.deepLinks,
     DateTime Function()? now,
   }) : now = now ?? DateTime.now;
 
@@ -110,6 +112,9 @@ class AppShell extends StatefulWidget {
   final BackupCoordinator backups;
   final ExportCoordinator exports;
   final StorageService storage;
+
+  /// Links from the home screen widget; null in tests that have none.
+  final DeepLinkInbox? deepLinks;
   final DateTime Function() now;
 
   @override
@@ -123,9 +128,33 @@ class _AppShellState extends State<AppShell> {
   final _filters = LibraryFilters();
 
   @override
+  void initState() {
+    super.initState();
+    widget.deepLinks?.addListener(_openLink);
+    // A link that arrived while the app was locked or starting is waiting.
+    WidgetsBinding.instance.addPostFrameCallback((_) => _openLink());
+  }
+
+  @override
   void dispose() {
+    widget.deepLinks?.removeListener(_openLink);
     _filters.dispose();
     super.dispose();
+  }
+
+  /// Opens the waiting widget link, from the tabs: whatever was open is
+  /// closed first, so taps on the widget do not pile screens up.
+  void _openLink() {
+    if (!mounted) return;
+    final link = widget.deepLinks?.take();
+    if (link == null) return;
+    Navigator.of(context).popUntil((route) => route.isFirst);
+    switch (link) {
+      case AddLink(:final type):
+        _handleTypeSelected(type);
+      case StreaksLink():
+        _openStreaks();
+    }
   }
 
   Future<void> _openFilter(LogType type) async {

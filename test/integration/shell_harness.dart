@@ -24,6 +24,7 @@ import 'package:moment/settings/app_settings.dart';
 import 'package:moment/settings/reminder_scheduler.dart';
 import 'package:moment/shell/app_shell.dart';
 import 'package:moment/storage/storage_service.dart';
+import 'package:moment/widgets/deep_links.dart';
 import 'package:path/path.dart' as p;
 
 import '../location/location_fakes.dart';
@@ -155,6 +156,7 @@ class ShellHarness {
     FakePlaceNameLookup? placeNames,
     AppSettings? settings,
     DateTime Function()? now,
+    DeepLinkInbox? deepLinks,
   }) async {
     await tester.binding.setSurfaceSize(const Size(390, 844));
     addTearDown(() => tester.binding.setSurfaceSize(null));
@@ -206,6 +208,7 @@ class ShellHarness {
           ),
           storage: StorageService(repository: repo),
           now: clock,
+          deepLinks: deepLinks,
         ),
       ),
     );
