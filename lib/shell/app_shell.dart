@@ -21,6 +21,8 @@ import '../emoji/create_emoji_screen.dart';
 import '../home/add_sheet.dart';
 import '../home/home_screen.dart';
 import '../library/library_screen.dart';
+import '../library/log_filter.dart';
+import '../library/log_filter_sheet.dart';
 import '../location/map/map_source.dart';
 import '../location/create_location_screen.dart';
 import '../location/location_detail_screen.dart';
@@ -114,6 +116,24 @@ class AppShell extends StatefulWidget {
 
 class _AppShellState extends State<AppShell> {
   _Tab _tab = _Tab.home;
+
+  /// What the Library filters currently show, per type. In memory only.
+  final _filters = LibraryFilters();
+
+  @override
+  void dispose() {
+    _filters.dispose();
+    super.dispose();
+  }
+
+  Future<void> _openFilter(LogType type) async {
+    final chosen = await showLogFilterSheet(
+      context,
+      type: type,
+      initial: _filters.of(type),
+    );
+    if (chosen != null) _filters.set(type, chosen);
+  }
 
   Future<void> _openAddSheet() async {
     final tokens =
@@ -314,30 +334,49 @@ class _AppShellState extends State<AppShell> {
     void back() => Navigator.of(context).pop();
     Navigator.of(context).push(
       MaterialPageRoute<void>(
-        builder: (_) => switch (type) {
-          LogType.photo => PhotoSectionScreen(
-            repository: widget.repository,
-            onBack: back,
-            onOpenLog: _openDetail,
-          ),
-          LogType.video => VideoSectionScreen(
-            repository: widget.repository,
-            onBack: back,
-            onOpenLog: _openDetail,
-          ),
-          LogType.location => LocationSectionScreen(
-            repository: widget.repository,
-            onBack: back,
-            onOpenLog: _openDetail,
-          ),
-          _ => SectionScreen(
-            type: type,
-            repository: widget.repository,
-            onBack: back,
-            onSearch: _openSearch,
-            onOpenLog: _openDetail,
-          ),
-        },
+        builder: (_) => ListenableBuilder(
+          listenable: _filters,
+          builder: (context, _) {
+            final filter = _filters.of(type);
+            void clear() => _filters.clear(type);
+            return switch (type) {
+              LogType.photo => PhotoSectionScreen(
+                repository: widget.repository,
+                onBack: back,
+                onOpenLog: _openDetail,
+                filter: filter,
+                onClearFilter: clear,
+                now: widget.now,
+              ),
+              LogType.video => VideoSectionScreen(
+                repository: widget.repository,
+                onBack: back,
+                onOpenLog: _openDetail,
+                filter: filter,
+                onClearFilter: clear,
+                now: widget.now,
+              ),
+              LogType.location => LocationSectionScreen(
+                repository: widget.repository,
+                onBack: back,
+                onOpenLog: _openDetail,
+                filter: filter,
+                onClearFilter: clear,
+                now: widget.now,
+              ),
+              _ => SectionScreen(
+                type: type,
+                repository: widget.repository,
+                onBack: back,
+                onSearch: _openSearch,
+                onOpenLog: _openDetail,
+                filter: filter,
+                onClearFilter: clear,
+                now: widget.now,
+              ),
+            };
+          },
+        ),
       ),
     );
   }
@@ -362,11 +401,16 @@ class _AppShellState extends State<AppShell> {
                 onOpenLog: _openDetail,
                 onSearchTap: _openSearch,
               ),
-              LibraryScreen(
-                repository: widget.repository,
-                now: widget.now,
-                onOpenType: _openSection,
-                onOpenTrash: _openTrash,
+              ListenableBuilder(
+                listenable: _filters,
+                builder: (context, _) => LibraryScreen(
+                  repository: widget.repository,
+                  now: widget.now,
+                  onOpenType: _openSection,
+                  onOpenTrash: _openTrash,
+                  filters: _filters.all,
+                  onFilter: _openFilter,
+                ),
               ),
               CalendarScreen(
                 repository: widget.repository,
