@@ -29,6 +29,7 @@ import '../settings/reminder_scheduler.dart';
 import '../lock/app_lock_controller.dart';
 import '../lock/biometric_authenticator.dart';
 import '../lock/pin_storage.dart';
+import '../lock/screen_privacy.dart';
 import '../photo/photo_picker.dart';
 import '../shell/app_shell.dart';
 import 'lock_gate.dart';
@@ -49,7 +50,6 @@ class _Resources {
     required this.exports,
     required this.storage,
     required this.settings,
-    required this.hasPin,
     required this.videoFrames,
   });
 
@@ -60,7 +60,6 @@ class _Resources {
   final ExportCoordinator exports;
   final StorageService storage;
   final AppSettings settings;
-  final bool hasPin;
   final VideoFrameStrip videoFrames;
 }
 
@@ -70,13 +69,11 @@ Future<_Resources> _bootstrap() async {
   final dbPath = p.join(supportDir.path, 'moment.db');
   final db = AppDatabase(openEncryptedDatabase(dbPath, key));
 
-  final lockController = AppLockController(SecurePinStorage());
-  final hasPin = await lockController.hasPin();
-  if (hasPin) {
-    lockController.lock();
-  } else {
-    lockController.unlock();
-  }
+  final lockController = AppLockController(
+    SecurePinStorage(),
+    screenPrivacy: const DeviceScreenPrivacy(),
+  );
+  await lockController.load();
 
   final settings = await AppSettings.load(
     FileSettingsStore(File(p.join(supportDir.path, 'settings.json'))),
@@ -107,7 +104,6 @@ Future<_Resources> _bootstrap() async {
     ),
     storage: StorageService(repository: repository),
     settings: settings,
-    hasPin: hasPin,
     // The scrubber's frames are a cache, never part of a backup.
     videoFrames: VideoFrameStrip(
       probe: DeviceVideoProbe(),
@@ -198,7 +194,6 @@ class _MomentAppState extends State<MomentApp> with WidgetsBindingObserver {
           return LockGate(
             controller: resources.lockController,
             biometrics: DeviceBiometricAuthenticator(),
-            hasPin: resources.hasPin,
             child: AppShell(
               repository: resources.repository,
               lockController: resources.lockController,

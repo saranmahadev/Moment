@@ -33,7 +33,46 @@ class _LockScreenState extends State<LockScreen> {
   String _entered = '';
   bool _showError = false;
 
+  /// Redraws the wait message each second while PINs are refused.
+  Timer? _waitTicker;
+
+  @override
+  void initState() {
+    super.initState();
+    widget.controller.addListener(_onControllerChanged);
+    _onControllerChanged();
+  }
+
+  @override
+  void dispose() {
+    widget.controller.removeListener(_onControllerChanged);
+    _waitTicker?.cancel();
+    super.dispose();
+  }
+
+  void _onControllerChanged() {
+    if (widget.controller.retryAfter == null || _waitTicker != null) return;
+    _waitTicker = Timer.periodic(const Duration(seconds: 1), (timer) {
+      if (!mounted) return;
+      if (widget.controller.retryAfter == null) {
+        timer.cancel();
+        _waitTicker = null;
+      }
+      setState(() {});
+    });
+    if (mounted) setState(() {});
+  }
+
+  /// "Try again in 30 s." or "in 2 min." while PINs are refused.
+  static String _waitText(Duration left) {
+    final seconds = (left.inMilliseconds / 1000).ceil();
+    if (seconds < 60) return 'Too many tries. Try again in $seconds s.';
+    final minutes = (seconds / 60).ceil();
+    return 'Too many tries. Try again in $minutes min.';
+  }
+
   void _onDigit(String digit) {
+    if (widget.controller.retryAfter != null) return;
     if (_entered.length >= _pinLength) return;
     setState(() {
       _entered += digit;
@@ -109,7 +148,14 @@ class _LockScreenState extends State<LockScreen> {
                   tokens: tokens,
                   error: _showError,
                 ),
-                if (_showError) ...[
+                if (widget.controller.retryAfter case final left?) ...[
+                  const SizedBox(height: 8),
+                  Text(
+                    _waitText(left),
+                    textAlign: TextAlign.center,
+                    style: TextStyle(fontSize: 13, color: tokens.danger),
+                  ),
+                ] else if (_showError) ...[
                   const SizedBox(height: 8),
                   Text(
                     'Incorrect PIN',
