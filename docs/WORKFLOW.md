@@ -35,9 +35,9 @@ Before a chunk merges into `main`:
 - Each phase ends with a tag `v0.1.0`, `v0.2.0`, `v0.3.0`, `v0.4.0`, and `v1.0.0` after Phase 5.
 - A tag is created only after CI is green on the release commit and the phase exit gate in the roadmap is met.
 - `CHANGELOG.md` gets one entry per release.
-- Tags are made by the **Release** workflow (`.github/workflows/release.yml`), never by hand: Actions → Release → Run workflow, with the version (and the commit, when it is not the head of `main`). In one run it checks the version against `pubspec.yaml` and the changelog, analyses, tests, builds the release APK, checks the permissions of the release manifest, creates the annotated tag and publishes a GitHub Release with the APK attached. If any step fails, nothing is tagged.
+- Tags are made by the **Release** workflow (`.github/workflows/release.yml`), never by hand: Actions → Release → Run workflow, with the version (and the commit, when it is not the head of `main`). In one run it checks the version against `pubspec.yaml` and the changelog, analyses, tests, builds the release APKs (one per CPU type, and a common one that works on every phone but is about three times larger), checks the permissions of the release manifest, creates the annotated tag and publishes a GitHub Release with all of them attached: `moment-X.Y.Z-arm64-v8a.apk` (nearly every phone), `-armeabi-v7a` (old 32-bit phones), `-x86_64` (emulators) and `moment-X.Y.Z.apk` (common). If any step fails, nothing is tagged.
 - Releasing an older commit (not the head of `main`): GitHub does not let a workflow tag a commit whose workflow files differ from `main`'s. Push that tag by hand (`git tag -a v0.1.0 <commit> -m "Moment 0.1.0" && git push origin v0.1.0`), then run the Release workflow with the same version and commit: it sees the tag, and builds and publishes the release for it.
-- `release-check.yml` builds the same APK without releasing it; it runs automatically when dependencies or the `android/` project change.
+- `release-check.yml` builds the same APKs without releasing them; it runs automatically when dependencies or the `android/` project change.
 
 ### Signing the APK
 
