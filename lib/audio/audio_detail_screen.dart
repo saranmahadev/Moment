@@ -58,6 +58,12 @@ class _AudioDetailScreenState extends State<AudioDetailScreen> {
   int _speedIndex = 0;
   StreamSubscription<Duration>? _positionSubscription;
   StreamSubscription<bool>? _playingSubscription;
+  StreamSubscription<Duration?>? _durationSubscription;
+
+  /// The length the player found in the file. The saved length is what the
+  /// timer counted while recording, which can run a little long, and then
+  /// the end of the clip would stop short of a full waveform.
+  late Duration _duration = _log.duration;
   late final _titleController = TextEditingController(text: _log.title ?? '');
 
   @override
@@ -72,12 +78,17 @@ class _AudioDetailScreenState extends State<AudioDetailScreen> {
       if (!mounted) return;
       setState(() => _playing = playing);
     });
+    _durationSubscription = widget.playback.durationStream.listen((d) {
+      if (!mounted || d == null || d == Duration.zero) return;
+      setState(() => _duration = d);
+    });
   }
 
   @override
   void dispose() {
     _positionSubscription?.cancel();
     _playingSubscription?.cancel();
+    _durationSubscription?.cancel();
     _titleController.dispose();
     widget.playback.dispose();
     super.dispose();
@@ -95,12 +106,12 @@ class _AudioDetailScreenState extends State<AudioDetailScreen> {
     final target = _position + delta;
     final clamped = target < Duration.zero
         ? Duration.zero
-        : (target > _log.duration ? _log.duration : target);
+        : (target > _duration ? _duration : target);
     await widget.playback.seek(clamped);
   }
 
   Future<void> _seekToFraction(double fraction) async {
-    final micros = (_log.duration.inMicroseconds * fraction).round();
+    final micros = (_duration.inMicroseconds * fraction).round();
     await widget.playback.seek(Duration(microseconds: micros));
   }
 
@@ -247,7 +258,7 @@ class _AudioDetailScreenState extends State<AudioDetailScreen> {
                               children: [
                                 PlayerWaveform(
                                   peaks: _log.peaks,
-                                  duration: _log.duration,
+                                  duration: _duration,
                                   position: _position,
                                   onSeekFraction: _seekToFraction,
                                 ),
@@ -264,7 +275,7 @@ class _AudioDetailScreenState extends State<AudioDetailScreen> {
                                     ),
                                     const Spacer(),
                                     Text(
-                                      _formatPosition(_log.duration),
+                                      _formatPosition(_duration),
                                       style: TextStyle(
                                         fontSize: 13,
                                         fontWeight: FontWeight.w500,

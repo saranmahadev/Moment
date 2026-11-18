@@ -1,3 +1,4 @@
+import 'package:async/async.dart' show StreamGroup;
 import 'package:just_audio/just_audio.dart' as just_audio;
 
 /// Plays back a recorded voice note. Wraps `just_audio` so tests can supply
@@ -5,6 +6,9 @@ import 'package:just_audio/just_audio.dart' as just_audio;
 abstract interface class AudioPlaybackController {
   Stream<Duration> get positionStream;
   Stream<bool> get playingStream;
+
+  /// How long the file really is, once the player knows (null before).
+  Stream<Duration?> get durationStream;
 
   Future<void> load(String path);
   Future<void> play();
@@ -28,11 +32,23 @@ class DeviceAudioPlaybackController implements AudioPlaybackController {
   final _player = just_audio.AudioPlayer();
 
   @override
-  Stream<Duration> get positionStream => _player.positionStream;
+  Stream<Duration> get positionStream => StreamGroup.merge([
+    _player.positionStream,
+    // The position stream can stop a hair short of the end; at completion
+    // say exactly where the end is, so the waveform fills.
+    _player.processingStateStream
+        .where((s) => s == just_audio.ProcessingState.completed)
+        .map((_) => _player.duration)
+        .where((d) => d != null)
+        .cast<Duration>(),
+  ]);
 
   @override
   Stream<bool> get playingStream =>
       _player.playerStateStream.map(isAudibleState).distinct();
+
+  @override
+  Stream<Duration?> get durationStream => _player.durationStream;
 
   @override
   Future<void> load(String path) async {

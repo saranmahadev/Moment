@@ -15,6 +15,7 @@ import 'package:moment/domain/log.dart';
 class _FakeAudioPlaybackController implements AudioPlaybackController {
   final _position = StreamController<Duration>.broadcast();
   final _playing = StreamController<bool>.broadcast();
+  final _duration = StreamController<Duration?>.broadcast();
 
   String? loadedPath;
   bool played = false;
@@ -29,6 +30,12 @@ class _FakeAudioPlaybackController implements AudioPlaybackController {
 
   @override
   Stream<bool> get playingStream => _playing.stream;
+
+  @override
+  Stream<Duration?> get durationStream => _duration.stream;
+
+  /// The player reports how long the file really is.
+  void reportDuration(Duration d) => _duration.add(d);
 
   @override
   Future<void> load(String path) async => loadedPath = path;
@@ -65,6 +72,7 @@ class _FakeAudioPlaybackController implements AudioPlaybackController {
     disposed = true;
     await _position.close();
     await _playing.close();
+    await _duration.close();
   }
 }
 
@@ -133,6 +141,42 @@ void main() {
     expect(find.textContaining('Friday 6 November'), findsOneWidget);
     expect(find.text('0:00'), findsOneWidget);
     expect(find.text('0:42'), findsOneWidget);
+
+    await close(tester);
+  });
+
+  testWidgets('uses the length the player finds in the file, so the end fills '
+      'the waveform even when the saved length ran long', (tester) async {
+    final playback = _FakeAudioPlaybackController();
+    await pump(tester, playback: playback); // saved as 42 s
+
+    playback.reportDuration(const Duration(seconds: 40));
+    await tester.pump(const Duration(milliseconds: 1));
+    await playback.seek(const Duration(seconds: 40)); // the real end
+    await tester.pump(const Duration(milliseconds: 1));
+
+    final wave = tester.widget<PlayerWaveform>(find.byType(PlayerWaveform));
+    expect(wave.duration, const Duration(seconds: 40));
+    expect(wave.position, wave.duration);
+    expect(find.text('0:40'), findsNWidgets(2)); // position and total
+
+    await close(tester);
+  });
+
+  testWidgets('skipping and seeking stay inside the real length', (
+    tester,
+  ) async {
+    final playback = _FakeAudioPlaybackController();
+    await pump(tester, playback: playback);
+    playback.reportDuration(const Duration(seconds: 20));
+    await tester.pump(const Duration(milliseconds: 1));
+
+    for (var i = 0; i < 3; i++) {
+      await tester.tap(find.bySemanticsLabel('Forward 15 seconds'));
+      await tester.pump(const Duration(milliseconds: 1));
+    }
+
+    expect(playback.lastSeek, const Duration(seconds: 20));
 
     await close(tester);
   });

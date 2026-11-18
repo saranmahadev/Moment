@@ -129,6 +129,9 @@ class _FakeAudioPlaybackController implements AudioPlaybackController {
   Future<void> setLoop(bool on) async {}
 
   @override
+  Stream<Duration?> get durationStream => const Stream.empty();
+
+  @override
   Future<void> dispose() async {
     await _position.close();
     await _playing.close();
