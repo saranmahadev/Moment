@@ -43,6 +43,7 @@ void main() {
     var t = now;
     repo = _CountingRepository(db, clock: () => t);
     ids = [];
+    // Written outside the test's fake clock: hundreds of writes.
     await tester.runAsync(() async {
       await db.transaction(() async {
         for (var i = 0; i < many; i++) {
@@ -83,17 +84,26 @@ void main() {
     await tester.pump();
   }
 
+  /// Takes the screen down, then closes the database the way it was
+  /// opened: outside the fake clock.
+  Future<void> finish(WidgetTester tester) async {
+    await tester.pumpWidget(const SizedBox());
+    await tester.pump(const Duration(milliseconds: 1));
+    await tester.runAsync(db.close);
+  }
+
   int built(Finder finder) =>
       finder.evaluate().length; // skipOffstage: false in the finder
 
-  /// Scrolls down until [target] is built, or gives up.
+  /// Jumps to the end of the list until [target] is built (each jump can
+  /// load another page), or gives up.
   Future<void> scrollTo(WidgetTester tester, Finder target) async {
-    for (var i = 0; i < 400 && target.evaluate().isEmpty; i++) {
-      await tester.drag(
-        find.byType(Scrollable).first,
-        const Offset(0, -600),
-        warnIfMissed: false,
-      );
+    for (var i = 0; i < 30 && target.evaluate().isEmpty; i++) {
+      final position = tester
+          .state<ScrollableState>(find.byType(Scrollable).first)
+          .position;
+      position.jumpTo(position.maxScrollExtent);
+      await tester.pump();
       await tester.pump();
       await tester.pump();
     }
@@ -119,7 +129,7 @@ void main() {
     await scrollTo(tester, oldest);
     expect(oldest, findsOneWidget);
     expect(built(find.byType(FeedCard, skipOffstage: false)), lessThan(60));
-    await db.close();
+    await finish(tester);
   });
 
   testWidgets('a section builds only the cards on screen', (tester) async {
@@ -136,7 +146,7 @@ void main() {
     );
     await scrollTo(tester, oldest);
     expect(oldest, findsOneWidget);
-    await db.close();
+    await finish(tester);
   });
 
   testWidgets('the photo grid builds only the rows on screen', (tester) async {
@@ -155,7 +165,7 @@ void main() {
     );
     await scrollTo(tester, oldest);
     expect(oldest, findsOneWidget);
-    await db.close();
+    await finish(tester);
   });
 
   testWidgets('the video grid builds only the rows on screen', (tester) async {
@@ -168,7 +178,7 @@ void main() {
       skipOffstage: false,
     );
     expect(built(tiles), lessThan(60));
-    await db.close();
+    await finish(tester);
   });
 
   testWidgets('the places list builds only the rows on screen', (tester) async {
@@ -181,7 +191,7 @@ void main() {
       skipOffstage: false,
     );
     expect(built(rows), lessThan(40));
-    await db.close();
+    await finish(tester);
   });
 
   testWidgets('Library counts without reading every log', (tester) async {
@@ -194,7 +204,7 @@ void main() {
     );
     expect(find.textContaining('$many logs'), findsOneWidget);
     expect(repo.fullFeeds, 0);
-    await db.close();
+    await finish(tester);
   });
 
   testWidgets('Calendar reads only the month it shows', (tester) async {
@@ -208,6 +218,6 @@ void main() {
     expect(repo.fullFeeds, 0);
     // Today's log is listed under the selected day.
     expect(find.text('Entry 0'), findsOneWidget);
-    await db.close();
+    await finish(tester);
   });
 }
