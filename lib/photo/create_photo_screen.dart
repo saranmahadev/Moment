@@ -72,6 +72,7 @@ class _CreatePhotoScreenState extends State<CreatePhotoScreen> {
         editing.id,
         caption: _captionNullable(),
       );
+      if (!mounted) return;
       widget.onSaved(editing.id);
       return;
     }
@@ -80,13 +81,21 @@ class _CreatePhotoScreenState extends State<CreatePhotoScreen> {
     if (file == null) return;
 
     setState(() => _saving = true);
-    final imported = await widget.mediaStore.importPhoto(file);
-    final id = await widget.repository.createPhoto(
-      path: imported.path,
-      thumbnailPath: imported.thumbnailPath,
-      caption: _captionNullable(),
-      createdAt: widget.now(),
-    );
+    final String id;
+    try {
+      final imported = await widget.mediaStore.importPhoto(file);
+      id = await widget.repository.createPhoto(
+        path: imported.path,
+        thumbnailPath: imported.thumbnailPath,
+        caption: _captionNullable(),
+        createdAt: widget.now(),
+      );
+    } catch (_) {
+      if (mounted) setState(() => _saving = false);
+      return;
+    }
+    // Closed while saving: the photo is logged, there is nothing to leave.
+    if (!mounted) return;
     widget.onSaved(id);
   }
 
@@ -232,14 +241,23 @@ class _Header extends StatelessWidget {
                 borderRadius: BorderRadius.circular(22),
               ),
               alignment: Alignment.center,
-              child: Text(
-                'Save',
-                style: TextStyle(
-                  color: tokens.onInk,
-                  fontSize: 15,
-                  fontWeight: FontWeight.w600,
-                ),
-              ),
+              child: saving
+                  ? SizedBox(
+                      width: 16,
+                      height: 16,
+                      child: CircularProgressIndicator(
+                        strokeWidth: 2,
+                        color: tokens.onInk,
+                      ),
+                    )
+                  : Text(
+                      'Save',
+                      style: TextStyle(
+                        color: tokens.onInk,
+                        fontSize: 15,
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ),
             ),
           )
         else

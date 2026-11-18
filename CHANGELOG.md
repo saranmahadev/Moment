@@ -1,5 +1,14 @@
 # Changelog
 
+## 0.4.1 — Fixes
+
+- **Photo and video**: Save shows progress on photos too, and a screen
+  you leave while saving no longer tries to close itself afterwards.
+  Errors while saving put Save back instead of leaving it spinning.
+- **Audio**: when a recording ends the button changes from Pause back to
+  Play, and Play starts it again from the beginning.
+- The launcher icon is Moment's logo (checked at every Android density).
+
 ## 0.4.0 — Calendar, Search and Settings
 
 Every screen in the mockups now exists, in light and dark.
