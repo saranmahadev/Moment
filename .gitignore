@@ -30,3 +30,9 @@ android/key.properties
 
 # Images flutter_test writes when a golden does not match.
 **/failures/
+
+# The upgrade matrix's fixtures: databases and backups made by each
+# released version from made-up logs (tool/fixtures/make_fixtures.sh).
+# Nothing personal; they must be committed for test/upgrade/ to run.
+!test/fixtures/releases/**/*.db
+!test/fixtures/releases/**/*.moment
