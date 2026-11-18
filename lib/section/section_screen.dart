@@ -10,6 +10,8 @@ import '../domain/log.dart';
 import '../domain/log_type.dart';
 import '../home/feed_card.dart';
 import '../library/filter_strip.dart';
+import 'audio_row.dart';
+import 'emoji_week_strip.dart';
 import '../library/log_filter.dart';
 
 /// One type's full list, newest first unless a filter says otherwise: Library opens this for whichever
@@ -136,15 +138,32 @@ class SectionScreen extends StatelessWidget {
                       tokens: tokens,
                       onClear: onClearFilter,
                     ),
+                    if (type == LogType.emoji)
+                      Padding(
+                        padding: const EdgeInsets.only(bottom: 2),
+                        child: EmojiWeekStrip(
+                          // The whole week, whatever the filter shows.
+                          week: weekOfEmoji(logs, today: filterToday(now())),
+                          today: filterToday(now()),
+                        ),
+                      ),
                     for (final log in shown)
                       Padding(
-                        padding: const EdgeInsets.only(top: 14),
-                        child: FeedCard(
-                          key: ValueKey('section-card-${log.id}'),
-                          log: log,
-                          showFullDate: true,
-                          onTap: () => onOpenLog?.call(log),
+                        padding: EdgeInsets.only(
+                          top: type == LogType.audio ? 10 : 14,
                         ),
+                        child: log is AudioLog
+                            ? AudioRow(
+                                key: ValueKey('audio-row-${log.id}'),
+                                log: log,
+                                onTap: () => onOpenLog?.call(log),
+                              )
+                            : FeedCard(
+                                key: ValueKey('section-card-${log.id}'),
+                                log: log,
+                                showFullDate: true,
+                                onTap: () => onOpenLog?.call(log),
+                              ),
                       ),
                   ],
                 );
