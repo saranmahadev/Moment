@@ -133,7 +133,8 @@ void main() {
 
     test('a release key passes', () {
       final r = signingCheck(printCerts: release, version: '1.0.0');
-      expect((r.problems, r.warnings), (isEmpty, isEmpty));
+      expect(r.problems, isEmpty);
+      expect(r.warnings, isEmpty);
     });
 
     test('the debug key fails a final release', () {
