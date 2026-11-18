@@ -8,21 +8,7 @@ import 'package:moment/widgets/widget_bridge.dart';
 import 'package:moment/widgets/widget_publisher.dart';
 import 'package:moment/widgets/widget_snapshot.dart';
 
-class FakeWidgetBridge implements WidgetBridge {
-  final published = <WidgetSnapshot>[];
-  bool pinAnswer = true;
-  int pinRequests = 0;
-
-  @override
-  Future<void> publish(WidgetSnapshot snapshot) async =>
-      published.add(snapshot);
-
-  @override
-  Future<bool> requestPin() async {
-    pinRequests++;
-    return pinAnswer;
-  }
-}
+import '../support/fake_widget_bridge.dart';
 
 DateTime d(int day) => DateTime.utc(2026, 11, day);
 
