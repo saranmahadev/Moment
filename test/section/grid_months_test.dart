@@ -7,14 +7,13 @@ import 'package:moment/design/theme.dart';
 import 'package:moment/domain/log.dart';
 import 'package:moment/domain/log_type.dart';
 import 'package:moment/library/log_filter.dart';
-import 'package:moment/library/sort_chip.dart';
 import 'package:moment/photo/photo_section_screen.dart';
 import 'package:moment/section/month_groups.dart';
-import 'package:moment/section/section_screen.dart';
 import 'package:moment/video/video_section_screen.dart';
 
-/// The mockups' "Newest first" control on every section, and month
-/// headings in the photo and video grids.
+/// Month headings in the photo and video grids, as in the mockups. (The
+/// mockups' "Newest first" pill was replaced by the order in each Library
+/// card's filter.)
 void main() {
   final now = DateTime.utc(2026, 11, 7, 10);
 
@@ -52,69 +51,12 @@ void main() {
     });
   });
 
-  group('SortChip', () {
-    Future<List<bool>> pump(WidgetTester tester, bool oldestFirst) async {
-      final changes = <bool>[];
-      await tester.pumpWidget(
-        MaterialApp(
-          theme: momentTheme(),
-          home: Scaffold(
-            body: SortChip(oldestFirst: oldestFirst, onChanged: changes.add),
-          ),
-        ),
-      );
-      return changes;
-    }
-
-    testWidgets('says the order and flips it', (tester) async {
-      final changes = await pump(tester, false);
-      expect(find.text('Newest first'), findsOneWidget);
-      await tester.tap(find.text('Newest first'));
-      expect(changes, [true]);
-    });
-
-    testWidgets('and the other way', (tester) async {
-      final changes = await pump(tester, true);
-      expect(find.text('Oldest first'), findsOneWidget);
-      await tester.tap(find.text('Oldest first'));
-      expect(changes, [false]);
-    });
-
-    testWidgets('is one labelled button for a screen reader', (tester) async {
-      await pump(tester, false);
-      expect(find.bySemanticsLabel('Order: newest first'), findsOneWidget);
-    });
-  });
-
   Future<void> pumpScreen(WidgetTester tester, Widget screen) async {
     await tester.binding.setSurfaceSize(const Size(390, 844));
     addTearDown(() => tester.binding.setSurfaceSize(null));
     await tester.pumpWidget(MaterialApp(theme: momentTheme(), home: screen));
     await tester.pump();
   }
-
-  testWidgets('every section offers the order, and passes the choice on', (
-    tester,
-  ) async {
-    final db = AppDatabase(NativeDatabase.memory());
-    final repo = LogRepository(db, clock: () => now);
-    await repo.createText(body: 'one');
-    final chosen = <bool>[];
-    await pumpScreen(
-      tester,
-      SectionScreen(
-        type: LogType.text,
-        repository: repo,
-        now: () => now,
-        onSortChanged: chosen.add,
-      ),
-    );
-    await tester.tap(find.text('Newest first'));
-    expect(chosen, [true]);
-    await tester.pumpWidget(const SizedBox());
-    await tester.pumpAndSettle();
-    await db.close();
-  });
 
   for (final type in [LogType.photo, LogType.video]) {
     testWidgets('the ${type.name} grid is headed by month', (tester) async {
@@ -145,7 +87,6 @@ void main() {
       final november = tester.getTopLeft(find.text('NOVEMBER 2026'));
       final october = tester.getTopLeft(find.text('OCTOBER 2026'));
       expect(october.dy, greaterThan(november.dy));
-      expect(find.text('Newest first'), findsOneWidget);
 
       // Oldest first: October comes first.
       await tester.pumpWidget(
@@ -169,7 +110,6 @@ void main() {
         tester.getTopLeft(find.text('OCTOBER 2026')).dy,
         lessThan(tester.getTopLeft(find.text('NOVEMBER 2026')).dy),
       );
-      expect(find.text('Oldest first'), findsOneWidget);
       await tester.pumpWidget(const SizedBox());
       await tester.pumpAndSettle();
       await db.close();
