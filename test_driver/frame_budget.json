@@ -1,0 +1,6 @@
+{
+  "_about": "Frame budget per traced action, in milliseconds, checked by test_driver/frame_budget_driver.dart. Build is the UI thread's work per frame. Measured on the CI emulator, which is no phone: these catch regressions; how it feels is checked on a real device. Tighten them from a run's summary once it is known.",
+  "home_feed": { "p90_build_ms": 12, "worst_build_ms": 120, "missed_build_share": 0.08 },
+  "photo_grid": { "p90_build_ms": 12, "worst_build_ms": 120, "missed_build_share": 0.08 },
+  "calendar": { "p90_build_ms": 16, "worst_build_ms": 160, "missed_build_share": 0.12 }
+}
