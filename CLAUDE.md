@@ -99,6 +99,13 @@ Screens in Phase 1: Lock, Home, Add, Library, New text, New emoji, Text section,
 - Goldens for the Bengaluru proof-of-concept point (12.91227 N, 77.71650 E) are in `test/goldens/goldens/place_map_*`.
 - Flow tests use a fixed clock: with the Ahem test font "Wednesday" overflows the Home header, so reading the real clock failed every Wednesday.
 
+## Audio player decisions (owner-approved design, after 0.4.1)
+
+- `AudioDetailScreen` is a music-style player: `_Artwork` card, `PlayerWaveform` (`lib/audio/player_waveform.dart`: 56 bars from `resamplePeaks`, glow at the playhead, drag to scrub with a time bubble, seek on release, one slider for TalkBack; no `LayoutBuilder` inside, because the screen sizes itself with `IntrinsicHeight`), play/pause, 15 s skips, Loop (`AudioPlaybackController.setLoop`) and a Speed chip cycling 1, 1.25, 1.5, 2, 0.75.
+- The ended recording counts as stopped (`isAudibleState`), so the button shows Play and Play restarts it.
+- No note under the player (nothing is transcribed). `AudioLog.note` stays in the schema and backups; the screen just does not show or edit it.
+- No mini player, no background or lock-screen playback, no bookmarks, no clip sharing (owner declined).
+
 ## Logo, site, film and open-source files (before Phase 5)
 
 - Licence: GPL-3.0, chosen by the owner (`LICENSE`). `CONTRIBUTING.md` and `SECURITY.md` state the rules; the fonts' credits are in `assets/fonts/README.md`.

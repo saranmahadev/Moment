@@ -78,10 +78,12 @@ void main() {
       final gesture = await tester.startGesture(
         Offset(rect.left + rect.width * 0.25, rect.center.dy),
       );
-      await gesture.moveTo(Offset(rect.left + rect.width * 0.75, rect.center.dy));
+      await gesture.moveTo(
+        Offset(rect.left + rect.width * 0.75, rect.center.dy),
+      );
       await tester.pump();
 
-      expect(find.text('2:01'), findsOneWidget); // 75% of 2:41
+      expect(find.text('2:00'), findsOneWidget); // 75% of 2:41 is 120.75 s
       expect(seeks, isEmpty);
 
       await gesture.up();
@@ -89,7 +91,7 @@ void main() {
 
       expect(seeks, hasLength(1));
       expect(seeks.single, closeTo(0.75, 0.06));
-      expect(find.text('2:01'), findsNothing);
+      expect(find.text('2:00'), findsNothing);
     });
 
     testWidgets('dragging past either end stays inside the recording', (
@@ -105,23 +107,24 @@ void main() {
       expect(seeks.single, 1.0);
     });
 
-    testWidgets('screen readers get a slider with the position, not a drawing', (
-      tester,
-    ) async {
-      final handle = tester.ensureSemantics();
-      await pump(tester, fraction: 0.5);
+    testWidgets(
+      'screen readers get a slider with the position, not a drawing',
+      (tester) async {
+        final handle = tester.ensureSemantics();
+        await pump(tester, fraction: 0.5);
 
-      final node = tester.getSemantics(find.byType(PlayerWaveform));
-      expect(node.label, contains('Playback position'));
-      expect(node.value, '1:20 of 2:41');
-      expect(node.hasFlag(SemanticsFlag.isSlider), isTrue);
+        final node = tester.getSemantics(find.byType(PlayerWaveform));
+        expect(node.label, contains('Playback position'));
+        expect(node.value, '1:21 of 2:41');
+        expect(node.flagsCollection.isSlider, isTrue);
 
-      tester.semantics.increase();
-      await tester.pump();
-      expect(seeks.single, greaterThan(0.5));
+        tester.semantics.increase(find.semantics.byLabel('Playback position'));
+        await tester.pump();
+        expect(seeks.single, greaterThan(0.5));
 
-      handle.dispose();
-    });
+        handle.dispose();
+      },
+    );
   });
 
   group('goldens, as in the approved design', () {

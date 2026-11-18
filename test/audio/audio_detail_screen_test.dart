@@ -153,7 +153,8 @@ void main() {
     final playback = _FakeAudioPlaybackController();
     await pump(tester, playback: playback, log_: untitled);
 
-    expect(find.text('Audio'), findsOneWidget);
+    // The fallback title, and the type badge on the artwork.
+    expect(find.text('Audio'), findsNWidgets(2));
 
     await close(tester);
   });
@@ -211,9 +212,7 @@ void main() {
     await close(tester);
   });
 
-  testWidgets('Edit lets the title be changed, Save stores it', (
-    tester,
-  ) async {
+  testWidgets('Edit lets the title be changed, Save stores it', (tester) async {
     final playback = _FakeAudioPlaybackController();
     await pump(tester, playback: playback);
 
@@ -265,9 +264,7 @@ void main() {
     await close(tester);
   });
 
-  testWidgets('Loop is off until asked for, then on, then off', (
-    tester,
-  ) async {
+  testWidgets('Loop is off until asked for, then on, then off', (tester) async {
     final playback = _FakeAudioPlaybackController();
     await pump(tester, playback: playback);
 
@@ -309,12 +306,17 @@ void main() {
     await pump(tester, playback: playback);
 
     final rect = tester.getRect(find.byType(PlayerWaveform));
-    final gesture = await tester.startGesture(rect.centerLeft + const Offset(4, 0));
+    final gesture = await tester.startGesture(
+      rect.centerLeft + const Offset(4, 0),
+    );
     await gesture.moveTo(rect.center);
     await gesture.up();
     await tester.pump();
 
-    expect(playback.lastSeek!.inSeconds, inInclusiveRange(18, 24)); // about half of 42 s
+    expect(
+      playback.lastSeek!.inSeconds,
+      inInclusiveRange(18, 24),
+    ); // about half of 42 s
 
     await close(tester);
   });

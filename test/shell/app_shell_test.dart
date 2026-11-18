@@ -126,6 +126,9 @@ class _FakeAudioPlaybackController implements AudioPlaybackController {
   Future<void> setSpeed(double speed) async {}
 
   @override
+  Future<void> setLoop(bool on) async {}
+
+  @override
   Future<void> dispose() async {
     await _position.close();
     await _playing.close();
