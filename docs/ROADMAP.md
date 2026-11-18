@@ -160,7 +160,7 @@ No new screens. Phase 5 makes everything built so far match the mockups exactly,
 
 - Fidelity pass: every screen compared to its artboard for spacing, type, colour, glass edge and shadow, with goldens tightened to a strict tolerance.
 - Performance: scrolling stays smooth on a mid-range Android phone and an older iPhone. Real blur stays on floating surfaces only; feed cards use the cheaper translucent treatment.
-- Security checks: the database is unreadable without the key, no network permission in the release build, backups excluded from iCloud and Google auto-backup, app-switcher preview hidden when locked.
+- Security checks: the database is unreadable without the key, the internet permission only for the opt-in place names (owner-approved in 0.3.0), backups excluded from iCloud and Google auto-backup, app-switcher preview hidden when locked.
 - Scale: a library of 20,000 logs with thousands of photos opens fast and scrolls without jank.
 - Upgrade path: databases from 0.1.0, 0.2.0, 0.3.0 and 0.4.0 all open correctly in 1.0.0.
 - Local diagnostics log with no crash reporting service, so nothing leaves the phone.
@@ -179,6 +179,20 @@ No new screens. Phase 5 makes everything built so far match the mockups exactly,
 - The owner signs off a release candidate on their own devices.
 - 1.0.0 is tagged and released with everything shown in the mockups.
 
+**How it was done (1.0.0-rc.1)**
+
+The owner chose the plan's recommended options: Android only for 1.0, published on GitHub Releases (store text ready in `docs/store/`), the app switcher preview hidden while the lock is on, the phone's own camera with the screens restyled, local diagnostics, and a lost-key screen that never deletes. In order, each a branch:
+
+1. Upgrade matrix: fixtures made by every released version's own code (`tool/fixtures/make_fixtures.sh`), opened by `test/upgrade/`.
+2. Security: live PIN state (a real bug: turning the lock off needed a restart), slower guessing, the hidden preview (`ScreenPrivacy`), `JournalOpener` and the lost-key screen, and Trash's 30-day purge actually running.
+3. Diagnostics: `DiagnosticsLog`, Settings → Diagnostics.
+4. Scale: a paged feed, a date-window feed, counts by type, feed indexes (schema 6), lazy grids, small posters; a 20,000-log round trip test.
+5. Frame budget: `integration_test/frame_budget_test.dart` on an emulator (Frame budget workflow).
+6. Fidelity: the glass shadow fix (the biggest difference on every screen), then the screen-by-screen differences; see the review page and `CHANGELOG.md`.
+7. Release check (`tool/release_check.dart`) and release candidates in the Release workflow.
+
+Left as the owner's call: the New text formatting toolbar and "Draft saved" of the mockup (they need rich text throughout); the mockup's "Newest first" pill (replaced earlier by the order in each Library card's filter); the notes removed earlier on purpose (Lock subtitle, Photo detail chips).
+
 ## Screen coverage
 
 | Phase | Release | New screens | Finished here |
@@ -194,9 +208,9 @@ Total: 13 + 6 + 6 + 2 = 27 screens, all in 1.0.0.
 ## Open decisions (defaults used until the owner says otherwise)
 
 - Releases: Android APK; iPhone via TestFlight needs an Apple Developer account.
-- Map: keep the stylised placeholder; a real offline map is not in 1.0.
+- Map: an offline Natural Earth map in the Location screens (owner-approved after 0.4.1); the Location section keeps the stylised tile.
 - First-run backup explainer: not in the mockups; not built unless approved.
-- Outside 1.0: home-screen widget, lock-screen shortcut, on-device transcription, import from other apps, any kind of sync.
+- Outside 1.0: iOS releases and the iOS widget, lock-screen shortcut, on-device transcription, import from other apps, any kind of sync. (The Android home screen widget shipped in 0.6.0.)
 - Dark mode: designed at the start of Phase 4.
 - Minimum OS: iOS 16 and Android 8 (API 26).
 - Security: app lock is a screen gate with the database key in Keychain or Keystore; media protected by app-private storage in 1.0.

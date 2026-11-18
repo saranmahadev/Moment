@@ -39,7 +39,7 @@ Moment is a life journal for your phone. It keeps what you write, feel, see, hea
 
 Everything stays on the device, in an encrypted database. There is nothing to sign up for.
 
-> **Status:** version 0.6.0, a preview on the way to 1.0. Every screen exists and the app is usable day to day, but it has had little testing on real phones yet. See [Status and roadmap](#status-and-roadmap).
+> **Status:** version 1.0.0-rc.1, the release candidate for 1.0. Every screen exists and the app is usable day to day; 1.0.0 follows once the candidate has been tried on real phones. See [Status and roadmap](#status-and-roadmap).
 
 ## Screens
 
@@ -67,10 +67,12 @@ More on the [website](https://saranmahadev.github.io/Moment/#screens). These are
 - **Calendar**: a month at a glance with a dot per kind on each day. Days are the ones logs were made on, so travel and daylight saving move nothing.
 - **Widget** (Android): your streak and a button for each log type on the home screen. It never opens the journal; you choose whether it shows the streak at all.
 - **Streaks**: days in a row, a heatmap of your year and milestones, with grace days you set. Worked out on the phone from your logs; nothing extra is stored or sent.
-- **Search**: full-text search as you type across everything you have written, named or captioned, on the device (SQLite FTS5). Fast at 20,000 logs.
+- **Search**: full-text search as you type across everything you have written, named or captioned, on the device (SQLite FTS5).
+- **Built for years of logs**: tested with 20,000 logs, which open, scroll, search, back up and restore without slowing down.
 - **Encrypted backup**: one passphrase-protected `.moment` file holds every log and media file. Restore is all or nothing.
 - **Export** to Markdown, JSON and the original files, for the kinds you choose.
-- **App lock**: a PIN, with Face ID or fingerprint.
+- **App lock**: a PIN, with Face ID or fingerprint. Wrong PINs slow guessing down, and while the lock is on the app switcher shows no preview of the journal.
+- **Diagnostics**: a short log of errors kept on the phone (never what you wrote), for you to read or share yourself.
 - **Trash**: deleted logs wait 30 days, then go for good, files included.
 - **Light and dark** themes, and **Reduce Transparency** for solid surfaces.
 - **Accessible**: every control is labelled for screen readers, tap targets are at least 44 pt, and text fits at 200% size.
@@ -89,6 +91,9 @@ This is checked, not just claimed:
 - `test/location/network_boundary_test.dart` keeps network code to one file, one address, over HTTPS, and keeps HTTP and geocoding packages out of the dependencies.
 - `tool/check_manifest.dart` lists every permission the Android release build asks for and fails CI on ones a private journal never needs (background location, advertising id, contacts, SMS, call log).
 - The **Live check** workflow asks the real place-name service two questions, to confirm the one request the app can send still works.
+- `tool/release_check.dart` runs on every release build: permissions exactly as listed, Android backup off, the encrypted SQLite inside each APK, the signing key, the version and the sizes.
+
+The [privacy policy](https://saranmahadev.github.io/Moment/privacy.html) says the same in plain words.
 
 Found a security or privacy problem? Please see [SECURITY.md](SECURITY.md).
 
@@ -155,7 +160,7 @@ flutter test --run-skipped --tags preview test/gate/previews_test.dart
 | `test/` | Tests, mirroring `lib/`; `test/gate/` holds the every-screen checks |
 | `design/` | Mockups, the logo and the film, with the scripts that build them |
 | `site/` | The project website, published to GitHub Pages |
-| `docs/` | Roadmap and working agreement |
+| `docs/` | Roadmap, working agreement and store text (`docs/store/`) |
 
 ### Releasing
 
@@ -171,7 +176,7 @@ Run the **Release** workflow (Actions → Release → Run workflow) with the ver
 | 0.4 | Calendar, Search, Settings, dark theme | Released |
 | 0.5 | Streaks | Released |
 | 0.6 | Home screen widget (Android) | Released |
-| 1.0 | Polish, hardening, signed releases | Next |
+| 1.0 | Polish, hardening, signed releases | Release candidate |
 
 The plan for each phase, with its tests and exit gate, is in [docs/ROADMAP.md](docs/ROADMAP.md).
 
