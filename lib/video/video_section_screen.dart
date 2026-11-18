@@ -197,7 +197,11 @@ class _VideoTile extends StatelessWidget {
               child: Stack(
                 fit: StackFit.expand,
                 children: [
-                  VideoPoster(path: log.posterPath, tokens: tokens),
+                  VideoPoster(
+                    path: log.posterPath,
+                    tokens: tokens,
+                    decodeWidth: VideoPoster.tileDecodeWidth,
+                  ),
                   Center(child: PlayBadge(tokens: tokens, size: 38)),
                   Positioned(
                     right: 8,
