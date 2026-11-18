@@ -396,4 +396,62 @@ void main() {
       await close(tester);
     });
   });
+
+  group('streaks row', () {
+    Future<void> showRow(WidgetTester tester) async {
+      await tester.scrollUntilVisible(find.text('Streaks'), 200);
+      await tester.pump();
+    }
+
+    testWidgets('sits under Logging and says what it is set to', (
+      tester,
+    ) async {
+      final db = AppDatabase(NativeDatabase.memory());
+      await pump(tester, LogRepository(db));
+      await showRow(tester);
+
+      expect(find.text('Streaks'), findsOneWidget);
+      expect(find.text('1 grace day a week'), findsOneWidget);
+      expect(find.text('On'), findsOneWidget);
+
+      await tester.pumpWidget(const SizedBox());
+      await tester.pumpAndSettle();
+      await db.close();
+    });
+
+    testWidgets('follows the grace days and the switch', (tester) async {
+      final db = AppDatabase(NativeDatabase.memory());
+      final settings = AppSettings.inMemory({'graceDays': 3});
+      await pump(tester, LogRepository(db), settings: settings);
+      await showRow(tester);
+      expect(find.text('3 grace days a week'), findsOneWidget);
+
+      await settings.setGraceDays(0);
+      await settings.setShowStreaks(false);
+      await tester.pump();
+
+      expect(find.text('Hidden'), findsOneWidget);
+      expect(find.text('Off'), findsOneWidget);
+
+      await tester.pumpWidget(const SizedBox());
+      await tester.pumpAndSettle();
+      await db.close();
+    });
+
+    testWidgets('opens the streak settings', (tester) async {
+      final db = AppDatabase(NativeDatabase.memory());
+      await pump(tester, LogRepository(db));
+      await showRow(tester);
+
+      await tester.tap(find.text('Streaks'));
+      await tester.pumpAndSettle();
+
+      expect(find.text('Show streaks'), findsOneWidget);
+      expect(find.text('Missed days forgiven each week'), findsOneWidget);
+
+      await tester.pumpWidget(const SizedBox());
+      await tester.pumpAndSettle();
+      await db.close();
+    });
+  });
 }
