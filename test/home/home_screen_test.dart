@@ -93,6 +93,12 @@ void main() {
     // One in the mood row itself, one in the new feed card it created.
     expect(find.text('😌'), findsNWidgets(2));
 
+    // A quick tap logs the emoji at full strength.
+    final logged = (await tester.runAsync(
+      () => repo.watchFeed().first,
+    ))!.whereType<EmojiLog>().single;
+    expect(logged.strength, 5);
+
     await tester.pumpWidget(const SizedBox());
     await tester.pumpAndSettle();
     await db.close();
