@@ -33,6 +33,10 @@ import '../photo/photo_picker.dart';
 import '../shell/app_shell.dart';
 import 'lock_gate.dart';
 import 'themed_app.dart';
+import '../widgets/deep_links.dart';
+import '../widgets/widget_bridge.dart';
+import '../widgets/widget_link_channel.dart';
+import '../widgets/widget_publisher.dart';
 import '../data/database.dart';
 import '../data/key_store.dart';
 
@@ -132,6 +136,10 @@ class _MomentAppState extends State<MomentApp> with WidgetsBindingObserver {
   final _playerScreen = DevicePlayerScreenControl();
 
   final _reminders = DeviceReminderScheduler();
+
+  /// Taps on the home screen widget wait here until the shell can open them.
+  final _deepLinks = DeepLinkInbox();
+  WidgetPublisher? _widgetPublisher;
   AppLockController? _lockController;
 
   /// Null until the bootstrap has read them; the app follows the system
@@ -142,8 +150,15 @@ class _MomentAppState extends State<MomentApp> with WidgetsBindingObserver {
   void initState() {
     super.initState();
     WidgetsBinding.instance.addObserver(this);
+    WidgetLinkChannel(_deepLinks).start();
     _resources.then((resources) {
       if (mounted) setState(() => _settings = resources.settings);
+      _widgetPublisher = WidgetPublisher(
+        days: resources.repository.watchActiveDays(),
+        settings: resources.settings,
+        bridge: const DeviceWidgetBridge(),
+        now: DateTime.now,
+      );
       // Schedule the reminder afresh at each launch: it survives a change
       // of time zone, and a schedule the system dropped comes back.
       final settings = resources.settings;
@@ -156,6 +171,7 @@ class _MomentAppState extends State<MomentApp> with WidgetsBindingObserver {
   @override
   void dispose() {
     WidgetsBinding.instance.removeObserver(this);
+    _widgetPublisher?.dispose();
     super.dispose();
   }
 
@@ -203,6 +219,7 @@ class _MomentAppState extends State<MomentApp> with WidgetsBindingObserver {
               backups: resources.backups,
               exports: resources.exports,
               storage: resources.storage,
+              deepLinks: _deepLinks,
             ),
           );
         },

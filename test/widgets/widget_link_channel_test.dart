@@ -15,7 +15,8 @@ void main() {
   test('picks up the link the app was started with', () async {
     messenger.setMockMethodCallHandler(
       channel,
-      (call) async => call.method == 'initialLink' ? 'moment://add/photo' : null,
+      (call) async =>
+          call.method == 'initialLink' ? 'moment://add/photo' : null,
     );
     final inbox = DeepLinkInbox();
 
@@ -48,7 +49,9 @@ void main() {
 
     await messenger.handlePlatformMessage(
       channel.name,
-      channel.codec.encodeMethodCall(const MethodCall('link', 'moment://streaks')),
+      channel.codec.encodeMethodCall(
+        const MethodCall('link', 'moment://streaks'),
+      ),
       (_) {},
     );
 
