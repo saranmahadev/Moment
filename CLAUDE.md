@@ -17,7 +17,7 @@ Releases: Phase 1 = 0.1.0 (Foundation, Text and Emoji), 2 = 0.2.0 (Photo, Audio,
 
 ## State
 
-Phases 1 to 4 are released (`v0.3.0` and `v0.4.0` are published with their APKs; the owner decided not to tag 0.1.0 and 0.2.0 after the fact). Every screen in the mockups exists, in light and dark. `CHANGELOG.md` has the detail per release. Next is Phase 5 (polish and hardening, 1.0.0) in `docs/ROADMAP.md`; the owner wants the release signing key and other production setup done at the end of it. CI pins Flutter 3.47.9; develop and verify on that version. First time setup is in `README.md` (`flutter create` for platform folders, then `build_runner`).
+Phases 1 to 4 are released (`v0.3.0` and `v0.4.0` are published with their APKs; the owner decided not to tag 0.1.0 and 0.2.0 after the fact). 0.5.0 added Streaks (see the Streaks decisions); Phase 5 (1.0.0) is still ahead. Every screen in the mockups exists, in light and dark. `CHANGELOG.md` has the detail per release. Next is Phase 5 (polish and hardening, 1.0.0) in `docs/ROADMAP.md`; the owner wants the release signing key and other production setup done at the end of it. CI pins Flutter 3.47.9; develop and verify on that version. First time setup is in `README.md` (`flutter create` for platform folders, then `build_runner`).
 
 Tags are never pushed by hand: the **Release** workflow (`.github/workflows/release.yml`, run with a version and optionally a commit) checks, builds, tags and publishes the APK in one go. See `docs/WORKFLOW.md`, "Releases".
 
@@ -115,6 +115,16 @@ Screens in Phase 1: Lock, Home, Add, Library, New text, New emoji, Text section,
 - Controls over footage use two fixed colours in `lib/video/overlay_colours.dart` (a dark film, white marks); everything else comes from the tokens.
 - A `VideoPlayerModel` or timer created in a `setUp` of a widget test runs on the wrong clock: create them inside the test.
 - Not built (owner declined for now): mini player, picture-in-picture, background playback, captions.
+
+## Streaks decisions (owner-approved design, 0.5.0)
+
+- A streak is derived, never stored: `streakOf(days, today, grace:)` in `lib/streaks/streak_model.dart` is a pure function of the set of `Log.localDay` values (midnight to midnight in the zone the log was made in), so Trash, restore, backdating and backups need nothing. No schema or manifest change.
+- Grace days (`AppSettings.graceDays`, 0 to 3, default 1; `showStreaks`, default on): a missed day does not break a streak while no more than `grace` days were missed in any seven in a row. A streak starts and ends on a logged day; today is not counted as missed until it is over. Forgiven days count in the total (a 12-day streak can be 11 logged plus 1 forgiven) and show as outlined squares.
+- Data: `LogRepository.watchActiveDays()` and `watchDayCounts()` read one number per log with SQL (the day is `created_at_ms` plus the stored offset), not whole logs. `StreakBuilder` hands `StreakSummary?` to a screen (null while loading, with no settings, or when streaks are off).
+- Screens: Home `StreakChip` (only when a streak exists), Calendar `StreakCard` (always, "Start a streak" when none, so the page stays reachable) and a band behind the running streak, `StreaksScreen` (hero and week, stats, Activity heatmap, milestones), `StreakSettingsScreen`, and a Streaks row in Settings. The evening reminder text is unchanged and never mentions streaks.
+- The heatmap (`lib/streaks/heatmap_model.dart`, `streak_heatmap.dart`) is one painted surface, not hundreds of buttons: tap or drag picks a day, and a single slider is exposed to screen readers. A year is wider than the card and scrolls. Colours come from `MomentTokens.streakRamp` and `streakAccent`.
+- Accessibility lesson: a labelled `Semantics` without `container: true` merges with its neighbours into one node (a Back button read together with the title; `find.bySemanticsLabel` then returns the whole row). Give separate controls `container: true`; `RoundGlassButton` now does.
+- Design review page for the feature: https://claude.ai/artifact/Gz2G5sxJxSZaud9Q6bvCkz (not needed to build anything).
 
 ## Logo, site, film and open-source files (before Phase 5)
 
