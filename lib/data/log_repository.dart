@@ -474,6 +474,33 @@ class LogRepository {
     );
   }
 
+  /// The calendar days that have at least one log outside Trash, each once.
+  /// A day is the one the log was made on in its own time zone (the offset
+  /// stored with it), as UTC midnights, the form [Log.localDay] uses. Reads
+  /// one number per log instead of whole logs, so it stays cheap for the
+  /// streaks that are worked out from it.
+  Stream<Set<DateTime>> watchActiveDays() {
+    const dayMs = Duration.millisecondsPerDay;
+    // Floor division, so a moment before 1970 lands on the right day.
+    const localMs = '(created_at_ms + tz_offset_minutes * 60000)';
+    return _db
+        .customSelect(
+          'SELECT DISTINCT ($localMs - (($localMs % $dayMs) + $dayMs) % $dayMs)'
+          ' / $dayMs AS day FROM log WHERE deleted_at_ms IS NULL',
+          readsFrom: {_db.logsTable},
+        )
+        .watch()
+        .map(
+          (rows) => {
+            for (final row in rows)
+              DateTime.fromMillisecondsSinceEpoch(
+                row.read<int>('day') * dayMs,
+                isUtc: true,
+              ),
+          },
+        );
+  }
+
   /// Every log in Trash, most recently deleted first.
   Stream<List<Log>> watchTrash() {
     final query = _feedQuery()
