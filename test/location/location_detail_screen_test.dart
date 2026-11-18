@@ -76,7 +76,7 @@ void main() {
     expect(find.text('Favourite bench'), findsOneWidget);
     expect(find.text('12.97160° N, 77.59456° E'), findsOneWidget);
     expect(find.text('Accuracy ±12 m'), findsOneWidget);
-    expect(find.text('Coordinates stored on this device'), findsOneWidget);
+    expect(find.text('Coordinates stored on this device'), findsNothing);
 
     await close(tester);
   });

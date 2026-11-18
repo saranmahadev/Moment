@@ -75,6 +75,22 @@ void main() {
     await db.close();
   }
 
+  testWidgets('shows no quality or storage tags under the photo', (
+    tester,
+  ) async {
+    final id = await repo.createPhoto(
+      path: fakeFile('b.jpg').path,
+      thumbnailPath: fakeFile('b-thumb.jpg').path,
+    );
+    await pump(tester, await repo.getById(id) as PhotoLog);
+
+    expect(find.text('Original quality'), findsNothing);
+    expect(find.text('Stored on this device'), findsNothing);
+    expect(find.byIcon(Icons.lock_outline), findsNothing);
+
+    await close(tester);
+  });
+
   testWidgets('shows the date, time and caption', (tester) async {
     final id = await repo.createPhoto(
       path: fakeFile('a.jpg').path,

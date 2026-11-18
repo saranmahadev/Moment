@@ -74,7 +74,7 @@ void main() {
     await pump(tester);
 
     expect(find.text('Moment'), findsOneWidget);
-    expect(find.text('Everything stays on this device'), findsOneWidget);
+    expect(find.text('Everything stays on this device'), findsNothing);
     expect(find.text('No account · No cloud · No tracking'), findsOneWidget);
   });
 
