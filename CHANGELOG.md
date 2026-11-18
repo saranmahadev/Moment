@@ -1,5 +1,53 @@
 # Changelog
 
+## 1.0.0-rc.1 — Release candidate for 1.0
+
+Phase 5: no new kinds of log, but everything made sturdier, faster and
+closer to the mockups, ready for 1.0 once it has been tried on phones.
+
+- **Looks like the mockups.** Glass cards no longer look doubled: their
+  shadow fell under the see-through card and showed through everywhere
+  but a band along the top; it now falls outside, as designed. Photos,
+  Videos and Locations are named in the plural, Library cards are the
+  mockup's size, photo and video grids are headed by month, the Emoji
+  section opens with This week, Audio is a list of recordings with their
+  waveforms, and New photo and New video show a viewfinder frame and
+  shutter (they still use the phone's own camera). Trash's Back button is
+  round again.
+- **Years of logs.** Home loads its feed a page at a time, Library counts
+  each kind without reading every log, Calendar reads only the weeks it
+  shows, and grids build only the rows on screen. Video posters in grids
+  are decoded small. Tested with 20,000 logs, including a full back up
+  and restore.
+- **App lock.** Turning the lock on or off now takes effect at once:
+  before, turning it off could leave a Lock screen with no PIN to unlock
+  it until the app was restarted. After four wrong PINs each further try
+  waits, from 30 seconds up to 15 minutes. While the lock is on, the app
+  switcher shows no preview of the journal (on Android 12 and older this
+  also blocks screenshots).
+- **A lost key no longer strands you.** If the phone's secure storage
+  loses the journal's key, Moment says so and offers to restore a backup
+  or start an empty journal (after a second confirmation). The journal
+  that cannot be opened is kept, never deleted.
+- **Trash empties itself** of logs older than 30 days, files included, as
+  it always said it would: that clean-up never actually ran before.
+- **Diagnostics** (Settings → Diagnostics): a short log of errors and app
+  events kept on the phone, never what you wrote, for you to read, copy
+  or share. If Moment cannot start, it shows this instead of a blank
+  screen.
+- Every earlier version's database, backup and settings are tested to
+  open in this one.
+- Releases are checked before they are published: permissions exactly as
+  listed, Android backup off, the encrypted SQLite inside every APK, the
+  signing key, the version and the sizes.
+- A privacy policy page on the site, and store text ready for when Moment
+  is listed in a store.
+
+Known limits: if no release key has been set up yet, this candidate is
+signed with a throwaway key, so it does not install over 0.6.0: back up
+in the app, uninstall, install, restore. The frame-rate check runs on an
+emulator in CI; how scrolling feels is for a real phone to say.
+
 ## 0.6.0 — Home screen widget (Android)
 
 - **Widget: Streak and Quick add.** One home screen widget with your
