@@ -20,7 +20,6 @@ import '../video/video_playback_controller.dart';
 import '../video/video_probe.dart';
 import '../data/log_repository.dart';
 import '../data/media_store.dart';
-import '../data/secure_database.dart';
 import '../location/map/map_source.dart';
 import '../location/location_provider.dart';
 import '../location/nominatim_place_names.dart';
@@ -39,7 +38,10 @@ import '../widgets/widget_bridge.dart';
 import '../widgets/widget_link_channel.dart';
 import '../widgets/widget_publisher.dart';
 import '../data/database.dart';
+import '../data/journal_opener.dart';
 import '../data/key_store.dart';
+import 'journal_problem_screen.dart';
+import 'launch_tidy.dart';
 
 class _Resources {
   _Resources({
@@ -63,12 +65,35 @@ class _Resources {
   final VideoFrameStrip videoFrames;
 }
 
-Future<_Resources> _bootstrap() async {
-  final supportDir = await getApplicationSupportDirectory();
-  final key = await KeyStore(SecureKeyStorage()).getOrCreateKey();
-  final dbPath = p.join(supportDir.path, 'moment.db');
-  final db = AppDatabase(openEncryptedDatabase(dbPath, key));
+/// What launch found: the journal open and everything built on it, or a
+/// journal that cannot be opened.
+sealed class _Start {}
 
+final class _Ready extends _Start {
+  _Ready(this.resources);
+  final _Resources resources;
+}
+
+final class _Blocked extends _Start {
+  _Blocked(this.problem, this.opener, this.supportDir);
+  final JournalProblem problem;
+  final JournalOpener opener;
+  final Directory supportDir;
+}
+
+Future<_Start> _start() async {
+  final supportDir = await getApplicationSupportDirectory();
+  final opener = JournalOpener(
+    file: File(p.join(supportDir.path, 'moment.db')),
+    keys: SecureKeyStorage(),
+  );
+  return switch (await opener.open()) {
+    JournalOpened(:final db) => _Ready(await _buildResources(supportDir, db)),
+    JournalBlocked(:final problem) => _Blocked(problem, opener, supportDir),
+  };
+}
+
+Future<_Resources> _buildResources(Directory supportDir, AppDatabase db) async {
   final lockController = AppLockController(
     SecurePinStorage(),
     screenPrivacy: const DeviceScreenPrivacy(),
@@ -81,6 +106,8 @@ Future<_Resources> _bootstrap() async {
   final tempDir = await getTemporaryDirectory();
   final cacheDir = await getApplicationCacheDirectory();
   final repository = LogRepository(db);
+  // Housekeeping never holds up the first screen.
+  tidyAtLaunch(repository, now: DateTime.now()).ignore();
   final gateway = DeviceBackupFileGateway();
   return _Resources(
     repository: repository,
@@ -122,7 +149,15 @@ class MomentApp extends StatefulWidget {
 }
 
 class _MomentAppState extends State<MomentApp> with WidgetsBindingObserver {
-  late final Future<_Resources> _resources = _bootstrap();
+  /// Null until launch has opened the journal.
+  _Resources? _resources;
+
+  /// Set when the journal on this phone cannot be opened.
+  _Blocked? _blocked;
+
+  /// The new journal made from the problem screen, kept across retries of
+  /// a restore so the old file is only moved aside once.
+  AppDatabase? _freshDb;
 
   /// One lookup for the life of the app, so its one-request-a-second
   /// spacing and its memory of spots already asked about hold. It is only
@@ -147,21 +182,53 @@ class _MomentAppState extends State<MomentApp> with WidgetsBindingObserver {
     super.initState();
     WidgetsBinding.instance.addObserver(this);
     WidgetLinkChannel(_deepLinks).start();
-    _resources.then((resources) {
-      if (mounted) setState(() => _settings = resources.settings);
-      _widgetPublisher = WidgetPublisher(
-        days: resources.repository.watchActiveDays(),
-        settings: resources.settings,
-        bridge: const DeviceWidgetBridge(),
-        now: DateTime.now,
-      );
-      // Schedule the reminder afresh at each launch: it survives a change
-      // of time zone, and a schedule the system dropped comes back.
-      final settings = resources.settings;
-      if (settings.reminderOn) {
-        _reminders.enable(settings.reminderTime).ignore();
+    _start().then((start) {
+      if (!mounted) return;
+      switch (start) {
+        case _Ready(:final resources):
+          _onReady(resources);
+        case _Blocked():
+          setState(() => _blocked = start);
       }
     });
+  }
+
+  void _onReady(_Resources resources) {
+    setState(() {
+      _blocked = null;
+      _resources = resources;
+      _settings = resources.settings;
+      _lockController = resources.lockController;
+    });
+    _widgetPublisher = WidgetPublisher(
+      days: resources.repository.watchActiveDays(),
+      settings: resources.settings,
+      bridge: const DeviceWidgetBridge(),
+      now: DateTime.now,
+    );
+    // Schedule the reminder afresh at each launch: it survives a change
+    // of time zone, and a schedule the system dropped comes back.
+    final settings = resources.settings;
+    if (settings.reminderOn) {
+      _reminders.enable(settings.reminderTime).ignore();
+    }
+  }
+
+  Future<AppDatabase> _newJournal(_Blocked blocked) async =>
+      _freshDb ??= await blocked.opener.startFresh();
+
+  Future<void> _restoreInto(_Blocked blocked, File file, String pass) async {
+    final db = await _newJournal(blocked);
+    await BackupService(
+      db: db,
+      mediaRoot: blocked.supportDir,
+    ).restoreFrom(file, passphrase: pass);
+    _onReady(await _buildResources(blocked.supportDir, db));
+  }
+
+  Future<void> _startEmpty(_Blocked blocked) async {
+    final db = await _newJournal(blocked);
+    _onReady(await _buildResources(blocked.supportDir, db));
   }
 
   @override
@@ -180,16 +247,22 @@ class _MomentAppState extends State<MomentApp> with WidgetsBindingObserver {
   Widget build(BuildContext context) {
     return ThemedApp(
       settings: _settings,
-      home: FutureBuilder<_Resources>(
-        future: _resources,
-        builder: (context, snapshot) {
-          final resources = snapshot.data;
+      home: Builder(
+        builder: (context) {
+          if (_blocked case final blocked?) {
+            return JournalProblemScreen(
+              problem: blocked.problem,
+              pickBackup: DeviceBackupFileGateway().pick,
+              restore: (file, pass) => _restoreInto(blocked, file, pass),
+              startFresh: () => _startEmpty(blocked),
+            );
+          }
+          final resources = _resources;
           if (resources == null) {
             return const Scaffold(
               body: Center(child: CircularProgressIndicator()),
             );
           }
-          _lockController = resources.lockController;
 
           return LockGate(
             controller: resources.lockController,
