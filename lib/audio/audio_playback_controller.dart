@@ -14,6 +14,13 @@ abstract interface class AudioPlaybackController {
   Future<void> dispose();
 }
 
+/// Whether the play button should show "pause". just_audio keeps `playing`
+/// true after the clip ends, so the end must count as stopped, or the button
+/// stays on pause and the note cannot be replayed.
+bool isAudibleState(just_audio.PlayerState state) =>
+    state.playing &&
+    state.processingState != just_audio.ProcessingState.completed;
+
 class DeviceAudioPlaybackController implements AudioPlaybackController {
   final _player = just_audio.AudioPlayer();
 
@@ -22,7 +29,7 @@ class DeviceAudioPlaybackController implements AudioPlaybackController {
 
   @override
   Stream<bool> get playingStream =>
-      _player.playerStateStream.map((state) => state.playing);
+      _player.playerStateStream.map(isAudibleState).distinct();
 
   @override
   Future<void> load(String path) async {
@@ -30,7 +37,13 @@ class DeviceAudioPlaybackController implements AudioPlaybackController {
   }
 
   @override
-  Future<void> play() => _player.play();
+  Future<void> play() async {
+    // After the end, play from the start rather than doing nothing.
+    if (_player.processingState == just_audio.ProcessingState.completed) {
+      await _player.seek(Duration.zero);
+    }
+    await _player.play();
+  }
 
   @override
   Future<void> pause() => _player.pause();
