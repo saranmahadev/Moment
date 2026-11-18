@@ -7,6 +7,7 @@ import 'package:moment/data/log_repository.dart';
 import 'package:moment/design/theme.dart';
 import 'package:moment/domain/log.dart';
 import 'package:moment/home/type_filter_chips.dart';
+import 'package:moment/settings/app_settings.dart';
 
 void main() {
   // Friday 6 November 2026, as in the mockup.
@@ -316,5 +317,126 @@ void main() {
     }
 
     await close(tester);
+  });
+
+  group('streak card and band', () {
+    Future<void> logDays(Iterable<(int, int)> days) async {
+      for (final (month, d) in days) {
+        await repo.createText(
+          body: 'log',
+          createdAt: DateTime.utc(2026, month, d, 12),
+        );
+      }
+    }
+
+    Future<void> pumpWith(
+      WidgetTester tester, {
+      AppSettings? settings,
+      VoidCallback? onOpenStreaks,
+    }) async {
+      await tester.binding.setSurfaceSize(const Size(390, 844));
+      addTearDown(() => tester.binding.setSurfaceSize(null));
+      await tester.pumpWidget(
+        MaterialApp(
+          theme: momentTheme(),
+          home: Scaffold(
+            body: CalendarScreen(
+              repository: repo,
+              settings: settings ?? AppSettings.inMemory(),
+              now: () => now,
+              onOpenStreaks: onOpenStreaks,
+            ),
+          ),
+        ),
+      );
+      await tester.pump();
+      await tester.pump();
+    }
+
+    Finder band(int month, int d) => find.byKey(
+      ValueKey(
+        'calendar-band-2026-${month.toString().padLeft(2, '0')}-'
+        '${d.toString().padLeft(2, '0')}',
+      ),
+    );
+
+    testWidgets('the card shows the streak and the longest', (tester) async {
+      await logDays([(11, 3), (11, 4), (11, 5), (11, 6), (10, 1), (10, 2)]);
+
+      await pumpWith(tester);
+
+      expect(find.text('4-day streak'), findsOneWidget);
+      expect(find.text('Longest 4 days'), findsOneWidget);
+      await close(tester);
+    });
+
+    testWidgets('the card mentions grace days used', (tester) async {
+      await logDays([(11, 1), (11, 3), (11, 4), (11, 5), (11, 6)]);
+
+      await pumpWith(tester);
+
+      expect(find.text('Longest 6 days · 1 grace day used'), findsOneWidget);
+      await close(tester);
+    });
+
+    testWidgets('with no streak the card invites one', (tester) async {
+      await pumpWith(tester);
+
+      expect(find.text('Start a streak'), findsOneWidget);
+      expect(find.text('Log anything today'), findsOneWidget);
+      await close(tester);
+    });
+
+    testWidgets('a tap on the card opens the streaks page', (tester) async {
+      var opened = 0;
+      await pumpWith(tester, onOpenStreaks: () => opened++);
+
+      await tester.tap(find.byKey(const ValueKey('streak-card')));
+
+      expect(opened, 1);
+      await close(tester);
+    });
+
+    testWidgets('the days of the streak sit on a band', (tester) async {
+      await logDays([(10, 29), (11, 4), (11, 5), (11, 6)]);
+
+      await pumpWith(tester);
+
+      expect(band(11, 4), findsOneWidget);
+      expect(band(11, 5), findsOneWidget);
+      expect(band(11, 6), findsOneWidget);
+      expect(band(11, 3), findsNothing);
+      expect(band(10, 29), findsNothing);
+      await close(tester);
+    });
+
+    testWidgets('a forgiven day is on the band too', (tester) async {
+      await logDays([(11, 3), (11, 5), (11, 6)]);
+
+      await pumpWith(tester);
+
+      expect(band(11, 4), findsOneWidget);
+      await close(tester);
+    });
+
+    testWidgets('turned off, there is no card and no band', (tester) async {
+      await logDays([(11, 5), (11, 6)]);
+
+      await pumpWith(
+        tester,
+        settings: AppSettings.inMemory({'showStreaks': false}),
+      );
+
+      expect(find.byKey(const ValueKey('streak-card')), findsNothing);
+      expect(band(11, 5), findsNothing);
+      await close(tester);
+    });
+
+    testWidgets('without settings the calendar is as it was', (tester) async {
+      await pump(tester);
+
+      expect(find.byKey(const ValueKey('streak-card')), findsNothing);
+      await close(tester);
+    });
   });
 }
