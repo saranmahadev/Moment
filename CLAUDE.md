@@ -90,6 +90,15 @@ Screens in Phase 1: Lock, Home, Add, Library, New text, New emoji, Text section,
 - Accessibility: a labelled button written as `Semantics(excludeSemantics: true, child: GestureDetector)` must also pass `onTap` to the `Semantics` (the exclusion hides the child's tap from screen readers); `test/gate/semantics_source_test.dart` enforces it. Fixed-shape layouts grow with the text size through `lib/design/text_growth.dart`.
 - Every-screen checks: `test/support/screen_cases.dart` lists all 27 mockup screens plus About and the quick-emoji editor; `test/gate/all_screens_test.dart` runs each through Reduce Transparency (no blur, both themes), labels, 44 pt targets, text at 200 %, and light and dark goldens drawn with the app's real fonts. Add a new screen to that list.
 
+## Place map decisions (owner-approved after a proof of concept, after 0.4.1)
+
+- The Location preview is `PlaceMap` (`lib/location/place_map.dart`) over `lib/location/map/`: `MapWindow` (zoom, aspect, pin position, longitude scaled by cos(latitude)), `MapTile`/`MapScene` (decode and cull), `MapSource` (`AssetMapSource` reads `assets/map/`; tests use `FakeMapSource`), `MapPainter` (colours from the tokens, no fixed colours, no blur).
+- Data: Natural Earth 1:10m (public domain), built by `tool/build_map_data.py` into 10 x 10 degree JSON tiles (`assets/map/<south>_<west>.json`, thousandths of a degree, delta-encoded). Regenerate with that script; the tiles are committed. About 15 MB raw, about 5.5 MB inside the APK.
+- Zoom steps Region (about 460 km across), Area (170), City (60). No closer: the data has no streets. The span is always shown.
+- Screens take an optional `mapSource`; without one they keep `StylisedMap` (all older tests). `AppShell` passes `AssetMapSource` from `moment_app.dart`. The Location section (many pins) still uses `StylisedMap`.
+- Goldens for the Bengaluru proof-of-concept point (12.91227 N, 77.71650 E) are in `test/goldens/goldens/place_map_*`.
+- Flow tests use a fixed clock: with the Ahem test font "Wednesday" overflows the Home header, so reading the real clock failed every Wednesday.
+
 ## Logo, site, film and open-source files (before Phase 5)
 
 - Licence: GPL-3.0, chosen by the owner (`LICENSE`). `CONTRIBUTING.md` and `SECURITY.md` state the rules; the fonts' credits are in `assets/fonts/README.md`.

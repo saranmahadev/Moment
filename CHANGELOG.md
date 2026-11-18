@@ -1,5 +1,14 @@
 # Changelog
 
+## Unreleased
+
+- **Place maps**: a Location log now shows a small map of the place in
+  the app's own colours, instead of a plain tile. It is drawn from Natural
+  Earth data (public domain) bundled in the app, so nothing is fetched.
+  Three zoom steps, Region, Area and City, with the width shown. The data
+  has city outlines, main highways, rivers and state lines but no streets,
+  so City (about 60 km across) is as close as it goes.
+
 ## 0.4.1 — Fixes
 
 - **Photo and video**: Save shows progress on photos too, and a screen

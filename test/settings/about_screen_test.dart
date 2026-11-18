@@ -23,6 +23,10 @@ void main() {
     expect(find.text('How Moment stays local'), findsOneWidget);
     expect(find.text('Everything stays on this device'), findsOneWidget);
     expect(find.text('Encrypted where it is stored'), findsOneWidget);
+    await tester.scrollUntilVisible(
+      find.text('No account, no analytics, no ads'),
+      200,
+    );
     expect(find.text('No account, no analytics, no ads'), findsOneWidget);
   });
 
@@ -40,6 +44,12 @@ void main() {
     expect(find.textContaining('OpenStreetMap'), findsOneWidget);
     expect(find.text('Backups are yours to keep'), findsOneWidget);
     expect(find.text('Moment $appVersion'), findsOneWidget);
+  });
+
+  testWidgets('says where the maps come from', (tester) async {
+    await pump(tester);
+
+    expect(find.textContaining('Natural Earth'), findsOneWidget);
   });
 
   testWidgets('never claims the app has no internet permission', (
