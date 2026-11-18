@@ -1,0 +1,78 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Moment privacy policy</title>
+<meta name="description" content="What Moment, the private life journal, keeps, what it never collects, and the one switch that can use the internet.">
+<link rel="icon" href="icons/favicon-32.png" sizes="32x32">
+<style>
+  /* Served from this site only, like the rest of it. */
+  @font-face { font-family: "Inter"; font-weight: 400; font-display: swap; src: url("fonts/inter-400.woff2") format("woff2"); }
+  @font-face { font-family: "Inter"; font-weight: 600; font-display: swap; src: url("fonts/inter-600.woff2") format("woff2"); }
+  @font-face { font-family: "Newsreader"; font-weight: 500; font-display: swap; src: url("fonts/newsreader-500.woff2") format("woff2"); }
+  :root {
+    color-scheme: light dark;
+    --ground: #edf0f7; --surface: rgba(255, 255, 255, 0.62); --edge: rgba(255, 255, 255, 0.85);
+    --ink: #1b1f2a; --secondary: #3a4152; --shadow: rgba(40, 50, 100, 0.12);
+  }
+  @media (prefers-color-scheme: dark) {
+    :root {
+      --ground: #0f1218; --surface: rgba(255, 255, 255, 0.07); --edge: rgba(255, 255, 255, 0.13);
+      --ink: #f1f3f8; --secondary: #b7bece; --shadow: rgba(0, 0, 0, 0.4);
+    }
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0; background: var(--ground); color: var(--ink);
+    font: 17px/1.6 "Inter", system-ui, -apple-system, "Segoe UI", sans-serif;
+  }
+  main { max-width: 720px; margin: 0 auto; padding: 48px 20px 80px; }
+  h1, h2 { font-family: "Newsreader", "Iowan Old Style", Georgia, serif; font-weight: 500; letter-spacing: -0.01em; }
+  h1 { font-size: 44px; line-height: 1.1; margin: 0 0 8px; }
+  h2 { font-size: 26px; margin: 36px 0 8px; }
+  p, li { color: var(--secondary); }
+  .card {
+    background: var(--surface); border: 1px solid var(--edge); border-radius: 22px;
+    box-shadow: 0 8px 32px var(--shadow); padding: 18px 22px; margin: 18px 0;
+  }
+  .card p { margin: 0; color: var(--ink); }
+  a { color: inherit; }
+  .fine { font-size: 14px; margin-top: 40px; }
+</style>
+</head>
+<body>
+<main>
+  <p><a href="index.html">← Moment</a></p>
+  <h1>Privacy policy</h1>
+  <p>Moment is a journal that lives on your phone. This page says what it keeps, what it never collects, and the one thing that can use the internet. It applies to the app as published from this project.</p>
+
+  <div class="card"><p>No account, no analytics, no advertising, no crash reporting service. Moment does not know who you are and sends nothing about how you use it.</p></div>
+
+  <h2>What stays on your phone</h2>
+  <p>Everything you log (text, emoji, photos, videos, recordings and places) is kept in Moment’s own private storage. The journal database is encrypted with a key made on your phone and held in its secure key store. Photos have their location and other hidden data removed when they are added. Android’s own cloud backup and phone-to-phone copy are switched off for Moment, so the system does not copy your journal anywhere either.</p>
+
+  <h2>The one switch that uses the internet</h2>
+  <p><strong>Look up place names</strong>, in Privacy and backup, is off unless you turn it on. While it is on, when you pin a place, its coordinates (rounded to about a metre) are sent over an encrypted connection to the Nominatim service of OpenStreetMap, which suggests a name for the spot. Nothing else is sent: no account, no identifier, no cookie, and nothing you wrote. Your request is then subject to the <a href="https://osmfoundation.org/wiki/Privacy_Policy">OpenStreetMap Foundation’s privacy policy</a>. With the switch off, nothing in Moment can open a connection.</p>
+
+  <h2>Backups</h2>
+  <p>A backup is one file you choose to make and keep, encrypted with a passphrase only you know. Moment never uploads it; you decide where it goes. Nobody, including the people who make Moment, can open it without the passphrase.</p>
+
+  <h2>Diagnostics</h2>
+  <p>Moment keeps a short log of errors and a few app events on your phone (Settings → Diagnostics), so there is something to look at if it misbehaves. It records where in Moment’s code an error happened, never what you wrote. It is never sent anywhere: you can read it, share it yourself, or clear it.</p>
+
+  <h2>The home screen widget</h2>
+  <p>The widget shows your streak and this week, if you choose, and buttons to add a log. It never opens the journal: the app hands it a small summary (the streak, whether today is logged and this week’s seven squares) and nothing you wrote. It stays on your phone.</p>
+
+  <h2>Permissions</h2>
+  <p>Location (only while you pin a place, never in the background), the microphone (for recordings), notifications (for the evening reminder, which never quotes your journal), fingerprint or face (for the app lock), and the internet (only for Look up place names). The camera opens through your phone’s own camera app.</p>
+
+  <h2>Children</h2>
+  <p>Moment collects nothing from anyone, children included.</p>
+
+  <h2>Changes and contact</h2>
+  <p>If this changes, the new version will be on this page and in the release notes. Moment is open source (GPL-3.0); questions and reports are welcome on <a href="https://github.com/saranmahadev/Moment/issues">the project’s issues page</a>.</p>
+  <p class="fine">Last updated with Moment 1.0.0.</p>
+</main>
+</body>
+</html>

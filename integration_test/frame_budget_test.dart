@@ -30,6 +30,18 @@ import '../test/video/video_fakes.dart';
 /// 20,000 logs, scrolled while the timeline records every frame. The
 /// driver (test_driver/frame_budget_driver.dart) compares the frame times
 /// with test_driver/frame_budget.json and fails the run past them.
+/// Lets [time] pass, a frame at a time. On a device something always
+/// animates, so pumpAndSettle would never return.
+Future<void> settle(
+  WidgetTester tester, [
+  Duration time = const Duration(milliseconds: 1200),
+]) async {
+  final end = DateTime.now().add(time);
+  while (DateTime.now().isBefore(end)) {
+    await tester.pump(const Duration(milliseconds: 16));
+  }
+}
+
 void main() {
   final binding = IntegrationTestWidgetsFlutterBinding.ensureInitialized();
 
@@ -86,7 +98,8 @@ void main() {
         ),
       ),
     );
-    await tester.pumpAndSettle();
+    await settle(tester, const Duration(seconds: 3));
+    debugPrint('frame budget: shell shown');
 
     Future<void> flingDown(int times) async {
       for (var i = 0; i < times; i++) {
@@ -96,7 +109,7 @@ void main() {
           2400,
           warnIfMissed: false,
         );
-        await tester.pumpAndSettle();
+        await settle(tester);
       }
     }
 
@@ -107,30 +120,30 @@ void main() {
     debugPrint('frame budget: photos');
     // Library, then the photo grid (3,000 photos).
     await tester.tap(find.bySemanticsLabel('Library'));
-    await tester.pumpAndSettle();
+    await settle(tester);
     await tester.ensureVisible(find.text('Photos').last);
-    await tester.pumpAndSettle();
+    await settle(tester);
     await tester.tap(find.text('Photos').last);
-    await tester.pumpAndSettle();
+    await settle(tester);
     await binding.traceAction(() => flingDown(12), reportKey: 'photo_grid');
     // Its Back button has scrolled away with the grid.
     Navigator.of(tester.element(find.byType(PhotoSectionScreen))).pop();
-    await tester.pumpAndSettle();
+    await settle(tester);
 
     debugPrint('frame budget: calendar');
     // Calendar: month after month, then the day's list.
     await tester.tap(find.bySemanticsLabel('Calendar'));
-    await tester.pumpAndSettle();
+    await settle(tester);
     await binding.traceAction(() async {
       for (var i = 0; i < 8; i++) {
         await tester.tap(find.bySemanticsLabel('Previous month'));
-        await tester.pumpAndSettle();
+        await settle(tester);
       }
       await flingDown(4);
     }, reportKey: 'calendar');
 
     await tester.pumpWidget(const SizedBox());
-    await tester.pumpAndSettle();
+    await settle(tester);
     await db.close();
   });
 }
