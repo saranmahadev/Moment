@@ -16,6 +16,30 @@ typedef IdGenerator = String Function();
 
 String _defaultId() => const Uuid().v4();
 
+/// How many logs of one type are outside Trash, and when the newest was
+/// made (see [LogRepository.watchTypeSummaries]).
+class TypeSummary {
+  const TypeSummary({
+    required this.count,
+    required this.newestAt,
+    required this.newestOffsetMinutes,
+  });
+
+  final int count;
+  final DateTime newestAt;
+  final int newestOffsetMinutes;
+
+  /// The newest log's wall-clock time where it was made, as [Log.localMoment].
+  DateTime get newestMoment =>
+      newestAt.add(Duration(minutes: newestOffsetMinutes));
+
+  /// The newest log's own day, as [Log.localDay].
+  DateTime get newestDay {
+    final m = newestMoment;
+    return DateTime.utc(m.year, m.month, m.day);
+  }
+}
+
 /// Reads and writes every log type through one local database.
 ///
 /// A [Clock] and an [IdGenerator] are injected instead of depending directly
@@ -458,8 +482,10 @@ class LogRepository {
   }
 
   /// Every log that is not in Trash, newest first (ties broken by id),
-  /// optionally restricted to [types].
-  Stream<List<Log>> watchFeed({Set<LogType>? types}) {
+  /// optionally restricted to [types]. With [limit], only the newest that
+  /// many: a page of the feed, read straight off its index. A larger limit
+  /// gives the same list, longer.
+  Stream<List<Log>> watchFeed({Set<LogType>? types, int? limit}) {
     final query = _feedQuery()
       ..where(_db.logsTable.deletedAtMs.isNull())
       ..orderBy([
@@ -469,10 +495,62 @@ class LogRepository {
     if (types != null) {
       query.where(_db.logsTable.type.isIn(types.map((t) => t.name)));
     }
+    if (limit != null) query.limit(limit);
     return query.watch().map(
       (rows) => [for (final row in rows) _rowToLog(row)],
     );
   }
+
+  /// The largest time zone offsets there are (UTC-12 to UTC+14).
+  static const _widestOffset = Duration(hours: 14);
+
+  /// Logs outside Trash that may belong to a day from [from] up to (not
+  /// including) [to], both UTC midnights in the [Log.localDay] sense,
+  /// newest first. The window is widened by the largest time zone offsets,
+  /// so every log whose own day is inside is there; a few from just
+  /// outside can be too, and callers group by [Log.localDay] anyway.
+  Stream<List<Log>> watchFeedBetween(DateTime from, DateTime to) {
+    final start = from.subtract(_widestOffset).millisecondsSinceEpoch;
+    final end = to.add(_widestOffset).millisecondsSinceEpoch;
+    final query = _feedQuery()
+      ..where(
+        _db.logsTable.deletedAtMs.isNull() &
+            _db.logsTable.createdAtMs.isBiggerOrEqualValue(start) &
+            _db.logsTable.createdAtMs.isSmallerThanValue(end),
+      )
+      ..orderBy([
+        OrderingTerm.desc(_db.logsTable.createdAtMs),
+        OrderingTerm.desc(_db.logsTable.id),
+      ]);
+    return query.watch().map(
+      (rows) => [for (final row in rows) _rowToLog(row)],
+    );
+  }
+
+  /// For each type with logs outside Trash: how many, and when the newest
+  /// was made. One small query, instead of reading every log to count it.
+  Stream<Map<LogType, TypeSummary>> watchTypeSummaries() => _db
+      .customSelect(
+        // SQLite takes the bare tz_offset_minutes from the row MAX() chose.
+        'SELECT type, COUNT(*) AS n, MAX(created_at_ms) AS newest, '
+        'tz_offset_minutes FROM log WHERE deleted_at_ms IS NULL '
+        'GROUP BY type',
+        readsFrom: {_db.logsTable},
+      )
+      .watch()
+      .map(
+        (rows) => {
+          for (final row in rows)
+            ?LogType.values.asNameMap()[row.read<String>('type')]: TypeSummary(
+              count: row.read<int>('n'),
+              newestAt: DateTime.fromMillisecondsSinceEpoch(
+                row.read<int>('newest'),
+                isUtc: true,
+              ),
+              newestOffsetMinutes: row.read<int>('tz_offset_minutes'),
+            ),
+        },
+      );
 
   /// The calendar days that have at least one log outside Trash, each once.
   /// A day is the one the log was made on in its own time zone (the offset

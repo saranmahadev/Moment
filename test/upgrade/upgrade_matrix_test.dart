@@ -148,7 +148,13 @@ void main() {
 
         // Opening it again is a no-op: same version, same rows.
         final raw = sqlite3.sqlite3.open(file.path);
-        expect(raw.select('PRAGMA user_version').single.values.single, 5);
+        expect(raw.select('PRAGMA user_version').single.values.single, 6);
+        expect(
+          raw
+              .select("SELECT name FROM sqlite_master WHERE type = 'index'")
+              .map((r) => r['name']),
+          containsAll(['log_feed_order', 'log_type_feed_order']),
+        );
         raw.close();
         final again = AppDatabase(NativeDatabase(file));
         expect(
