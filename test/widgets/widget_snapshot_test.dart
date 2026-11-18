@@ -11,12 +11,8 @@ WidgetSnapshot build(
   int today = 18,
   int grace = 1,
   bool show = true,
-}) => WidgetSnapshot.build(
-  days: days,
-  today: d(today),
-  grace: grace,
-  show: show,
-);
+}) =>
+    WidgetSnapshot.build(days: days, today: d(today), grace: grace, show: show);
 
 void main() {
   group('WidgetSnapshot', () {
@@ -45,12 +41,12 @@ void main() {
       expect(s.endsOn, isNull);
     });
 
-    test('with no grace a streak ends the day after the next missed day', () {
-      // Last log yesterday: alive today, alive until the end of tomorrow's
-      // ... no: tomorrow is the missed day, so Thu 19 is its last day.
+    test('with no grace a streak lasts through the day after the last log', () {
+      // Last log Tue 17, today Wed 18 not logged yet: still alive today, and
+      // gone on Thu 19 once Wed has been missed.
       final s = build({d(16), d(17)}, grace: 0);
 
-      expect(s.endsOn, '2026-11-19');
+      expect(s.endsOn, '2026-11-18');
     });
 
     test('endsOn is the last day the streak is alive, whatever the grace', () {
@@ -65,8 +61,11 @@ void main() {
           reason: 'alive on its last day (grace $grace)',
         );
         expect(
-          streakOf(days, end.add(const Duration(days: 1)), grace: grace)
-              .current,
+          streakOf(
+            days,
+            end.add(const Duration(days: 1)),
+            grace: grace,
+          ).current,
           0,
           reason: 'gone the day after (grace $grace)',
         );
