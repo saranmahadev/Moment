@@ -124,7 +124,6 @@ class FakeVideoPlaybackController implements VideoPlaybackController {
   }
 }
 
-
 /// Records what the player asks of the screen and the system.
 class FakePlayerScreenControl implements PlayerScreenControl {
   final List<bool> fullscreen = [];

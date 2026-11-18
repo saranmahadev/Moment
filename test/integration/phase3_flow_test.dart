@@ -45,7 +45,7 @@ void main() {
     // View.
     await tester.tap(find.text('Walk to the station'));
     await tester.pumpAndSettle();
-    expect(find.text('Stored on this device'), findsOneWidget);
+    expect(find.bySemanticsLabel('Fullscreen'), findsOneWidget);
     expect(find.text('0:48'), findsOneWidget);
 
     // Edit.

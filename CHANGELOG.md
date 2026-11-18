@@ -2,6 +2,16 @@
 
 ## Unreleased
 
+- **Video player**, redesigned like the audio player: the picture with mute
+  and fullscreen on it, a strip of frames to scrub along (a preview of the
+  frame and its time follows your finger; the seek lands when you let go),
+  play with Replay at the end, 15-second skips, loop and speed (1x, 1.25x,
+  1.5x, 2x, 0.5x). Fullscreen turns the phone to suit the clip, hides its
+  controls after three seconds, jumps 10 seconds on a double-tap of either
+  half and pinches to zoom. The screen stays on while a video plays. The
+  frames are made the first time you open a video and kept in the cache,
+  never in a backup. "Stored on this device" is gone from this screen.
+
 - **Audio player**, redesigned as a small music player: artwork card, a
   fine waveform you can drag (a time bubble follows your finger and the
   seek happens when you let go), big play and pause, 15-second skips,

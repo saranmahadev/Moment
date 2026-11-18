@@ -10,17 +10,13 @@ void main() {
   const length = Duration(seconds: 48);
   late FakeVideoPlaybackController playback;
   late VideoPlayerModel model;
-  late FakePlayerScreenControl screen;
   var closed = 0;
 
-  setUp(() {
+  Future<void> pump(WidgetTester tester) async {
+    // Made inside the test, so its timers run on the test's clock.
+    closed = 0;
     playback = FakeVideoPlaybackController();
     model = VideoPlayerModel(playback: playback, duration: length);
-    screen = FakePlayerScreenControl();
-    closed = 0;
-  });
-
-  Future<void> pump(WidgetTester tester) async {
     await tester.binding.setSurfaceSize(const Size(844, 390));
     addTearDown(() => tester.binding.setSurfaceSize(null));
     await tester.pumpWidget(
@@ -67,12 +63,15 @@ void main() {
 
     expect(find.bySemanticsLabel('Pause'), findsOneWidget);
 
-    await tester.pump(const Duration(seconds: 3, milliseconds: 500));
+    await tester.pump(const Duration(seconds: 3, milliseconds: 100));
+    await tester.pump(const Duration(milliseconds: 300));
+    await tester.pump();
     expect(find.bySemanticsLabel('Pause'), findsNothing);
     expect(find.text('Lake at dusk'), findsNothing);
 
     await tester.tapAt(const Offset(422, 200));
     await tester.pump(const Duration(milliseconds: 400));
+    await tester.pump(const Duration(milliseconds: 300));
     expect(find.bySemanticsLabel('Pause'), findsOneWidget);
 
     await finish(tester);

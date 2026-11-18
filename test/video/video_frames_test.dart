@@ -46,22 +46,28 @@ void main() {
     maxCachedVideos: maxCachedVideos,
   );
 
-  test('takes one frame from the middle of each equal slice of the clip', () async {
-    final probe = FakeVideoProbe();
-    final log = await video();
+  test(
+    'takes one frame from the middle of each equal slice of the clip',
+    () async {
+      final probe = FakeVideoProbe();
+      final log = await video();
 
-    final lists = await strip(probe).framesFor(log).toList();
+      final lists = await strip(probe).framesFor(log).toList();
 
-    expect(probe.frameRequests.map((r) => r.at.inSeconds), [
-      for (var i = 0; i < 12; i++) 2 + 4 * i,
-    ]);
-    expect(lists.last, hasLength(12));
-    expect(lists.last.every((f) => f != null && f.existsSync()), isTrue);
-  });
+      expect(probe.frameRequests.map((r) => r.at.inSeconds), [
+        for (var i = 0; i < 12; i++) 2 + 4 * i,
+      ]);
+      expect(lists.last, hasLength(12));
+      expect(lists.last.every((f) => f != null && f.existsSync()), isTrue);
+    },
+  );
 
   test('the strip fills in as frames are made', () async {
     final probe = FakeVideoProbe();
-    final lists = await strip(probe, count: 4).framesFor(await video()).toList();
+    final lists = await strip(
+      probe,
+      count: 4,
+    ).framesFor(await video()).toList();
 
     expect(lists.first.every((f) => f == null), isTrue);
     expect(lists.map((l) => l.whereType<File>().length), [0, 1, 2, 3, 4]);
@@ -80,20 +86,29 @@ void main() {
     expect(again.last.whereType<File>(), hasLength(4));
   });
 
-  test('a frame that cannot be made is a gap; the others are still made', () async {
-    final probe = FakeVideoProbe(failFramesAt: {6});
-    final lists = await strip(probe, count: 4).framesFor(await video()).toList();
+  test(
+    'a frame that cannot be made is a gap; the others are still made',
+    () async {
+      final probe = FakeVideoProbe(failFramesAt: {6});
+      final lists = await strip(
+        probe,
+        count: 4,
+      ).framesFor(await video()).toList();
 
-    // 48 s in 4 slices: frames at 6, 18, 30 and 42 seconds.
-    expect(lists.last.map((f) => f != null), [false, true, true, true]);
-  });
+      // 48 s in 4 slices: frames at 6, 18, 30 and 42 seconds.
+      expect(lists.last.map((f) => f != null), [false, true, true, true]);
+    },
+  );
 
   test('a very short clip still gets distinct times inside it', () async {
     final probe = FakeVideoProbe();
     await strip(probe, count: 4).framesFor(await video(seconds: 2)).toList();
 
     final times = probe.frameRequests.map((r) => r.at).toList();
-    expect(times.every((t) => t >= Duration.zero && t < const Duration(seconds: 2)), isTrue);
+    expect(
+      times.every((t) => t >= Duration.zero && t < const Duration(seconds: 2)),
+      isTrue,
+    );
     expect(times.toSet(), hasLength(4));
   });
 

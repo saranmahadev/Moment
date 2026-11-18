@@ -56,33 +56,38 @@ void main() {
     await pump(tester);
     final rect = tester.getRect(find.byType(FrameStripScrubber));
 
-    await tester.tapAt(Offset(rect.left + rect.width * 0.25, rect.center.dy + 10));
+    await tester.tapAt(
+      Offset(rect.left + rect.width * 0.25, rect.center.dy + 10),
+    );
 
     expect(seeks.single, closeTo(0.25, 0.04));
   });
 
-  testWidgets('dragging reports the finger, shows its time, and seeks on release', (
-    tester,
-  ) async {
-    await pump(tester);
-    final rect = tester.getRect(find.byType(FrameStripScrubber));
-    final gesture = await tester.startGesture(
-      Offset(rect.left + rect.width * 0.4, rect.center.dy + 10),
-    );
-    await gesture.moveTo(Offset(rect.left + rect.width * 0.75, rect.center.dy + 10));
-    await tester.pump();
+  testWidgets(
+    'dragging reports the finger, shows its time, and seeks on release',
+    (tester) async {
+      await pump(tester);
+      final rect = tester.getRect(find.byType(FrameStripScrubber));
+      final gesture = await tester.startGesture(
+        Offset(rect.left + rect.width * 0.4, rect.center.dy + 10),
+      );
+      await gesture.moveTo(
+        Offset(rect.left + rect.width * 0.75, rect.center.dy + 10),
+      );
+      await tester.pump();
 
-    expect(find.text('0:36'), findsOneWidget); // 75% of 48 s
-    expect(scrubs.last, closeTo(0.75, 0.04));
-    expect(seeks, isEmpty);
+      expect(find.text('0:36'), findsOneWidget); // 75% of 48 s
+      expect(scrubs.last, closeTo(0.75, 0.04));
+      expect(seeks, isEmpty);
 
-    await gesture.up();
-    await tester.pump();
+      await gesture.up();
+      await tester.pump();
 
-    expect(seeks.single, closeTo(0.75, 0.04));
-    expect(scrubs.last, isNull);
-    expect(find.text('0:36'), findsNothing);
-  });
+      expect(seeks.single, closeTo(0.75, 0.04));
+      expect(scrubs.last, isNull);
+      expect(find.text('0:36'), findsNothing);
+    },
+  );
 
   testWidgets('the preview shows the frame nearest the finger', (tester) async {
     final frames = [
@@ -104,7 +109,9 @@ void main() {
     await gesture.up();
   });
 
-  testWidgets('without frames it still scrubs and shows the time', (tester) async {
+  testWidgets('without frames it still scrubs and shows the time', (
+    tester,
+  ) async {
     await pump(tester);
     final rect = tester.getRect(find.byType(FrameStripScrubber));
     final gesture = await tester.startGesture(rect.center);
@@ -139,6 +146,8 @@ void main() {
 
     for (final brightness in Brightness.values) {
       testWidgets('${brightness.name}, scrubbing', (tester) async {
+        // Placeholders only: a golden cannot wait for image decoding. The
+        // real frames are checked by the scrubber's own tests.
         await pump(
           tester,
           fraction: 0.7,

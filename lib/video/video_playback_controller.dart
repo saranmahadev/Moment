@@ -14,6 +14,12 @@ abstract interface class VideoPlaybackController {
   Future<void> play();
   Future<void> pause();
   Future<void> seek(Duration position);
+  Future<void> setSpeed(double speed);
+  Future<void> setLoop(bool on);
+  Future<void> setMuted(bool on);
+
+  /// Width over height of the loaded video; 16:9 until it is loaded.
+  double get aspectRatio;
 
   /// The surface the video is drawn on.
   Widget buildView();
@@ -57,6 +63,22 @@ class DeviceVideoPlaybackController implements VideoPlaybackController {
 
   @override
   Future<void> seek(Duration position) async => _controller?.seekTo(position);
+
+  @override
+  Future<void> setSpeed(double speed) async =>
+      _controller?.setPlaybackSpeed(speed);
+
+  @override
+  Future<void> setLoop(bool on) async => _controller?.setLooping(on);
+
+  @override
+  Future<void> setMuted(bool on) async => _controller?.setVolume(on ? 0 : 1);
+
+  @override
+  double get aspectRatio {
+    final value = _controller?.value;
+    return value != null && value.isInitialized ? value.aspectRatio : 16 / 9;
+  }
 
   @override
   Widget buildView() {

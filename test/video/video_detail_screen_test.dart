@@ -138,7 +138,9 @@ void main() {
     await close(tester);
   });
 
-  testWidgets('dragging the frame strip seeks within the video', (tester) async {
+  testWidgets('dragging the frame strip seeks within the video', (
+    tester,
+  ) async {
     final playback = FakeVideoPlaybackController();
     await pump(tester, playback: playback);
 

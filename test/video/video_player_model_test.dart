@@ -83,19 +83,22 @@ void main() {
     expect(model.ended, isFalse);
   });
 
-  test('looping is passed on, and a looping clip never counts as ended', () async {
-    await model.toggleLoop();
-    expect(playback.loop, isTrue);
-    expect(model.loop, isTrue);
+  test(
+    'looping is passed on, and a looping clip never counts as ended',
+    () async {
+      await model.toggleLoop();
+      expect(playback.loop, isTrue);
+      expect(model.loop, isTrue);
 
-    await model.togglePlay();
-    playback.ended();
-    await settle();
-    expect(model.ended, isFalse);
+      await model.togglePlay();
+      playback.ended();
+      await settle();
+      expect(model.ended, isFalse);
 
-    await model.toggleLoop();
-    expect(playback.loop, isFalse);
-  });
+      await model.toggleLoop();
+      expect(playback.loop, isFalse);
+    },
+  );
 
   test('mute is passed on and toggles back', () async {
     await model.toggleMute();
