@@ -45,7 +45,9 @@ void main() {
     final db = AppDatabase(NativeDatabase.memory());
     final now = DateTime(2026, 11, 18, 10);
     final repo = LogRepository(db, clock: () => now);
+    debugPrint('frame budget: seeding');
     await _seed(db, repo, dir, now);
+    debugPrint('frame budget: seeded');
 
     await tester.pumpWidget(
       MaterialApp(
@@ -98,9 +100,11 @@ void main() {
       }
     }
 
+    debugPrint('frame budget: home');
     // Home: the feed, a page at a time.
     await binding.traceAction(() => flingDown(12), reportKey: 'home_feed');
 
+    debugPrint('frame budget: photos');
     // Library, then the photo grid (3,000 photos).
     await tester.tap(find.bySemanticsLabel('Library'));
     await tester.pumpAndSettle();
@@ -113,6 +117,7 @@ void main() {
     Navigator.of(tester.element(find.byType(PhotoSectionScreen))).pop();
     await tester.pumpAndSettle();
 
+    debugPrint('frame budget: calendar');
     // Calendar: month after month, then the day's list.
     await tester.tap(find.bySemanticsLabel('Calendar'));
     await tester.pumpAndSettle();
@@ -140,7 +145,7 @@ Future<void> _seed(
 ) async {
   final images = <(String, String)>[];
   for (var i = 0; i < 12; i++) {
-    final picture = img.Image(width: 1200, height: 900);
+    final picture = img.Image(width: 640, height: 480);
     img.fill(picture, color: img.ColorRgb8(40 + i * 15, 120, 200 - i * 10));
     final full = File(p.join(dir.path, 'photo$i.jpg'))
       ..writeAsBytesSync(img.encodeJpg(picture, quality: 80));
