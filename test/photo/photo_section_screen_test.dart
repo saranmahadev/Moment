@@ -66,7 +66,7 @@ void main() {
     await pump(tester, repo);
     await tester.pump();
 
-    expect(find.text('Photo'), findsWidgets);
+    expect(find.text('Photos'), findsWidgets);
     expect(find.text('2 logs'), findsOneWidget);
 
     await tester.pumpWidget(const SizedBox());

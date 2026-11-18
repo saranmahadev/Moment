@@ -599,7 +599,7 @@ void main() {
     await tester.pump();
     await tester.tap(find.bySemanticsLabel('Library'));
     await tester.pump();
-    await tester.tap(find.text('Photo'));
+    await tester.tap(find.text('Photos'));
     await tester.pumpAndSettle();
 
     expect(find.text('1 log'), findsOneWidget);
@@ -979,11 +979,11 @@ void main() {
     await tester.tap(find.bySemanticsLabel('Library'));
     await tester.pump();
     await tester.scrollUntilVisible(
-      find.text('Video'),
+      find.text('Videos'),
       200,
       scrollable: find.byType(Scrollable).first,
     );
-    await tester.tap(find.text('Video'));
+    await tester.tap(find.text('Videos'));
     await tester.pumpAndSettle();
 
     expect(find.byKey(ValueKey('video-tile-$id')), findsOneWidget);
@@ -1097,11 +1097,11 @@ void main() {
       await tester.tap(find.bySemanticsLabel('Library'));
       await tester.pump();
       await tester.scrollUntilVisible(
-        find.text('Location'),
+        find.text('Locations'),
         200,
         scrollable: find.byType(Scrollable).first,
       );
-      await tester.tap(find.text('Location'));
+      await tester.tap(find.text('Locations'));
       await tester.pumpAndSettle();
 
       expect(find.byKey(ValueKey('location-row-$id')), findsOneWidget);
