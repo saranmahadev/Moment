@@ -66,4 +66,41 @@ void main() {
       expect(gradle, contains('coreLibraryDesugaring('));
     });
   });
+
+  group('nothing leaves through the system backup', () {
+    test('Android\'s automatic backup is off', () {
+      expect(manifest, contains('android:allowBackup="false"'));
+    });
+
+    test('the data-extraction rules exclude every kind of file, for the '
+        'cloud and for a phone-to-phone transfer', () {
+      expect(
+        manifest,
+        contains('android:dataExtractionRules="@xml/data_extraction_rules"'),
+      );
+      final rules = File(
+        'android/app/src/main/res/xml/data_extraction_rules.xml',
+      ).readAsStringSync();
+      for (final section in ['cloud-backup', 'device-transfer']) {
+        final block = RegExp(
+          '<$section[^>]*>(.*?)</$section>',
+          dotAll: true,
+        ).firstMatch(rules);
+        expect(block, isNotNull, reason: section);
+        for (final domain in [
+          'root',
+          'file',
+          'database',
+          'sharedpref',
+          'external',
+        ]) {
+          expect(
+            block!.group(1),
+            contains('<exclude domain="$domain" path="."/>'),
+            reason: '$section excludes $domain',
+          );
+        }
+      }
+    });
+  });
 }
