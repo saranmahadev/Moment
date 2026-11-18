@@ -65,6 +65,13 @@ class MomentTokens extends ThemeExtension<MomentTokens> {
     ],
     this.orbOpacity = 0.8,
     this.mapGradient = const [Color(0xFFCDEBD3), Color(0xFFBFE0EC)],
+    this.streakRamp = const [
+      Color(0xFFCDD3FF),
+      Color(0xFFA9B2FA),
+      Color(0xFF808AEE),
+      Color(0xFF4B52D1),
+    ],
+    this.streakAccent = const Color(0xFF4B52D1),
     required this.typeColors,
     required this.typeTints,
     required this.card,
@@ -152,6 +159,13 @@ class MomentTokens extends ThemeExtension<MomentTokens> {
     ],
     orbOpacity: 0.5,
     mapGradient: [Color(0xFF1D3A30), Color(0xFF1A3340)],
+    streakRamp: [
+      Color(0xFF2B3270),
+      Color(0xFF3F49A6),
+      Color(0xFF6670D8),
+      Color(0xFF9AA3FF),
+    ],
+    streakAccent: Color(0xFF9AA3FF),
     typeColors: {
       LogType.text: Color(0xFF8FB1FF),
       LogType.emoji: Color(0xFFF2A94E),
@@ -234,6 +248,12 @@ class MomentTokens extends ThemeExtension<MomentTokens> {
   /// The two ends of the stylised map's wash.
   final List<Color> mapGradient;
 
+  /// The Streaks heatmap: four steps from a quiet day to a busy one.
+  final List<Color> streakRamp;
+
+  /// The streak ring and the highlight on the current week.
+  final Color streakAccent;
+
   final Map<LogType, Color> typeColors;
   final Map<LogType, Color> typeTints;
 
@@ -265,6 +285,8 @@ class MomentTokens extends ThemeExtension<MomentTokens> {
     List<List<Color>>? orbs,
     double? orbOpacity,
     List<Color>? mapGradient,
+    List<Color>? streakRamp,
+    Color? streakAccent,
     Map<LogType, Color>? typeColors,
     Map<LogType, Color>? typeTints,
     GlassRecipe? card,
@@ -286,6 +308,8 @@ class MomentTokens extends ThemeExtension<MomentTokens> {
       orbs: orbs ?? this.orbs,
       orbOpacity: orbOpacity ?? this.orbOpacity,
       mapGradient: mapGradient ?? this.mapGradient,
+      streakRamp: streakRamp ?? this.streakRamp,
+      streakAccent: streakAccent ?? this.streakAccent,
       typeColors: typeColors ?? this.typeColors,
       typeTints: typeTints ?? this.typeTints,
       card: card ?? this.card,

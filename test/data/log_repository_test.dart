@@ -923,4 +923,37 @@ void main() {
       await seen;
     });
   });
+
+  group('watchDayCounts', () {
+    test('counts the logs on each day, Trash left out', () async {
+      await repo.createText(body: 'a', createdAt: DateTime.utc(2026, 1, 14, 9));
+      await repo.createText(
+        body: 'b',
+        createdAt: DateTime.utc(2026, 1, 14, 21),
+      );
+      final gone = await repo.createText(
+        body: 'c',
+        createdAt: DateTime.utc(2026, 1, 14, 22),
+      );
+      await repo.createEmoji(
+        emoji: '😌',
+        strength: 3,
+        createdAt: DateTime.utc(2026, 1, 15, 8),
+      );
+      await repo.softDelete(gone);
+
+      expect(await repo.watchDayCounts().first, {
+        DateTime.utc(2026, 1, 14): 2,
+        DateTime.utc(2026, 1, 15): 1,
+      });
+    });
+
+    test('has the same days as watchActiveDays', () async {
+      await repo.createText(body: 'a', createdAt: DateTime.utc(2026, 1, 3));
+      await repo.createText(body: 'b', createdAt: DateTime.utc(2026, 1, 9));
+
+      final counts = await repo.watchDayCounts().first;
+      expect(counts.keys.toSet(), await repo.watchActiveDays().first);
+    });
+  });
 }

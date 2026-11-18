@@ -479,14 +479,20 @@ class LogRepository {
   /// stored with it), as UTC midnights, the form [Log.localDay] uses. Reads
   /// one number per log instead of whole logs, so it stays cheap for the
   /// streaks that are worked out from it.
-  Stream<Set<DateTime>> watchActiveDays() {
+  Stream<Set<DateTime>> watchActiveDays() =>
+      watchDayCounts().map((counts) => counts.keys.toSet());
+
+  /// How many logs outside Trash each calendar day has (see
+  /// [watchActiveDays] for what a day is); days with none are left out.
+  Stream<Map<DateTime, int>> watchDayCounts() {
     const dayMs = Duration.millisecondsPerDay;
     // Floor division, so a moment before 1970 lands on the right day.
     const localMs = '(created_at_ms + tz_offset_minutes * 60000)';
     return _db
         .customSelect(
-          'SELECT DISTINCT ($localMs - (($localMs % $dayMs) + $dayMs) % $dayMs)'
-          ' / $dayMs AS day FROM log WHERE deleted_at_ms IS NULL',
+          'SELECT ($localMs - (($localMs % $dayMs) + $dayMs) % $dayMs)'
+          ' / $dayMs AS day, COUNT(*) AS n FROM log '
+          'WHERE deleted_at_ms IS NULL GROUP BY day',
           readsFrom: {_db.logsTable},
         )
         .watch()
@@ -496,6 +502,8 @@ class LogRepository {
               DateTime.fromMillisecondsSinceEpoch(
                 row.read<int>('day') * dayMs,
                 isUtc: true,
+              ): row.read<int>(
+                'n',
               ),
           },
         );
