@@ -12,11 +12,24 @@ String formatClipLength(Duration d) =>
 /// A video's still frame filling its box, with a soft tint in the Video
 /// colour wherever the image is missing or cannot be decoded.
 class VideoPoster extends StatelessWidget {
-  const VideoPoster({super.key, required this.path, required this.tokens});
+  const VideoPoster({
+    super.key,
+    required this.path,
+    required this.tokens,
+    this.decodeWidth,
+  });
+
+  /// What grid tiles and feed cards decode a poster to, in pixels: sharp
+  /// on a 3x screen, instead of a full video frame (a 1080p frame is about
+  /// 8 MB once decoded).
+  static const tileDecodeWidth = 640;
 
   /// Null when there is no still frame yet.
   final String? path;
   final MomentTokens tokens;
+
+  /// Decode the frame to this many pixels across; null keeps its size.
+  final int? decodeWidth;
 
   @override
   Widget build(BuildContext context) {
@@ -41,6 +54,7 @@ class VideoPoster extends StatelessWidget {
         if (path != null)
           Image.file(
             File(path),
+            cacheWidth: decodeWidth,
             fit: BoxFit.cover,
             errorBuilder: (_, _, _) => const SizedBox.shrink(),
           ),
