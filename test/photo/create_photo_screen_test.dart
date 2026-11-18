@@ -161,6 +161,56 @@ void main() {
     await close(tester);
   });
 
+  testWidgets('Save shows progress while the photo is imported', (
+    tester,
+  ) async {
+    final source = _sampleSourcePhoto(p.join(tempDir.path, 'source.jpg'));
+    await pump(tester, picker: _FakePhotoPicker(galleryResult: source));
+
+    await tester.tap(find.text('Choose from Library'));
+    await tester.pumpAndSettle();
+    await tester.runAsync(() async {
+      await tester.tap(find.text('Save'));
+      await Future<void>.delayed(Duration.zero);
+    });
+    await tester.pump();
+
+    expect(find.byType(CircularProgressIndicator), findsOneWidget);
+    expect(find.text('Save'), findsNothing);
+
+    await tester.runAsync(
+      () => Future<void>.delayed(const Duration(seconds: 2)),
+    );
+    await tester.pump();
+    await close(tester);
+  });
+
+  testWidgets('a screen closed mid-save does not report it saved', (
+    tester,
+  ) async {
+    final source = _sampleSourcePhoto(p.join(tempDir.path, 'source.jpg'));
+    var saved = 0;
+    await pump(
+      tester,
+      picker: _FakePhotoPicker(galleryResult: source),
+      onSaved: (_) => saved++,
+    );
+
+    await tester.tap(find.text('Choose from Library'));
+    await tester.pumpAndSettle();
+    await tester.runAsync(() async {
+      await tester.tap(find.text('Save'));
+      await Future<void>.delayed(Duration.zero);
+    });
+    await tester.pumpWidget(const SizedBox());
+    await tester.runAsync(
+      () => Future<void>.delayed(const Duration(seconds: 2)),
+    );
+
+    expect(saved, 0);
+    await db.close();
+  });
+
   testWidgets('Close calls onClose without creating a log', (tester) async {
     var closed = false;
     await pump(
@@ -227,7 +277,9 @@ void main() {
       );
       await tester.enterText(find.byType(TextField), 'Edited caption');
       await tester.tap(find.text('Save'));
-      await tester.pumpAndSettle();
+      // Not pumpAndSettle: Save shows a spinner until the screen is closed.
+      await tester.pump();
+      await tester.pump();
 
       expect(savedId, id);
       final updated = await repo.getById(id) as PhotoLog;
