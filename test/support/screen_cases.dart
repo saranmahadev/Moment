@@ -4,7 +4,9 @@ import 'package:drift/native.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:moment/app/journal_problem_screen.dart';
 import 'package:moment/audio/audio_detail_screen.dart';
+import 'package:moment/data/journal_opener.dart';
 import 'package:moment/audio/create_audio_screen.dart';
 import 'package:moment/backup/backup_cipher.dart';
 import 'package:moment/backup/backup_coordinator.dart';
@@ -456,6 +458,15 @@ final screenCases = <ScreenCase>[
       settings: f.settings,
       bridge: FakeWidgetBridge(),
       onBack: () {},
+    ),
+  ),
+  ScreenCase(
+    'journal_problem',
+    (f) async => JournalProblemScreen(
+      problem: JournalProblem.keyMissing,
+      pickBackup: () async => null,
+      restore: (_, _) async {},
+      startFresh: () async {},
     ),
   ),
   ScreenCase(
