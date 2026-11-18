@@ -11,7 +11,13 @@
          scheduled again after the phone restarts. It is inexact on
          purpose, so no exact-alarm permission is asked for. -->
     <uses-permission android:name="android.permission.RECEIVE_BOOT_COMPLETED"/>
+    <!-- The journal leaves the phone only as a backup file the owner makes.
+         Android's automatic cloud backup is off, and so is transfer to a
+         new phone, which would copy the same files
+         (res/xml/data_extraction_rules.xml excludes everything). -->
     <application
+        android:allowBackup="false"
+        android:dataExtractionRules="@xml/data_extraction_rules"
         android:label="Moment"
         android:name="${applicationName}"
         android:icon="@mipmap/ic_launcher">
