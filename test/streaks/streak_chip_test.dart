@@ -80,8 +80,6 @@ void main() {
         label: '6-day streak, logged today',
         isButton: true,
         hasTapAction: true,
-        isFocusable: true,
-        hasFocusAction: true,
       ),
     );
   });
