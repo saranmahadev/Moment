@@ -90,29 +90,68 @@ class GlassSurface extends StatelessWidget {
           color: Colors.white.withValues(alpha: recipe.borderOpacity),
         ),
         borderRadius: radius,
-        boxShadow: shadow,
       ),
       child: child,
     );
 
-    if (!(blur ?? variant == GlassVariant.strong)) {
-      return ClipRRect(borderRadius: radius, child: film);
-    }
+    final glass = (blur ?? variant == GlassVariant.strong)
+        ? ClipRRect(
+            borderRadius: radius,
+            child: BackdropFilter(
+              filter: ImageFilter.compose(
+                outer: ColorFilter.matrix(
+                  _saturationMatrix(recipe.saturationBoost),
+                ),
+                inner: ImageFilter.blur(
+                  sigmaX: recipe.blurSigma,
+                  sigmaY: recipe.blurSigma,
+                ),
+              ),
+              child: film,
+            ),
+          )
+        : ClipRRect(borderRadius: radius, child: film);
 
-    return ClipRRect(
-      borderRadius: radius,
-      child: BackdropFilter(
-        filter: ImageFilter.compose(
-          outer: ColorFilter.matrix(_saturationMatrix(recipe.saturationBoost)),
-          inner: ImageFilter.blur(
-            sigmaX: recipe.blurSigma,
-            sigmaY: recipe.blurSigma,
-          ),
-        ),
-        child: film,
-      ),
+    // The shadow falls outside the glass only, as CSS box-shadow does in
+    // the mockups. Painted under the translucent fill, the offset shadow
+    // showed through everywhere but a pale band along the top edge.
+    return CustomPaint(
+      painter: _OuterShadowPainter(radius: radius, shadows: shadow),
+      child: glass,
     );
   }
+}
+
+/// Paints [shadows] around a rounded rectangle the size of the child,
+/// leaving its inside untouched.
+class _OuterShadowPainter extends CustomPainter {
+  const _OuterShadowPainter({required this.radius, required this.shadows});
+
+  final BorderRadius radius;
+  final List<BoxShadow> shadows;
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    final shape = radius.toRRect(Offset.zero & size);
+    final outside = Path.combine(
+      PathOperation.difference,
+      Path()..addRect(shape.outerRect.inflate(200)),
+      Path()..addRRect(shape),
+    );
+    canvas.save();
+    canvas.clipPath(outside);
+    for (final shadow in shadows) {
+      canvas.drawRRect(
+        shape.shift(shadow.offset).inflate(shadow.spreadRadius),
+        shadow.toPaint(),
+      );
+    }
+    canvas.restore();
+  }
+
+  @override
+  bool shouldRepaint(_OuterShadowPainter old) =>
+      old.radius != radius || old.shadows != shadows;
 }
 
 /// A saturation-boosting colour matrix equivalent to CSS's

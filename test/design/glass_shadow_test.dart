@@ -60,10 +60,10 @@ void main() {
       reason: 'top $nearTop, middle $middle',
     );
 
-    // And there is a shadow below it, outside.
-    final below = pixels.at(140, 172);
-    final ground = pixels.at(4, 4);
-    expect(below, lessThan(ground));
+    // And there is a shadow below it, outside the card (the boundary has
+    // no background, so anything painted there is the shadow).
+    expect(pixels.alphaAt(140, 164), greaterThan(0));
+    expect(pixels.alphaAt(4, 4), 0);
   });
 }
 
@@ -72,6 +72,8 @@ class ByteDataPixels {
   ByteDataPixels(this.data, this.width);
   final ByteData data;
   final int width;
+
+  int alphaAt(int x, int y) => data.getUint8((y * width + x) * 4 + 3);
 
   int at(int x, int y) {
     final i = (y * width + x) * 4;
