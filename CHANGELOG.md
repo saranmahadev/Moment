@@ -1,6 +1,6 @@
 # Changelog
 
-## Unreleased
+## 0.4.3 — Place maps and new players
 
 - **Video player**, redesigned like the audio player: the picture with mute
   and fullscreen on it, a strip of frames to scrub along (a preview of the
