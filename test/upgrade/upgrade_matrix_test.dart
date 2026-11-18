@@ -148,7 +148,7 @@ void main() {
 
         // Opening it again is a no-op: same version, same rows.
         final raw = sqlite3.sqlite3.open(file.path);
-        expect(raw.select('PRAGMA user_version').single.values.single, 5);
+        expect(raw.select('PRAGMA user_version').single.values.single, 6);
         raw.close();
         final again = AppDatabase(NativeDatabase(file));
         expect(
