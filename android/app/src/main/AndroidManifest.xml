@@ -43,6 +43,23 @@
                 <category android:name="android.intent.category.LAUNCHER"/>
             </intent-filter>
         </activity>
+        <!-- The home screen widget (Streak and Quick add). It reads only the
+             small snapshot the app writes, never the journal, and needs no
+             permission. The date and time actions redraw it at midnight. -->
+        <receiver
+            android:name=".MomentWidgetProvider"
+            android:exported="false"
+            android:label="Streak and Quick add">
+            <intent-filter>
+                <action android:name="android.appwidget.action.APPWIDGET_UPDATE"/>
+                <action android:name="android.intent.action.DATE_CHANGED"/>
+                <action android:name="android.intent.action.TIME_SET"/>
+                <action android:name="android.intent.action.TIMEZONE_CHANGED"/>
+            </intent-filter>
+            <meta-data
+                android:name="android.appwidget.provider"
+                android:resource="@xml/moment_widget_info"/>
+        </receiver>
         <receiver
             android:exported="false"
             android:name="com.dexterous.flutterlocalnotifications.ScheduledNotificationReceiver" />

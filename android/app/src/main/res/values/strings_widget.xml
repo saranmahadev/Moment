@@ -1,0 +1,23 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="widget_description">Your streak and a button for each kind of log</string>
+    <string name="widget_loading">Moment</string>
+    <string name="widget_buttons_only">Add a log</string>
+    <string name="widget_unset">Open Moment to start</string>
+    <string name="widget_logged_today">Logged today</string>
+    <string name="widget_log_today">Log today</string>
+    <string name="widget_start_streak">Start a streak</string>
+    <string name="widget_caption_streak">STREAK</string>
+    <string name="widget_new_text">New text log</string>
+    <string name="widget_new_emoji">New emoji log</string>
+    <string name="widget_new_photo">New photo log</string>
+    <string name="widget_new_video">New video log</string>
+    <string name="widget_new_audio">New audio log</string>
+    <string name="widget_new_location">New location log</string>
+    <string name="widget_label_text">Text</string>
+    <string name="widget_label_emoji">Emoji</string>
+    <string name="widget_label_photo">Photo</string>
+    <string name="widget_label_video">Video</string>
+    <string name="widget_label_audio">Audio</string>
+    <string name="widget_label_location">Location</string>
+</resources>

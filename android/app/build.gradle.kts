@@ -52,4 +52,9 @@ flutter {
 
 dependencies {
     coreLibraryDesugaring("com.android.tools:desugar_jdk_libs:2.1.4")
+
+    // JVM tests of the home screen widget's model (WidgetModelTest). The
+    // real org.json is needed because Android's is stubbed out on the JVM.
+    testImplementation("junit:junit:4.13.2")
+    testImplementation("org.json:json:20240303")
 }

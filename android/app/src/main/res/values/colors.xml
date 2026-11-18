@@ -1,0 +1,22 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Widget colours: the app's light tokens (lib/design/tokens.dart), with the type tints already laid over the solid card, because a widget cannot blend. -->
+<resources>
+    <color name="widget_bg">#F9FAFD</color>
+    <color name="widget_ink">#1B1F2A</color>
+    <color name="widget_on_ink">#FFFFFF</color>
+    <color name="widget_secondary">#3A4152</color>
+    <color name="widget_accent">#4B52D1</color>
+    <color name="widget_cell_off">#E6E8EF</color>
+    <color name="type_text">#1D4ED8</color>
+    <color name="type_emoji">#B45309</color>
+    <color name="type_photo">#BE185D</color>
+    <color name="type_video">#6D28D9</color>
+    <color name="type_audio">#0F766E</color>
+    <color name="type_location">#15803D</color>
+    <color name="tile_text">#DCE5FB</color>
+    <color name="tile_emoji">#F6E3CC</color>
+    <color name="tile_photo">#F7D9E6</color>
+    <color name="tile_video">#E6DDF8</color>
+    <color name="tile_audio">#D2EDE9</color>
+    <color name="tile_location">#D6EDDD</color>
+</resources>
