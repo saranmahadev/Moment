@@ -48,7 +48,6 @@ void main() {
         isSelected: true,
         hasSelectedState: true,
         hasTapAction: true,
-        isEnabled: null,
       ),
     );
   });

@@ -7,6 +7,8 @@ import '../design/glass_surface.dart';
 import '../design/tokens.dart';
 import '../domain/log.dart';
 import '../streaks/streak_settings_screen.dart';
+import '../widgets/widget_bridge.dart';
+import '../widgets/widget_settings_screen.dart';
 import 'about_screen.dart';
 import 'app_settings.dart';
 import 'media_quality.dart';
@@ -44,6 +46,7 @@ class SettingsScreen extends StatefulWidget {
     required this.onOpenPrivacy,
     required this.onOpenTrash,
     this.pickTime = _showTimePicker,
+    this.widgetBridge = const DeviceWidgetBridge(),
   });
 
   final LogRepository repository;
@@ -52,6 +55,7 @@ class SettingsScreen extends StatefulWidget {
   final VoidCallback onOpenPrivacy;
   final VoidCallback onOpenTrash;
   final TimePicker pickTime;
+  final WidgetBridge widgetBridge;
 
   @override
   State<SettingsScreen> createState() => _SettingsScreenState();
@@ -407,6 +411,24 @@ class _SettingsScreenState extends State<SettingsScreen> {
                       color: tokens.secondary,
                     ),
                   ],
+                ),
+              ),
+              _divider(tokens),
+              _Row(
+                tokens: tokens,
+                title: 'Widgets',
+                subtitle: widgetShowsLabel(settings),
+                onTap: () => _push(
+                  (back) => WidgetSettingsScreen(
+                    settings: settings,
+                    bridge: widget.widgetBridge,
+                    onBack: back,
+                  ),
+                ),
+                trailing: Icon(
+                  Icons.chevron_right,
+                  size: 18,
+                  color: tokens.secondary,
                 ),
               ),
             ],
