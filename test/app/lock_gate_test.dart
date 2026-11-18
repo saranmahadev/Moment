@@ -31,7 +31,6 @@ void main() {
   Future<void> pump(
     WidgetTester tester, {
     required AppLockController controller,
-    required bool hasPin,
   }) async {
     await tester.binding.setSurfaceSize(const Size(390, 844));
     addTearDown(() => tester.binding.setSurfaceSize(null));
@@ -41,7 +40,6 @@ void main() {
         home: LockGate(
           controller: controller,
           biometrics: _FakeBiometrics(),
-          hasPin: hasPin,
           child: const Text('Shell'),
         ),
       ),
@@ -53,7 +51,7 @@ void main() {
   ) async {
     final controller = AppLockController(_FakePinStorage());
 
-    await pump(tester, controller: controller, hasPin: false);
+    await pump(tester, controller: controller);
 
     expect(find.text('Shell'), findsOneWidget);
     expect(find.text('Moment'), findsNothing);
@@ -66,7 +64,7 @@ void main() {
     await controller.setPin('1234');
     controller.lock();
 
-    await pump(tester, controller: controller, hasPin: true);
+    await pump(tester, controller: controller);
 
     expect(find.text('Shell'), findsNothing);
     expect(find.text('Moment'), findsOneWidget);
@@ -79,7 +77,7 @@ void main() {
     await controller.setPin('1234');
     controller.lock();
 
-    await pump(tester, controller: controller, hasPin: true);
+    await pump(tester, controller: controller);
     expect(find.text('Shell'), findsNothing);
 
     controller.unlock();
@@ -95,7 +93,7 @@ void main() {
     await controller.setPin('1234');
     controller.unlock();
 
-    await pump(tester, controller: controller, hasPin: true);
+    await pump(tester, controller: controller);
     expect(find.text('Shell'), findsOneWidget);
 
     controller.lock();
