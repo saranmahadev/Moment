@@ -86,7 +86,8 @@ class LibraryScreen extends StatelessWidget {
               mainAxisSpacing: 12,
               crossAxisSpacing: 12,
               // Taller tiles when the system text size is larger.
-              childAspectRatio: 0.78 / textGrowth(context),
+              // About 150 pt tall on a 390 pt phone, as in the mockup.
+              childAspectRatio: 1.0 / textGrowth(context),
               children: [
                 for (final type in builtLogTypes)
                   _TypeTile(
@@ -157,11 +158,10 @@ class _TypeTile extends StatelessWidget {
                     padding: const EdgeInsets.all(16),
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
-                      mainAxisSize: MainAxisSize.min,
                       children: [
                         Container(
-                          width: 48,
-                          height: 48,
+                          width: 44,
+                          height: 44,
                           decoration: BoxDecoration(
                             color: tokens.tintFor(type),
                             shape: BoxShape.circle,
@@ -171,16 +171,21 @@ class _TypeTile extends StatelessWidget {
                             color: tokens.colorFor(type),
                           ),
                         ),
-                        const SizedBox(height: 12),
+                        // The name and count sit at the bottom, as in the
+                        // mockup, however tall the card is.
+                        const Spacer(),
                         Text(
-                          momentLabelFor(type),
+                          momentSectionTitleFor(type),
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
                           style: TextStyle(
                             fontFamily: 'Newsreader',
-                            fontSize: 26,
+                            fontSize: 25,
+                            height: 1.1,
                             color: tokens.ink,
                           ),
                         ),
-                        const SizedBox(height: 4),
+                        const SizedBox(height: 6),
                         Text(
                           lastLabel,
                           maxLines: 2,

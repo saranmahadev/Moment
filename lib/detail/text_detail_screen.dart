@@ -122,13 +122,16 @@ class TextDetailScreen extends StatelessWidget {
                   GlassSurface(
                     variant: GlassVariant.surface,
                     child: Padding(
-                      padding: const EdgeInsets.all(22),
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 24,
+                        vertical: 26,
+                      ),
                       child: Text(
                         log.body,
                         style: TextStyle(
                           fontFamily: 'Newsreader',
-                          fontSize: 23,
-                          height: 1.45,
+                          fontSize: 24,
+                          height: 1.4,
                           color: tokens.ink,
                         ),
                       ),

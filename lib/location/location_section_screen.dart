@@ -105,27 +105,29 @@ class LocationSectionScreen extends StatelessWidget {
                           ),
                         ),
                         const SizedBox(width: 12),
-                        Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Text(
-                              momentLabelFor(LogType.location),
-                              style: TextStyle(
-                                fontFamily: 'Newsreader',
-                                fontWeight: FontWeight.w500,
-                                fontSize: 34,
-                                color: tokens.ink,
+                        Expanded(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(
+                                momentSectionTitleFor(LogType.location),
+                                style: TextStyle(
+                                  fontFamily: 'Newsreader',
+                                  fontWeight: FontWeight.w500,
+                                  fontSize: 34,
+                                  color: tokens.ink,
+                                ),
                               ),
-                            ),
-                            Text(
-                              '${logs.length} '
-                              '${logs.length == 1 ? 'log' : 'logs'}',
-                              style: TextStyle(
-                                fontSize: 14,
-                                color: tokens.secondary,
+                              Text(
+                                '${logs.length} '
+                                '${logs.length == 1 ? 'log' : 'logs'}',
+                                style: TextStyle(
+                                  fontSize: 14,
+                                  color: tokens.secondary,
+                                ),
                               ),
-                            ),
-                          ],
+                            ],
+                          ),
                         ),
                       ],
                     ),

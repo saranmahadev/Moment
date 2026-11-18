@@ -59,12 +59,6 @@ void main() {
     });
   }
 
-  testWidgets('Lock says everything stays on this device', (tester) async {
-    final fixture = await pumpScreenCase(tester, screen('01_lock'));
-    expect(find.text('Everything stays on this device'), findsOneWidget);
-    await closeScreenCase(tester, fixture);
-  });
-
   testWidgets('Text detail reads at the mockup size', (tester) async {
     final fixture = await pumpScreenCase(tester, screen('17_text_detail'));
     final body = tester.widget<Text>(

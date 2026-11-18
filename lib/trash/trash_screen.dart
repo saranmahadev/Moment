@@ -81,20 +81,27 @@ class TrashScreen extends StatelessWidget {
                 return ListView(
                   padding: const EdgeInsets.fromLTRB(20, 16, 20, 20),
                   children: [
-                    Semantics(
-                      button: true,
-                      label: 'Back',
-                      onTap: onBack,
-                      excludeSemantics: true,
-                      child: GestureDetector(
+                    Align(
+                      alignment: Alignment.centerLeft,
+                      child: Semantics(
+                        container: true,
+                        button: true,
+                        label: 'Back',
                         onTap: onBack,
-                        child: SizedBox(
-                          width: 44,
-                          height: 44,
-                          child: GlassSurface(
-                            variant: GlassVariant.card,
-                            borderRadius: 22,
-                            child: Icon(Icons.chevron_left, color: tokens.ink),
+                        excludeSemantics: true,
+                        child: GestureDetector(
+                          onTap: onBack,
+                          child: SizedBox(
+                            width: 44,
+                            height: 44,
+                            child: GlassSurface(
+                              variant: GlassVariant.card,
+                              borderRadius: 22,
+                              child: Icon(
+                                Icons.chevron_left,
+                                color: tokens.ink,
+                              ),
+                            ),
                           ),
                         ),
                       ),

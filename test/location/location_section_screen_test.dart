@@ -53,7 +53,7 @@ void main() {
 
     await pump(tester);
 
-    expect(find.text('Location'), findsOneWidget);
+    expect(find.text('Locations'), findsOneWidget);
     expect(find.text('2 logs'), findsOneWidget);
 
     await close(tester);

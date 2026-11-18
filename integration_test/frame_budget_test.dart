@@ -104,9 +104,9 @@ void main() {
     // Library, then the photo grid (3,000 photos).
     await tester.tap(find.bySemanticsLabel('Library'));
     await tester.pumpAndSettle();
-    await tester.ensureVisible(find.text('Photo').last);
+    await tester.ensureVisible(find.text('Photos').last);
     await tester.pumpAndSettle();
-    await tester.tap(find.text('Photo').last);
+    await tester.tap(find.text('Photos').last);
     await tester.pumpAndSettle();
     await binding.traceAction(() => flingDown(12), reportKey: 'photo_grid');
     // Its Back button has scrolled away with the grid.

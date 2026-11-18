@@ -69,7 +69,7 @@ void main() {
 
     await pump(tester);
 
-    expect(find.text('Video'), findsOneWidget);
+    expect(find.text('Videos'), findsOneWidget);
     expect(find.text('2 logs'), findsOneWidget);
 
     await close(tester);
