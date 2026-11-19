@@ -61,6 +61,9 @@ class _CreateLocationScreenState extends State<CreateLocationScreen> {
   LocationFix? _pin;
   bool _typed = false;
   bool _locating = false;
+
+  /// The last try to find a position failed (no signal, timed out).
+  bool _fixFailed = false;
   bool _entering = false;
   bool _saving = false;
   final _nameController = TextEditingController();
@@ -95,9 +98,18 @@ class _CreateLocationScreenState extends State<CreateLocationScreen> {
   }
 
   Future<void> _locate() async {
-    setState(() => _locating = true);
+    setState(() {
+      _locating = true;
+      _fixFailed = false;
+    });
     try {
-      final fix = await widget.provider.currentFix();
+      final LocationFix fix;
+      try {
+        fix = await widget.provider.currentFix();
+      } on Object {
+        if (mounted) setState(() => _fixFailed = true);
+        return;
+      }
       if (!mounted) return;
       setState(() {
         _pin = fix;
@@ -382,6 +394,49 @@ class _CreateLocationScreenState extends State<CreateLocationScreen> {
     }
 
     final access = _access;
+    if (access == LocationAccess.granted && _fixFailed && !_locating) {
+      return Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Text(
+            'Pin this spot',
+            style: TextStyle(
+              fontFamily: 'Newsreader',
+              fontWeight: FontWeight.w500,
+              fontSize: 28,
+              color: tokens.ink,
+            ),
+          ),
+          const SizedBox(height: 6),
+          Text(
+            'Could not find where you are. Try again, or enter coordinates.',
+            style: TextStyle(fontSize: 14.5, color: tokens.ink),
+          ),
+          const SizedBox(height: 14),
+          Row(
+            children: [
+              Expanded(
+                child: LocationPillButton(
+                  label: 'Enter coordinates',
+                  tokens: tokens,
+                  onTap: () => setState(() => _entering = true),
+                ),
+              ),
+              const SizedBox(width: 12),
+              Expanded(
+                child: LocationPillButton(
+                  label: 'Try again',
+                  tokens: tokens,
+                  primary: true,
+                  onTap: _locate,
+                ),
+              ),
+            ],
+          ),
+        ],
+      );
+    }
     if (access == null || access == LocationAccess.granted) {
       return Padding(
         padding: const EdgeInsets.symmetric(vertical: 12),
