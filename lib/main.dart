@@ -6,11 +6,13 @@ import 'package:flutter/material.dart';
 import 'package:path/path.dart' as p;
 import 'package:path_provider/path_provider.dart';
 
+import 'app/licences.dart';
 import 'app/moment_app.dart';
 import 'diagnostics/diagnostics_log.dart';
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
+  registerAppLicences();
   try {
     final dir = await getApplicationSupportDirectory();
     DiagnosticsLog.shared = DiagnosticsLog(

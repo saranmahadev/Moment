@@ -1,0 +1,56 @@
+name: Bug report
+description: Something in Moment does not work as it should.
+labels: ["bug"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thank you for taking the time. Please **do not paste your journal entries, photos, recordings, places or backups** here: nobody needs them, and issues are public.
+        Security or privacy problems go privately instead: see SECURITY.md.
+  - type: input
+    id: version
+    attributes:
+      label: Moment version
+      description: Settings → Version.
+      placeholder: 1.0.0
+    validations:
+      required: true
+  - type: input
+    id: phone
+    attributes:
+      label: Phone and Android version
+      placeholder: Pixel 7, Android 15
+    validations:
+      required: true
+  - type: textarea
+    id: steps
+    attributes:
+      label: Steps to reproduce
+      description: What you did, one step per line.
+      placeholder: |
+        1. Open Library → Photos
+        2. Tap a photo
+        3. ...
+    validations:
+      required: true
+  - type: textarea
+    id: expected
+    attributes:
+      label: What you expected, and what happened instead
+    validations:
+      required: true
+  - type: textarea
+    id: diagnostics
+    attributes:
+      label: Diagnostics (optional)
+      description: Settings → Diagnostics → Copy. It holds error types and where in Moment's code they happened, never what you wrote. Read it before you paste it.
+      render: text
+  - type: checkboxes
+    id: checks
+    attributes:
+      label: Checks
+      options:
+        - label: I searched the existing issues.
+          required: true
+        - label: This report contains nothing from my journal.
+          required: true

@@ -53,6 +53,16 @@ class AboutScreen extends StatelessWidget {
 
   final VoidCallback onBack;
 
+  /// Flutter's licence page: every package Moment is built with, plus the
+  /// typefaces and map data (see registerAppLicences).
+  static void _showLicences(BuildContext context) => showLicensePage(
+    context: context,
+    applicationName: 'Moment',
+    applicationVersion: appVersion,
+    applicationLegalese:
+        'Free software under the GNU General Public License v3.0.',
+  );
+
   @override
   Widget build(BuildContext context) {
     final tokens =
@@ -126,7 +136,81 @@ class AboutScreen extends StatelessWidget {
                   ),
                   const SizedBox(height: 12),
                 ],
-                const SizedBox(height: 8),
+                GlassSurface(
+                  variant: GlassVariant.card,
+                  child: Padding(
+                    padding: const EdgeInsets.all(16),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Row(
+                          children: [
+                            Icon(Icons.code, size: 22, color: tokens.ink),
+                            const SizedBox(width: 12),
+                            Expanded(
+                              child: Text(
+                                'Free and open source',
+                                style: TextStyle(
+                                  fontSize: 16,
+                                  fontWeight: FontWeight.w600,
+                                  color: tokens.ink,
+                                ),
+                              ),
+                            ),
+                          ],
+                        ),
+                        const SizedBox(height: 6),
+                        Text(
+                          'Moment is free software under the GNU General '
+                          'Public License (GPL-3.0): you can read, change '
+                          'and share it. The source, the changelog and the '
+                          'way to report a problem are at '
+                          'github.com/saranmahadev/Moment.',
+                          style: TextStyle(
+                            fontSize: 14,
+                            height: 1.4,
+                            color: tokens.secondary,
+                          ),
+                        ),
+                        const SizedBox(height: 12),
+                        Semantics(
+                          container: true,
+                          button: true,
+                          label: 'Open-source licences',
+                          onTap: () => _showLicences(context),
+                          excludeSemantics: true,
+                          child: GestureDetector(
+                            behavior: HitTestBehavior.opaque,
+                            onTap: () => _showLicences(context),
+                            child: ConstrainedBox(
+                              constraints: const BoxConstraints(minHeight: 44),
+                              child: Row(
+                                children: [
+                                  Expanded(
+                                    child: Text(
+                                      'Open-source licences',
+                                      style: TextStyle(
+                                        fontSize: 15,
+                                        fontWeight: FontWeight.w600,
+                                        color: tokens.ink,
+                                      ),
+                                    ),
+                                  ),
+                                  Icon(
+                                    Icons.chevron_right,
+                                    size: 18,
+                                    color: tokens.secondary,
+                                  ),
+                                ],
+                              ),
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+                const SizedBox(height: 20),
                 Center(
                   child: Text(
                     'Moment $appVersion',

@@ -34,7 +34,10 @@ void main() {
     tester,
   ) async {
     await pump(tester);
-    await tester.scrollUntilVisible(find.text('Moment $appVersion'), 200);
+    await tester.scrollUntilVisible(
+      find.text('Backups are yours to keep'),
+      200,
+    );
 
     expect(find.text('One switch can use the internet'), findsOneWidget);
     expect(
@@ -43,6 +46,7 @@ void main() {
     );
     expect(find.textContaining('OpenStreetMap'), findsOneWidget);
     expect(find.text('Backups are yours to keep'), findsOneWidget);
+    await tester.scrollUntilVisible(find.text('Moment $appVersion'), 200);
     expect(find.text('Moment $appVersion'), findsOneWidget);
   });
 
@@ -83,6 +87,8 @@ void main() {
       findsOneWidget,
     );
 
+    await tester.ensureVisible(find.text('Open-source licences'));
+    await tester.pumpAndSettle();
     await tester.tap(find.text('Open-source licences'));
     await tester.pumpAndSettle();
     expect(find.byType(LicensePage), findsOneWidget);

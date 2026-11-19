@@ -13,7 +13,7 @@ Six kinds of log, encrypted on your phone. No account, no cloud.
 [![Latest release](https://img.shields.io/github/v/release/saranmahadev/Moment?label=release)](https://github.com/saranmahadev/Moment/releases/latest)
 [![Licence: GPL-3.0](https://img.shields.io/badge/licence-GPL--3.0-blue)](LICENSE)
 
-[**Website**](https://saranmahadev.github.io/Moment/) · [**Download**](https://github.com/saranmahadev/Moment/releases/latest) · [**Changelog**](CHANGELOG.md) · [**Contributing**](CONTRIBUTING.md)
+[**Website**](https://saranmahadev.github.io/Moment/) · [**Download**](https://github.com/saranmahadev/Moment/releases) · [**Changelog**](CHANGELOG.md) · [**Contributing**](CONTRIBUTING.md) · [**Privacy**](https://saranmahadev.github.io/Moment/privacy.html)
 
 <a href="https://saranmahadev.github.io/Moment/#film">
   <img src="site/media/moment-preview.gif" alt="The opening of a short film introducing Moment: the logo, then the six kinds of log" width="640">
@@ -101,9 +101,12 @@ Found a security or privacy problem? Please see [SECURITY.md](SECURITY.md).
 
 ### Android
 
-Download the APK from the [latest release](https://github.com/saranmahadev/Moment/releases/latest) and open it on your phone. Android will ask you to allow installing from your browser or file manager.
+Download the APK from the [releases page](https://github.com/saranmahadev/Moment/releases) and open it on your phone. Android will ask you to allow installing from your browser or file manager. Almost every phone wants the `arm64-v8a` file; each release lists the SHA-256 of every APK.
 
-> Until 1.0, releases are signed with a temporary key, so a new version does not install over the old one. Back up in the app (Settings → Privacy and backup), uninstall, install the new version, then restore.
+- **1.0.0-rc.1** is the release candidate for 1.0, marked as a pre-release.
+- **0.6.0** is the [latest full release](https://github.com/saranmahadev/Moment/releases/latest).
+
+> Releases are still signed with a temporary key, so a new version does not install over the old one. Back up in the app (Settings → Privacy and backup), uninstall, install the new version, then restore. Once the permanent signing key is in place, updates will install over each other.
 
 ### iPhone
 
@@ -160,7 +163,10 @@ flutter test --run-skipped --tags preview test/gate/previews_test.dart
 | `test/` | Tests, mirroring `lib/`; `test/gate/` holds the every-screen checks |
 | `design/` | Mockups, the logo and the film, with the scripts that build them |
 | `site/` | The project website, published to GitHub Pages |
-| `docs/` | Roadmap, working agreement and store text (`docs/store/`) |
+| `lib/diagnostics/` | The on-phone error log |
+| `integration_test/`, `test_driver/` | Frame-time measurements on an emulator |
+| `tool/` | The manifest and release checks, fixture and map builders |
+| `docs/` | Architecture, roadmap, working agreement and store text (`docs/store/`) |
 
 ### Releasing
 
@@ -180,16 +186,35 @@ Run the **Release** workflow (Actions → Release → Run workflow) with the ver
 
 The plan for each phase, with its tests and exit gate, is in [docs/ROADMAP.md](docs/ROADMAP.md).
 
-## Contributing
+## Documentation
 
-Contributions are welcome. Start with [CONTRIBUTING.md](CONTRIBUTING.md): it explains the test-first workflow and the handful of rules that protect the privacy promise (no new network access, no new permissions without discussion).
+| Document | What it covers |
+|---|---|
+| [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md) | How the code is laid out, the rules it keeps, and where the tests are |
+| [docs/ROADMAP.md](docs/ROADMAP.md) | Every phase: scope, tests written first, exit gate |
+| [docs/WORKFLOW.md](docs/WORKFLOW.md) | Branches, test-first commits, the merge gate, releases and signing |
+| [CHANGELOG.md](CHANGELOG.md) | What changed in each version |
+| [design/README.md](design/README.md) | The mockups, the logo and the film |
+| [docs/store/listing.md](docs/store/listing.md) | Store text, screenshots and the data-safety answers |
+| `CLAUDE.md` | Every design decision so far, and why |
+
+## Community
+
+- **Questions and help:** [SUPPORT.md](SUPPORT.md)
+- **Bugs and ideas:** [issues](https://github.com/saranmahadev/Moment/issues), with a form for each
+- **Security or privacy problems:** privately, as [SECURITY.md](SECURITY.md) explains
+- **Contributing:** [CONTRIBUTING.md](CONTRIBUTING.md) explains the test-first workflow and the rules that protect the privacy promise (no new network access, no new permissions without discussion)
+- Everyone taking part follows the [code of conduct](CODE_OF_CONDUCT.md).
 
 ## Built with
 
 - [Flutter](https://flutter.dev) and [Drift](https://drift.simonbinder.eu) on [SQLite3 Multiple Ciphers](https://utelle.github.io/SQLite3MultipleCiphers/)
-- [Inter](https://rsms.me/inter/) and [Newsreader](https://github.com/productiontype/Newsreader), under the SIL Open Font License
-- Place names, when turned on, from [OpenStreetMap](https://www.openstreetmap.org/copyright) contributors
+- [Inter](https://rsms.me/inter/) and [Newsreader](https://github.com/productiontype/Newsreader), under the SIL Open Font License ([assets/fonts/OFL.txt](assets/fonts/OFL.txt))
+- Offline maps from [Natural Earth](https://www.naturalearthdata.com), in the public domain
+- Place names, when turned on, from [OpenStreetMap](https://www.openstreetmap.org/copyright) contributors (ODbL)
+
+The app lists every package and its licence in About → Open-source licences.
 
 ## Licence
 
-Moment is free software, licensed under the [GNU General Public License v3.0](LICENSE). You can use it, study it, change it and share it; versions you distribute must stay under the same licence.
+Moment is free software, licensed under the [GNU General Public License v3.0](LICENSE). You can use it, study it, change it and share it; versions you distribute must stay under the same licence. The typefaces keep their own licence (SIL OFL 1.1).

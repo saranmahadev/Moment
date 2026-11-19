@@ -22,8 +22,19 @@ Say what you found, how to reproduce it, and which version you used. You will ge
 - The database is encrypted (SQLite3MultipleCiphers) with a random key made on the device and kept in the Keychain or Keystore.
 - Backups are encrypted with a passphrase only you know (PBKDF2-HMAC-SHA256, XChaCha20-Poly1305). Without the passphrase nobody can open one, including the maintainers.
 - The app has no account, no analytics, no ads and no cloud. It uses the internet for one thing only, and only if you turn it on: "Look up place names" sends a new pin's coordinates to OpenStreetMap.
-- Tests in the repository keep network code to one file and one address, and CI lists every permission the release build asks for.
+- Tests in the repository keep network code to one file and one address, and every release build is checked: the exact list of permissions, Android backup off, the encrypted SQLite inside each APK.
+- While the app lock is on, the app switcher shows no preview of the journal, and wrong PINs make you wait longer each time.
+- Diagnostics stay on the phone and never contain what you wrote.
 
 ## Supported versions
 
-Until 1.0, only the latest release gets fixes.
+| Version | Fixes |
+|---|---|
+| 1.0.x (and the 1.0.0 release candidates) | Yes |
+| 0.x | No: please update |
+
+Only the newest release gets fixes. A fix is released as a new version, with the problem described in the changelog once people have had time to update.
+
+## Checking a download
+
+Every release lists the SHA-256 of each APK. Compare it with `sha256sum moment-<version>-arm64-v8a.apk` before installing a file you did not download from the releases page yourself.

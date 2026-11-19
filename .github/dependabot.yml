@@ -1,0 +1,15 @@
+# Keeps the GitHub Actions the workflows use up to date (several still run
+# on Node 20, which GitHub is retiring). Dart and Flutter packages are moved
+# by hand: some are held back on purpose (see CLAUDE.md), and every update
+# must pass the test suite and the release check.
+version: 2
+updates:
+  - package-ecosystem: github-actions
+    directory: /
+    schedule:
+      interval: weekly
+    commit-message:
+      prefix: ci
+    groups:
+      actions:
+        patterns: ["*"]
