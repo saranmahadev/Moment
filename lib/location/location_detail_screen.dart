@@ -50,6 +50,7 @@ class _LocationDetailScreenState extends State<LocationDetailScreen> {
   late LocationLog _log = widget.log;
   bool _editing = false;
   bool _moving = false;
+  bool _locating = false;
   String? _moveMessage;
   late final _nameController = TextEditingController(text: _log.name ?? '');
   late final _noteController = TextEditingController(text: _log.note ?? '');
@@ -95,16 +96,41 @@ class _LocationDetailScreenState extends State<LocationDetailScreen> {
   }
 
   Future<void> _moveToCurrentPosition() async {
-    var access = await widget.provider.checkAccess();
-    if (access == LocationAccess.denied) {
-      access = await widget.provider.requestAccess();
+    if (_locating) return;
+    setState(() {
+      _locating = true;
+      _moveMessage = null;
+    });
+    try {
+      var access = await widget.provider.checkAccess();
+      if (access == LocationAccess.denied) {
+        access = await widget.provider.requestAccess();
+      }
+      if (access != LocationAccess.granted) {
+        if (mounted) {
+          setState(() => _moveMessage = locationAccessMessage(access));
+        }
+        return;
+      }
+      // A fix can take a while (up to the provider's 30 seconds) and can
+      // fail, indoors or with no signal: say so rather than nothing.
+      final LocationFix fix;
+      try {
+        fix = await widget.provider.currentFix();
+      } on Object {
+        if (mounted) {
+          setState(
+            () => _moveMessage =
+                'Could not find where you are. Try again, or enter '
+                'coordinates.',
+          );
+        }
+        return;
+      }
+      await _moveTo(fix.latitude, fix.longitude, fix.accuracyMeters);
+    } finally {
+      if (mounted) setState(() => _locating = false);
     }
-    if (access != LocationAccess.granted) {
-      if (mounted) setState(() => _moveMessage = locationAccessMessage(access));
-      return;
-    }
-    final fix = await widget.provider.currentFix();
-    await _moveTo(fix.latitude, fix.longitude, fix.accuracyMeters);
   }
 
   Future<void> _moveTo(
@@ -340,7 +366,7 @@ class _LocationDetailScreenState extends State<LocationDetailScreen> {
       mainAxisSize: MainAxisSize.min,
       children: [
         LocationPillButton(
-          label: 'Use current position',
+          label: _locating ? 'Finding where you are…' : 'Use current position',
           icon: Icons.my_location,
           tokens: tokens,
           onTap: _moveToCurrentPosition,

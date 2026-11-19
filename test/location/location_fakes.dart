@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:moment/location/location_provider.dart';
 import 'package:moment/location/place_name_lookup.dart';
 
@@ -18,6 +20,12 @@ class FakeLocationProvider implements LocationProvider {
   LocationAccess afterRequest;
   LocationFix fix;
 
+  /// When set, the next fix waits for this, as a real one can for a while.
+  Completer<LocationFix>? pending;
+
+  /// When set, finding a fix fails with this (no signal, timed out).
+  Object? failWith;
+
   int requests = 0;
   int fixes = 0;
   int settingsOpened = 0;
@@ -37,6 +45,8 @@ class FakeLocationProvider implements LocationProvider {
     if (access != LocationAccess.granted) {
       throw StateError('no location access');
     }
+    if (failWith case final error?) throw error;
+    if (pending case final waiting?) return waiting.future;
     return fix;
   }
 

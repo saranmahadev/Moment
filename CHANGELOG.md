@@ -2,6 +2,7 @@
 
 ## Unreleased
 
+- **Fixed: moving a place to where you are could look like it did nothing.** Finding the phone's position can take up to 30 seconds and can fail indoors; Move pin → Use current position now says "Finding where you are…" while it waits, and if no position comes, says so and leaves the coordinates field ready. New Location no longer stays on "Finding where you are…" forever when no position comes: it offers Try again and Enter coordinates.
 - **About → Open-source licences** lists every package Moment is built with, the typefaces (with the full SIL Open Font License text, now bundled as their licence asks), the Natural Earth map data and OpenStreetMap.
 - The project has the files an open-source project should: a code of conduct, a support guide, issue forms for bugs and ideas (which ask for nothing from your journal), a pull request template, code owners, and Dependabot for the CI actions. `docs/ARCHITECTURE.md` maps the code for contributors.
 - The site has an Open source section (how the promise is tested, how releases can be checked, how to help, credits) and a footer with every project link.
