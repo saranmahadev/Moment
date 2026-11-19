@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'dart:io';
 
 import 'package:drift/native.dart';
@@ -513,5 +515,32 @@ void main() {
     expect(connections, 0);
 
     await close(tester);
+  });
+
+  testWidgets('a position that cannot be found offers a retry and typing', (
+    tester,
+  ) async {
+    final provider = FakeLocationProvider()
+      ..failWith = TimeoutException('no fix');
+    await pump(tester, provider);
+
+    expect(find.text('Finding where you are…'), findsNothing);
+    expect(
+      find.text(
+        'Could not find where you are. Try again, or enter coordinates.',
+      ),
+      findsOneWidget,
+    );
+    expect(find.text('Enter coordinates'), findsOneWidget);
+
+    provider.failWith = null;
+    await tester.tap(find.text('Try again'));
+    await tester.pump();
+    await tester.pump();
+    expect(find.text('Locked on'), findsOneWidget);
+
+    await tester.pumpWidget(const SizedBox());
+    await tester.pumpAndSettle();
+    await db.close();
   });
 }
