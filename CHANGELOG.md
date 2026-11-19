@@ -1,5 +1,11 @@
 # Changelog
 
+## Unreleased
+
+- **About → Open-source licences** lists every package Moment is built with, the typefaces (with the full SIL Open Font License text, now bundled as their licence asks), the Natural Earth map data and OpenStreetMap.
+- The project has the files an open-source project should: a code of conduct, a support guide, issue forms for bugs and ideas (which ask for nothing from your journal), a pull request template, code owners, and Dependabot for the CI actions. `docs/ARCHITECTURE.md` maps the code for contributors.
+- The site has an Open source section (how the promise is tested, how releases can be checked, how to help, credits) and a footer with every project link.
+
 ## 1.0.0-rc.1 — Release candidate for 1.0
 
 Phase 5: no new kinds of log, but everything made sturdier, faster and

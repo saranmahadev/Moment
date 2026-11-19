@@ -1,0 +1,24 @@
+name: Feature request
+description: An idea for Moment.
+labels: ["idea"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Moment keeps a strict promise: the journal stays on the phone, with no account, no cloud and no tracking. Ideas that need a server, an account, analytics or a new permission are unlikely to fit; the roadmap (docs/ROADMAP.md) says what is planned.
+  - type: textarea
+    id: problem
+    attributes:
+      label: What would it help you do?
+      description: The situation, before any solution.
+    validations:
+      required: true
+  - type: textarea
+    id: idea
+    attributes:
+      label: What you have in mind
+  - type: textarea
+    id: privacy
+    attributes:
+      label: Does it need anything to leave the phone, or a new permission?
+      placeholder: "No"

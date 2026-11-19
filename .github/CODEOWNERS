@@ -1,0 +1,10 @@
+# Every change is reviewed by the maintainer. Changes to what can reach the
+# network, the release build or the encrypted data are the ones that matter
+# most; they are listed so they always ask for review.
+*                                     @saranmahadev
+/lib/location/nominatim_place_names.dart @saranmahadev
+/lib/data/                            @saranmahadev
+/lib/backup/                          @saranmahadev
+/android/app/src/main/AndroidManifest.xml @saranmahadev
+/tool/release_check.dart              @saranmahadev
+/.github/workflows/                   @saranmahadev

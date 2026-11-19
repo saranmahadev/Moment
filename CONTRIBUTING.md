@@ -6,7 +6,9 @@ Thank you for wanting to help. Moment is a small app with a strict promise (your
 
 - For anything larger than a small fix, open an issue first and say what you want to do. It saves both of us time.
 - Read `docs/WORKFLOW.md` (how work is done) and `docs/ROADMAP.md` (what is planned, phase by phase).
+- `docs/ARCHITECTURE.md` is the map of the code.
 - `CLAUDE.md` records every design decision made so far and why. If your change touches one, read that part.
+- Everyone taking part follows the [code of conduct](CODE_OF_CONDUCT.md).
 
 ## Setting up
 
@@ -27,10 +29,11 @@ flutter test --exclude-tags slow
 3. **Conventional Commits** for every message: `feat(search): …`, `fix(a11y): …`, `docs: …`.
 4. **The gate** before a pull request, all three clean:
    ```sh
-   dart format --set-exit-if-changed lib test tool
+   dart format --set-exit-if-changed .
    flutter analyze
    flutter test
    ```
+6. **Open a pull request.** The template asks for the failing test, the gate, and the privacy checks below. CI runs the same gate.
 5. Do not commit generated `*.g.dart` files.
 
 ## Rules that protect the promise
@@ -44,6 +47,8 @@ These are enforced by tests, and a pull request that breaks one will not be merg
 - **No live blur on anything that scrolls or repeats.** It made the app lag once.
 - **New screens join the every-screen checks** by being added to `test/support/screen_cases.dart`: light and dark baselines, labels, tap-target size, large text.
 - **A new kind of log goes into backup before it appears in the app.**
+- **Nothing from the journal in logs or diagnostics.** `DiagnosticsLog` keeps error types and code locations only.
+- **A screen never reads every log to show a few.** Use a page, a date window or a count.
 
 ## Design changes
 
@@ -61,7 +66,8 @@ flutter test --update-goldens test/gate/all_screens_test.dart --plain-name golde
 
 ## Reporting problems
 
-- **Bugs and ideas:** open an issue. Say what you did, what you expected and what happened, with the app version and your phone.
+- **Bugs and ideas:** open an issue with the bug or idea form. Never paste journal content.
+- **Questions:** see [SUPPORT.md](SUPPORT.md).
 - **Security or privacy problems:** please do not open a public issue. See `SECURITY.md`.
 
 ## Licence
