@@ -130,6 +130,37 @@ void main() {
     await shell.close(tester);
   });
 
+  testWidgets('moving a place shows the new spot there and back on Home', (
+    tester,
+  ) async {
+    final shell = await ShellHarness.pump(tester);
+    await shell.repo.createLocation(
+      latitude: 12.9716,
+      longitude: 77.5946,
+      name: 'Favourite bench',
+    );
+    await tester.pumpAndSettle();
+
+    await tester.tap(find.text('Favourite bench'));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Move pin'));
+    await tester.pumpAndSettle();
+    await tester.enterText(
+      find.byKey(const ValueKey('coordinates-field')),
+      '48.8584, 2.2945',
+    );
+    await tester.tap(find.text('Use these coordinates'));
+    await tester.pumpAndSettle();
+    expect(find.textContaining('48.85840° N'), findsOneWidget);
+
+    await tester.tap(find.bySemanticsLabel('Back'));
+    await tester.pumpAndSettle();
+    expect(find.textContaining('48.85840° N'), findsOneWidget);
+    expect(find.textContaining('12.97160° N'), findsNothing);
+
+    await shell.close(tester);
+  });
+
   testWidgets(
     'a library with video and location backs up from the Privacy screen',
     (tester) async {

@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:drift/native.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
@@ -241,6 +243,112 @@ void main() {
       expect(after.accuracyMeters, isNull);
       expect(find.textContaining('Accuracy'), findsNothing);
 
+      await close(tester);
+    });
+
+    testWidgets('the screen shows the new place at once: text and map', (
+      tester,
+    ) async {
+      await pump(tester, mapSource: FakeMapSource());
+
+      await tester.tap(find.text('Move pin'));
+      await tester.pump();
+      await tester.enterText(
+        find.byKey(const ValueKey('coordinates-field')),
+        '48.8584, 2.2945',
+      );
+      await tester.tap(find.text('Use these coordinates'));
+      await tester.pump();
+      await tester.pump();
+
+      expect(find.textContaining('48.85840° N'), findsOneWidget);
+      expect(find.textContaining('12.97160° N'), findsNothing);
+      final map = tester.widget<PlaceMap>(find.byType(PlaceMap));
+      expect((map.latitude, map.longitude), (48.8584, 2.2945));
+      // The move panel closes, back to Copy coordinates and Move pin.
+      expect(find.text('Use these coordinates'), findsNothing);
+
+      await close(tester);
+    });
+
+    testWidgets('moving while the name is being edited keeps both', (
+      tester,
+    ) async {
+      await pump(tester);
+      await tester.tap(find.bySemanticsLabel('Edit'));
+      await tester.pump();
+      await tester.enterText(find.byKey(const ValueKey('place-name')), 'Tower');
+
+      await tester.tap(find.text('Move pin'));
+      await tester.pump();
+      await tester.enterText(
+        find.byKey(const ValueKey('coordinates-field')),
+        '48.8584, 2.2945',
+      );
+      await tester.tap(find.text('Use these coordinates'));
+      await tester.pump();
+      await tester.pump();
+
+      expect(find.textContaining('48.85840° N'), findsOneWidget);
+      expect(
+        tester
+            .widget<TextField>(find.byKey(const ValueKey('place-name')))
+            .controller!
+            .text,
+        'Tower',
+      );
+      await close(tester);
+    });
+
+    testWidgets('says it is finding the position while it waits', (
+      tester,
+    ) async {
+      final provider = FakeLocationProvider()
+        ..pending = Completer<LocationFix>();
+      await pump(tester, provider: provider);
+      await tester.tap(find.text('Move pin'));
+      await tester.pump();
+      await tester.tap(find.text('Use current position'));
+      await tester.pump();
+
+      expect(find.text('Finding where you are…'), findsOneWidget);
+      // A second tap does not ask again.
+      await tester.tap(find.text('Finding where you are…'));
+      await tester.pump();
+      expect(provider.fixes, 1);
+
+      provider.pending!.complete(
+        const LocationFix(latitude: 48.8584, longitude: 2.2945),
+      );
+      await tester.pump();
+      await tester.pump();
+      expect(find.textContaining('48.85840° N'), findsOneWidget);
+      expect(find.text('Finding where you are…'), findsNothing);
+      await close(tester);
+    });
+
+    testWidgets('a position that cannot be found is said, nothing moves', (
+      tester,
+    ) async {
+      final provider = FakeLocationProvider()
+        ..failWith = TimeoutException('no fix');
+      await pump(tester, provider: provider);
+      await tester.tap(find.text('Move pin'));
+      await tester.pump();
+      await tester.tap(find.text('Use current position'));
+      await tester.pump();
+      await tester.pump();
+
+      expect(
+        find.text(
+          'Could not find where you are. Try again, or enter coordinates.',
+        ),
+        findsOneWidget,
+      );
+      expect(find.textContaining('12.97160° N'), findsOneWidget);
+      expect((await stored()).latitude, log.latitude);
+      // Still possible to type them.
+      expect(find.byKey(const ValueKey('coordinates-field')), findsOneWidget);
       await close(tester);
     });
 
