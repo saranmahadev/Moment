@@ -71,4 +71,20 @@ void main() {
 
     expect(back, isTrue);
   });
+
+  testWidgets('credits the work Moment is built on, and where its source is', (
+    tester,
+  ) async {
+    await pump(tester);
+    await tester.scrollUntilVisible(find.text('Open-source licences'), 200);
+    expect(find.textContaining('GPL-3.0'), findsWidgets);
+    expect(
+      find.textContaining('github.com/saranmahadev/Moment'),
+      findsOneWidget,
+    );
+
+    await tester.tap(find.text('Open-source licences'));
+    await tester.pumpAndSettle();
+    expect(find.byType(LicensePage), findsOneWidget);
+  });
 }
